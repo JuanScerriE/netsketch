@@ -1,0 +1,33 @@
+Application which takes in a bunch of options and it can handle those options.
+
+Then we'll need a thread which runs the command prompt.
+
+Then we want a thread which runs the drawing.
+
+The client will have two particular modes of operations
+either in local or server mode.
+
+Then we'll have the server which we'll have to run.
+
+so the client will have
+the following options
+--local
+--server, takes an ipv4 ipaddress
+--port, takes a port
+--username, takes a name maybe set a maximum on the size of the username
+
+if --local is
+proivded non of the other options are avaliable
+if nothing is provided it is  assumed to be running in local mode
+if --server is provided an ip address is expected
+if --port is not provided when --server the default port is used
+if --username is not provided the simple userN where N is the next
+user is used.
+
+
+the commands section i.e. reading commands should be simple read
+in the stream from user input. if we match a letter we should
+try to consume all the next letters until we reach some of the
+letters which are a whitespace and then consume accordingly.
+accepth when we reach a newline which is the point at which we
+flush so we have to deal with that.

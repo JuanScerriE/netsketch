@@ -1,0 +1,246 @@
+\documentclass[article]{uom-coursework}
+% \usepackage[showframe]{geometry}
+
+\usetikzlibrary{automata, positioning, arrows,
+arrows.meta}
+
+\usepackage{float}
+\usepackage{syntax}
+\usepackage{mdframed}
+\usepackage[ruled]{algorithm2e}
+\usepackage[nopagecolor={white}]{pagecolor}
+% \usepackage{contour}
+\usepackage{soul}
+\usepackage{calc}
+\usepackage{wrapfig2}
+% \usepackage[normalem]{ulem}
+% \usepackage[luatex]{accsupp}
+
+
+% \setlength{\ULdepth}{1.8pt}
+% \contourlength{1pt}
+
+% \newcommand{\ul}[1]{
+% \BeginAccSupp{method=plain,ActualText={#1}}%
+% \uline{\hphantom{#1}}%
+% % \llap{\contour{\thepagecolor}{#1}}%
+% \EndAccSupp{}%
+% }
+
+% \newcommand{\ul}[1]{
+% \uline{\hphantom{#1}}%
+% \llap{#1}%
+% }
+
+\usepackage{caption}
+\captionsetup{%
+   % labelsep=newline,
+   justification=raggedright,
+   labelfont=bf
+}
+
+\tcbuselibrary{most,documentation}
+
+\tcbset{skin=enhanced,
+  doc head={colback=yellow!10!white,interior style=fill},
+  doc head key={colback=magenta!5!white,interior style=fill},
+  doc head path={colback=blue!50!gray!7!white,interior style=fill},
+  color key=DarkViolet,
+  color value=Teal,
+  color color=Teal,
+  color counter=Orange!85!black,
+  color length=Orange!85!black,
+  index colorize,
+  index annotate,
+}
+
+\newtcolorbox{marker}[1][]{
+  before skip balanced=2mm,after skip balanced=3mm,
+  boxrule=0.4pt,left=5mm,right=2mm,top=1mm,bottom=1mm,
+  colback=UMc2!50,
+  colframe=UMc2!20!black,
+  sharp corners,rounded corners=southeast,arc is angular,arc=3mm,
+  underlay={%
+    \path[fill=tcbcolback!80!black] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[draw=tcbcolframe,shorten <=-0.05mm,shorten >=-0.05mm] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[fill=UMc2!50!black,draw=none] (interior.south west) rectangle node[white]{\Huge\bfseries !} ([xshift=4mm]interior.north west);
+    },
+  drop fuzzy shadow,#1}
+
+\newlength\inlineheight
+\newlength\inlinedepth
+\settototalheight\inlineheight{Xygp}
+\settodepth\inlinedepth{Xygp}
+\setlength\fboxsep{0pt}
+\newcommand*\inlinegraphics[1]{%
+  \settototalheight\inlineheight{Xygp}%
+  \settodepth\inlinedepth{Xygp}%
+  \raisebox{-\inlinedepth}{\includegraphics[height=\inlineheight]{#1}}%
+}
+
+
+
+\newtcolorbox{todo}[1][]{
+  before skip balanced=2mm,after skip balanced=3mm,
+  boxrule=0.4pt,left=5mm,right=2mm,top=1mm,bottom=1mm,
+  colback=UMc17!50,
+  colframe=UMc17!20!black,
+  sharp corners,rounded corners=southeast,arc is angular,arc=3mm,
+  underlay={%
+    \path[fill=tcbcolback!80!black] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[draw=tcbcolframe,shorten <=-0.05mm,shorten >=-0.05mm] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[fill=UMc17!50!black,draw=none] (interior.south west) rectangle node[white]{\rotatebox{90}{\resizebox{!}{0.6em}{\bfseries TODO}}} ([xshift=4mm]interior.north west);
+    },
+  drop fuzzy shadow,#1}
+
+\newtcolorbox{note}[1][]{
+  before skip balanced=2mm,after skip balanced=3mm,
+  boxrule=0.4pt,left=5mm,right=2mm,top=1mm,bottom=1mm,
+  colback=UMc8!50,
+  colframe=UMc8!20!black,
+  sharp corners,rounded corners=southeast,arc is angular,arc=3mm,
+  underlay={%
+    \path[fill=tcbcolback!80!black] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[draw=tcbcolframe,shorten <=-0.05mm,shorten >=-0.05mm] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[fill=UMc8!50!black,draw=none] (interior.south west) rectangle node[white]{\rotatebox{90}{\resizebox{!}{0.6em}{\bfseries NOTE}}} ([xshift=4mm]interior.north west);
+    },
+  drop fuzzy shadow,#1}
+
+
+\newtcolorbox{noteline}[1][]{
+  before skip balanced=2mm,after skip balanced=3mm,
+  boxrule=0.4pt,left=5mm,right=2mm,top=1mm,bottom=1mm,
+  colback=UMc8!50,
+  colframe=UMc8!20!black,
+  sharp corners,rounded corners=southeast,arc is angular,arc=3mm,
+  underlay={%
+    \path[fill=tcbcolback!80!black] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[draw=tcbcolframe,shorten <=-0.05mm,shorten >=-0.05mm] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[fill=UMc8!50!black,draw=none] (interior.south west) rectangle node[white]{\rotatebox{90}{\resizebox{!}{0.4em}{\bfseries NOTE}}} ([xshift=4mm]interior.north west);
+    },
+  drop fuzzy shadow,#1}
+
+\newtcolorbox{attrib}[1][]{
+  before skip balanced=2mm,after skip balanced=3mm,
+  boxrule=0.4pt,left=5mm,right=2mm,top=1mm,bottom=1mm,
+  colback=UMc16!50,
+  colframe=UMc16!20!black,
+  sharp corners,rounded corners=southeast,arc is angular,arc=3mm,
+  underlay={%
+    \path[fill=tcbcolback!80!black] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[draw=tcbcolframe,shorten <=-0.05mm,shorten >=-0.05mm] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[fill=UMc16!50!black,draw=none] (interior.south west) rectangle node[white]{\rotatebox{90}{\resizebox{!}{0.5em}{\bfseries ATTRIB.}}} ([xshift=4mm]interior.north west);
+    },
+  drop fuzzy shadow,#1}
+
+\newtcolorbox{framefig}{
+    boxrule=1pt,
+    boxsep=0pt,
+    sharp corners,
+    colback=white,
+    left=0pt,
+    right=0pt,
+    top=0pt,
+    bottom=0pt
+}
+
+\definecolor{UMPaleRed}{HTML}{d29599}
+\definecolor{OffWhite}{HTML}{fffff4}
+
+\makeatletter
+\newcommand{\RemoveAlgoNumber}{\renewcommand{\fnum@algocf}{\AlCapSty{\AlCapFnt\algorithmcfname}}}
+\newcommand{\RevertAlgoNumber}{\algocf@resetfnum}
+\makeatother
+
+% \usepackage{etoolbox}% http://ctan.org/pkg/etoolbox
+% \makeatletter
+% \patchcmd{\lst@GLI@}% <command>
+%   {\def\lst@firstline{#1\relax}}% <search>
+%   {\def\lst@firstline{#1\relax}\def\lst@firstnumber{#1\relax}}% <replace>
+%   {\typeout{listings firstnumber=firstline}}% <success>
+%   {\typeout{listings firstnumber not set}}% <failure>
+% \makeatother
+
+% \makeatletter
+% \patchcmd{\lst@GLI@}% <command>
+%   {\def\lst@firstline{#1\relax}}% <search>
+%   {\def\lst@firstline{#1\relax}\def\lst@firstnumber{#1\relax}}% <replace>
+%   {\typeout{listings firstnumber=firstline}}% <success>
+%   {\typeout{listings firstnumber not set}}% <failure>
+% \makeatother
+
+% \tracingpatches
+%
+% \makeatletter
+% \ifpatchable{\lst@GLI@}% <command>
+%   {\def\lst@firstline{#1\relax}}% <search>
+%     {
+%         \patchcmd{\lst@GLI@}% <command>
+%           {\def\lst@firstline{#1\relax}}% <search>
+%           {\def\lst@firstline{#1\relax}\def\lst@firstnumber{#1\relax}}% <replace>
+%           {\typeout{listings firstnumber=firstline}}% <success>
+%           {\typeout{listings firstnumber not set}}% <failure>
+%     }% <true>
+%   {\typeout{listings firstline not set}}% <false>
+% \makeatother
+
+\counterwithout{section}{chapter}
+
+\lstset{inputpath={../src}, language=C++}
+
+\def\CC{{C\nolinebreak\raisebox{.25ex}{\scriptsize\bfseries{++}}}}
+
+\newcommand{\listref}[1]{Listing~\ref{lst:#1}}
+\newcommand{\figref}[1]{Figure~\ref{fig:#1}}
+\newcommand{\algref}[1]{Algorithm~\ref{alg:#1}}
+
+% Biblography
+% \addbibresource{dsa.bib}
+
+\title{Compiler Theory and Practice}
+\tagline{Coursework}
+\author{Juan Scerri}
+\authorid{123456A}
+\courseworkname{Some Degree}
+\doctype{coursework}
+\courseworkdate{\monthyeardate\today}
+\subjectcode{CPS2000}
+
+
+\begin{document}
+
+\RemoveAlgoNumber
+
+%----------------------------------
+%	Front Matter
+%----------------------------------
+
+\pagestyle{umpage}
+
+\frontmatter
+
+\maketitle % Print the title page
+
+\tableofcontents % Print the table of contents
+
+\clearpage
+
+\lstlistoflistings
+
+\clearpage
+
+\mainmatter
+
+\chapter*{Report}
+\label{chap:report}
+\addcontentsline{toc}{chapter}{\nameref{chap:report}}
+
+\input{section1.tex}
+\input{section2.tex}
+\input{section3.tex}
+\input{section4.tex}
+\input{section5.tex}
+\input{section6.tex}
+\input{section7.tex}
+
+\end{document}

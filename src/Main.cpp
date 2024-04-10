@@ -1,274 +1,168 @@
+/*******************************************************************************************
+ *
+ *   raylib [core] example - 2d camera mouse zoom
+ *
+ *   Example originally created with raylib 4.2, last time
+ *updated with raylib 4.2
+ *
+ *   Example licensed under an unmodified zlib/libpng
+ *license, which is an OSI-certified, BSD-like license that
+ *allows static linking with closed source software
+ *
+ *   Copyright (c) 2022-2024 Jeffery Myers (@JeffM2501)
+ *
+ ********************************************************************************************/
+
+#include <fmt/core.h>
 #include <raylib.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include <raymath.h>
+#include <rlgl.h>
 
-#define SNAKE_MAX_LEN 15 * 15
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
+int main() {
+    // Initialization
+    //--------------------------------------------------------------------------------------
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
-typedef enum { LEFT, RIGHT, UP, DOWN } Direction;
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE
+    );  // Window configuration flags
+    InitWindow(
+        screenWidth,
+        screenHeight,
+        "raylib [core] example - 2d camera mouse zoom"
+    );
 
-typedef struct {
-  int body_len;
-  Vector2 body_blocks[SNAKE_MAX_LEN];
-  Direction direction;
-  int block_size;
-} Snake;
+    Camera2D camera = {0};
+    camera.zoom = 1.0f;
 
-#define UPDATE_RATE 7
+    SetTargetFPS(60
+    );  // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
 
-void reset_snake(Snake *snake, int x, int y) {
-  snake->body_len = 1;
-  snake->direction = UP;
-  snake->body_blocks[0].x = x;
-  snake->body_blocks[0].y = y;
-}
-
-void snake_left(Snake *snake, int step_size) {
-  Vector2 temp = snake->body_blocks[0];
-  snake->body_blocks[0].x -= step_size;
-
-  for (int i = 0; i < snake->body_len - 1; i++) {
-    Vector2 temp_2 = snake->body_blocks[i + 1];
-    snake->body_blocks[i + 1] = temp;
-    temp = temp_2;
-  }
-}
-
-void snake_right(Snake *snake, int step_size) {
-  Vector2 temp = snake->body_blocks[0];
-  snake->body_blocks[0].x += step_size;
-
-  for (int i = 0; i < snake->body_len - 1; i++) {
-    Vector2 temp_2 = snake->body_blocks[i + 1];
-    snake->body_blocks[i + 1] = temp;
-    temp = temp_2;
-  }
-}
-
-void snake_up(Snake *snake, int step_size) {
-  Vector2 temp = snake->body_blocks[0];
-  snake->body_blocks[0].y -= step_size;
-
-  for (int i = 0; i < snake->body_len - 1; i++) {
-    Vector2 temp_2 = snake->body_blocks[i + 1];
-    snake->body_blocks[i + 1] = temp;
-    temp = temp_2;
-  }
-}
-
-void snake_down(Snake *snake, int step_size) {
-  Vector2 temp = snake->body_blocks[0];
-  snake->body_blocks[0].y += step_size;
-
-  for (int i = 0; i < snake->body_len - 1; i++) {
-    Vector2 temp_2 = snake->body_blocks[i + 1];
-    snake->body_blocks[i + 1] = temp;
-    temp = temp_2;
-  }
-}
-
-Direction find_direction(Vector2 v1, Vector2 v2) {
-  Vector2 dir_v;
-
-  dir_v.x = v2.x - v1.x;
-  dir_v.y = v2.y - v1.y;
-
-  if (dir_v.x == 0) {
-    if (dir_v.y > 0) {
-      return UP;
-    } else {
-      return DOWN;
-    }
-  } else {
-    if (dir_v.x > 0) {
-      return RIGHT;
-    } else {
-      return LEFT;
-    }
-  }
-}
-
-void snake_grow(Snake *snake) {
-  if (snake->body_len >= SNAKE_MAX_LEN)
-    return;
-
-  Direction direction;
-
-  if (snake->body_len == 1) {
-    direction = snake->direction;
-  } else {
-    direction = find_direction(snake->body_blocks[snake->body_len - 1],
-                               snake->body_blocks[snake->body_len - 2]);
-  }
-
-  snake->body_len++;
-
-  snake->body_blocks[snake->body_len - 1] =
-      snake->body_blocks[snake->body_len - 2];
-
-  switch (direction) {
-  case LEFT:
-    snake->body_blocks[snake->body_len - 1].x += snake->block_size;
-    break;
-  case RIGHT:
-    snake->body_blocks[snake->body_len - 1].x -= snake->block_size;
-    break;
-  case UP:
-    snake->body_blocks[snake->body_len - 1].y += snake->block_size;
-    break;
-  case DOWN:
-    snake->body_blocks[snake->body_len - 1].y -= snake->block_size;
-    break;
-  }
-}
-
-int main(void) {
-  const int screenWidth = 800;
-  const int screenHeight = 450;
-  const int centerWidth = screenWidth / 2;
-  const int centerHeight = screenHeight / 2;
-
-  // Snake Arena
-  const int arenaSize = 15;
-  const int arenaWidth = 300;
-  const int arenaHeight = 300;
-  const int arenaX = centerWidth - arenaWidth / 2;
-  const int arenaY = centerHeight - arenaHeight / 2;
-
-  InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
-
-  SetTargetFPS(60);
-
-  int step_size = arenaHeight / arenaSize;
-
-  Snake snake;
-  snake.body_len = 1;
-  snake.body_blocks[0].x = centerWidth;
-  snake.body_blocks[0].y = centerHeight;
-  snake.block_size = step_size;
-  snake.direction = UP;
-
-  int frame_counter = 0;
-
-  Vector2 size;
-  size.x = snake.block_size;
-  size.y = snake.block_size;
-
-  Vector2 apple_location;
-  (void)apple_location;
-
-  bool grow_snake = false;
-  bool snake_died = false;
-  bool apple_present = false;
-
-  // seed the random number generator with program start.
-  // this is used for when you want to deal with
-  srand(time(NULL));
-
-  while (!WindowShouldClose()) {
+    // Main game loop
+    while (!WindowShouldClose()
+    )  // Detect window close button or ESC key
     {
-      if (IsKeyPressed(KEY_RIGHT) &&
-          (snake.direction != LEFT || snake.body_len == 1))
-        snake.direction = RIGHT;
+        // Update
+        //----------------------------------------------------------------------------------
+        // Translate based on mouse right click
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            Vector2 delta = GetMouseDelta();
+            delta =
+                Vector2Scale(delta, -1.0f / camera.zoom);
 
-      if (IsKeyPressed(KEY_LEFT) &&
-          (snake.direction != RIGHT || snake.body_len == 1))
-        snake.direction = LEFT;
+            camera.target =
+                Vector2Add(camera.target, delta);
+        }
 
-      if (IsKeyPressed(KEY_UP) &&
-          (snake.direction != DOWN || snake.body_len == 1))
-        snake.direction = UP;
+        // Get the world point that is under the mouse
+        Vector2 mouseWorldPos =
+            GetScreenToWorld2D(GetMousePosition(), camera);
 
-      if (IsKeyPressed(KEY_DOWN) &&
-          (snake.direction != UP || snake.body_len == 1))
-        snake.direction = DOWN;
+        // Zoom based on mouse wheel
+        float wheel = GetMouseWheelMove();
+        if (wheel != 0) {
+            // Set the offset to where the mouse is
+            camera.offset = GetMousePosition();
 
-      if (snake_died && IsKeyPressed(KEY_SPACE)) {
-        reset_snake(&snake, centerWidth, centerHeight);
-        snake_died = false;
-      }
+            // Set the target to match, so that the camera
+            // maps the world space point under the cursor
+            // to the screen space point under the cursor at
+            // any zoom
+            camera.target = mouseWorldPos;
+
+            // Zoom increment
+            const float zoomIncrement = 0.125f;
+
+            camera.zoom += (wheel * zoomIncrement);
+            if (camera.zoom < zoomIncrement)
+                camera.zoom = zoomIncrement;
+        }
+
+        if (IsWindowResized()) {
+            TraceLog(
+                LOG_INFO,
+                "width:%d, height:%d",
+                GetScreenWidth(),
+                GetScreenHeight()
+            );
+        }
+
+        //----------------------------------------------------------------------------------
+
+        // Draw
+        //----------------------------------------------------------------------------------
+        BeginDrawing();
+        {
+            ClearBackground(WHITE);
+
+            BeginMode2D(camera);
+            {
+                // Draw the 3d grid, rotated 90 degrees and
+                // centered around 0,0 just so we have
+                // something in the XY plane
+                // rlPushMatrix();
+                // rlTranslatef(0, 25 * 50, 0);
+                // rlRotatef(90, 1, 0, 0);
+                // DrawGrid(100, 50);
+                // rlPopMatrix();
+
+                // Draw a reference circle
+                DrawCircle(100, 100, 50, YELLOW);
+
+                int gap = 50;
+
+                int width = GetScreenWidth();
+                int widthSteps = width / gap;
+
+                for (int x = 0; x < widthSteps; x++) {
+                    DrawLine(
+                        x * gap,
+                        0,
+                        x * gap,
+                        20,
+                        BLACK
+                    );
+                }
+
+                int height = GetScreenHeight();
+                int heightSteps = height / gap;
+
+                for (int y = 0; y < heightSteps; y++) {
+                    DrawLine(
+                        0,
+                        y * gap,
+                        20,
+                        y * gap,
+                        BLACK
+                    );
+                }
+            }
+            EndMode2D();
+
+            DrawText(
+                fmt::format(
+                    "X:{}, Y:{}",
+                    mouseWorldPos.x,
+                    mouseWorldPos.y
+                )
+                    .c_str(),
+                10,
+                10,
+                20,
+                BLACK
+            );
+        }
+        EndDrawing();
+        //----------------------------------------------------------------------------------
     }
 
-    if (frame_counter % UPDATE_RATE == 0) {
-      if (!apple_present) {
-        double r_x = rand() / (double)RAND_MAX;
-        double r_y = rand() / (double)RAND_MAX;
-        (void)r_x;
-        (void)r_y;
-        /* printf("Value: %f\n", random); */
-      }
-
-      if (snake.direction == RIGHT)
-        snake_right(&snake, step_size);
-      if (snake.direction == LEFT)
-        snake_left(&snake, step_size);
-      if (snake.direction == UP)
-        snake_up(&snake, step_size);
-      if (snake.direction == DOWN)
-        snake_down(&snake, step_size);
-
-      // check if snake has hit the boundary
-      {
-        if (snake.body_blocks[0].x < arenaX ||
-            snake.body_blocks[0].x > arenaX + arenaWidth)
-          snake_died = true;
-
-        if (snake.body_blocks[0].y < arenaY ||
-            snake.body_blocks[0].y > arenaY + arenaHeight)
-          snake_died = true;
-      }
-
-      // check if the snake has hit itself
-      {
-        Vector2 head = snake.body_blocks[0];
-        for (int i = 1; i < snake.body_len; i++) {
-          Vector2 body_block = snake.body_blocks[i];
-          if (head.x == body_block.x && head.y == body_block.y)
-            snake_died = true;
-        }
-      }
-
-      if (grow_snake && !snake_died) {
-        snake_grow(&snake);
-        grow_snake = false;
-      }
-
-      frame_counter = 0;
-    }
-
-    BeginDrawing();
-    {
-      ClearBackground(RAYWHITE);
-      if (snake_died) {
-        // TODO: properly center text
-        DrawText("Snake Died", centerWidth, centerHeight, 16,
-                 RED); // Draw text (using default font)
-
-      } else {
-        for (int i = 0; i < snake.body_len; i++) {
-          Vector2 pos;
-
-          pos.x = snake.body_blocks[i].x - size.x / 2;
-          pos.y = snake.body_blocks[i].y - size.y / 2;
-
-          DrawRectangleV(pos, size, GREEN);
-        }
-
-        for (int y = arenaY; y <= arenaY + arenaHeight; y += step_size) {
-          DrawLine(arenaX, y, arenaX + arenaWidth, y, RED);
-        }
-
-        for (int x = arenaX; x <= arenaX + arenaWidth; x += step_size) {
-          DrawLine(x, arenaY, x, arenaY + arenaHeight, RED);
-        }
-      }
-    }
-    EndDrawing();
-
-    frame_counter++;
-  }
-
-  CloseWindow();
-
-  return 0;
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
+    CloseWindow();  // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
+    return 0;
 }

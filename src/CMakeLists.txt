@@ -10,6 +10,7 @@
 add_executable(netsketch_client
         client/main.cpp
         client/gui.cpp
+        client/command_input.cpp
 )
 
 target_link_libraries(netsketch_client PRIVATE fmt::fmt raylib)

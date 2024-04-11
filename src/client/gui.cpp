@@ -1,14 +1,106 @@
 // client
+#include <cstring>
 #include <gui.hpp>
 
 // std
+#include <cerrno>
+#include <chrono>
 #include <cmath>
 
 // raylib
 #include <raylib.h>
 #include <raymath.h>
 
+// fmt
+#include <fmt/chrono.h>
+#include <fmt/core.h>
+
 namespace client {
+
+common::log_file_t gui_t::s_log_file{};
+
+gui_t::gui_t(std::atomic_bool &stop, bool log)
+    : a_stop(stop), m_log(log) {
+}
+
+void gui_t::operator()() {
+    SetTraceLogCallback(noop_file_logger);
+
+    if (m_log) {
+        using std::chrono::system_clock;
+
+        auto now = system_clock::now();
+
+        s_log_file.open(fmt::format(
+            "netsketch-raylib-log {:%Y-%m-%d %H:%M:%S}",
+            now
+        ));
+
+        if (s_log_file.error()) {
+            fmt::println(
+                stderr,
+                "warn: opening a log file failed because - "
+                "{}",
+                s_log_file.reason()
+            );
+        } else {
+            SetTraceLogCallback(file_logger);
+        }
+    }
+
+    game_loop();
+
+    if (m_log) {
+        if (s_log_file.is_open()) {
+            s_log_file.close();
+        }
+    }
+}
+
+void gui_t::noop_file_logger(int, const char *, va_list) {
+    // do nothing
+}
+
+void gui_t::file_logger(
+    int msg_type,
+    const char *text,
+    va_list args
+) {
+    // TODO: add error handling for each call to printf (and
+    // friends)
+    switch (msg_type) {
+        case LOG_INFO:
+            fprintf(
+                gui_t::s_log_file.native_handle(),
+                "[INFO]: "
+            );
+            break;
+        case LOG_ERROR:
+            fprintf(
+                gui_t::s_log_file.native_handle(),
+                "[ERROR]: "
+            );
+            break;
+        case LOG_WARNING:
+            fprintf(
+                gui_t::s_log_file.native_handle(),
+                "[WARN] : "
+            );
+            break;
+        case LOG_DEBUG:
+            fprintf(
+                gui_t::s_log_file.native_handle(),
+                "[DEBUG]: "
+            );
+            break;
+        default:
+            break;
+    }
+
+    vfprintf(gui_t::s_log_file.native_handle(), text, args);
+
+    fprintf(gui_t::s_log_file.native_handle(), "\n");
+}
 
 inline void gui_t::draw_scene() {
     DrawCircle(0, 0, 50, YELLOW);
@@ -93,13 +185,14 @@ void gui_t::game_loop() {
     InitWindow(
         m_screen_width,
         m_screen_height,
-        m_window_name
+        m_window_name.c_str()
     );
 
-    SetTargetFPS(m_traget_fps);
+    SetTargetFPS(m_target_fps);
 
     // detect window close button or ESC key
-    while (!WindowShouldClose()) {
+    // or when the main tells us so
+    while (!WindowShouldClose() && !a_stop) {
         if (IsKeyPressed(KEY_H)) {
             m_camera = {{0, 0}, {0, 0}, 0, 1.0};
         }
@@ -145,7 +238,7 @@ void gui_t::game_loop() {
         if (IsWindowResized()) {
             TraceLog(
                 LOG_INFO,
-                "width:%d, height:%d",
+                "Width: %d, Height: %d",
                 GetScreenWidth(),
                 GetScreenHeight()
             );

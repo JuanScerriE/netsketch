@@ -1,9 +1,7 @@
 // client
-#include <cstring>
 #include <gui.hpp>
 
 // std
-#include <cerrno>
 #include <chrono>
 #include <cmath>
 
@@ -24,7 +22,7 @@ gui_t::gui_t(std::atomic_bool &stop, bool log)
 }
 
 void gui_t::operator()() {
-    SetTraceLogCallback(noop_file_logger);
+    SetTraceLogCallback(noop_logger);
 
     if (m_log) {
         using std::chrono::system_clock;
@@ -57,7 +55,7 @@ void gui_t::operator()() {
     }
 }
 
-void gui_t::noop_file_logger(int, const char *, va_list) {
+void gui_t::noop_logger(int, const char *, va_list) {
     // do nothing
 }
 

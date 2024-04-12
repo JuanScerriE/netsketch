@@ -3,8 +3,6 @@
 // std
 #include <cerrno>
 #include <cstdio>
-#include <optional>
-#include <stdexcept>
 #include <string>
 
 // fmt

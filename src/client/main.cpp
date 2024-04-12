@@ -5,21 +5,20 @@
 
 // std
 #include <atomic>
-#include <iostream>
 #include <thread>
 
 std::atomic_bool stop{false};
 
 int main() {
-     std::thread gui_thread(client::gui_t{stop});
+    client::gui_t gui{stop};
 
-     client::command_input_t command_input;
+    client::command_input_t command_input{stop};
 
-     command_input.start();
+    std::thread input_thread(client::command_input_t{stop});
 
-     stop = true;
+    gui();
 
-     gui_thread.join();
+    input_thread.join();
 
     return 0;
 }

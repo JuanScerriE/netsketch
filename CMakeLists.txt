@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(
-  netsketch
-  VERSION 0.1
-  LANGUAGES C CXX
+        netsketch
+        VERSION 0.1
+        LANGUAGES C CXX
 )
 
 set(CMAKE_CXX_STANDARD 17)

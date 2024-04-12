@@ -5,7 +5,6 @@
 
 // std
 #include <atomic>
-#include <fstream>
 
 // client
 #include <log_file.hpp>
@@ -19,7 +18,7 @@ class gui_t {
     void operator()();
 
    private:
-    static void noop_file_logger(int, const char*, va_list);
+    static void noop_logger(int, const char*, va_list);
 
     static void file_logger(
         int msg_type,

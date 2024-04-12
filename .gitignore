@@ -22,3 +22,5 @@ report/*.out
 report/*.url
 report/*.svn
 report/*.toc
+netsketch-raylib-log*
+

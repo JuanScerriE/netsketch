@@ -23,4 +23,4 @@ report/*.url
 report/*.svn
 report/*.toc
 netsketch-raylib-log*
-
+netsketch-client-net-handler-log*

@@ -4,6 +4,8 @@
 // std
 #include <chrono>
 #include <cmath>
+#include <typeinfo>
+#include <variant>
 
 // raylib
 #include <raylib.h>
@@ -13,15 +15,27 @@
 #include <fmt/chrono.h>
 #include <fmt/core.h>
 
+// common
+#include <abort.hpp>
+#include <types.hpp>
+
+// share
+#include <share.hpp>
+
 namespace client {
 
 common::log_file_t gui_t::s_log_file{};
 
-gui_t::gui_t(std::atomic_bool &stop, bool log)
-    : a_stop(stop), m_log(log) {
+gui_t::gui_t(bool log)
+    : m_log(log) {
 }
 
 void gui_t::operator()() {
+    AbortIf(
+        m_in_game_loop,
+        "calling operator()() twice on a gui_t object"
+    );
+
     SetTraceLogCallback(noop_logger);
 
     if (m_log) {
@@ -101,7 +115,66 @@ void gui_t::file_logger(
 }
 
 inline void gui_t::draw_scene() {
-    DrawCircle(0, 0, 50, YELLOW);
+    for (auto &draw : m_draws) {
+        if (std::holds_alternative<common::line_draw_t>(draw
+            )) {
+            auto &line =
+                std::get<common::line_draw_t>(draw);
+
+            DrawLineEx(
+                {static_cast<float>(line.x0),
+                 static_cast<float>(line.y0)},
+                {static_cast<float>(line.x1),
+                 static_cast<float>(line.y1)},
+                1.1f,  // NOTE: maybe change this?
+                line.colour.to_raylib_colour()
+            );
+            continue;
+        }
+        if (std::holds_alternative<
+                common::rectangle_draw_t>(draw)) {
+            auto &rectangle =
+                std::get<common::rectangle_draw_t>(draw);
+            DrawRectangle(
+                rectangle.x,
+                rectangle.y,
+                rectangle.w,
+                rectangle.h,
+                rectangle.colour.to_raylib_colour()
+            );
+            continue;
+        }
+        if (std::holds_alternative<common::circle_draw_t>(
+                draw
+            )) {
+            auto &circle =
+                std::get<common::circle_draw_t>(draw);
+            DrawCircle(
+                circle.x,
+                circle.y,
+                circle.r,
+                circle.colour.to_raylib_colour()
+            );
+            continue;
+        }
+        if (std::holds_alternative<common::text_draw_t>(draw
+            )) {
+            auto &text =
+                std::get<common::text_draw_t>(draw);
+            DrawText(
+                text.string.c_str(),
+                text.x,
+                text.y,
+                16,  // NOTE: maybe change this?
+                text.colour.to_raylib_colour()
+            );
+            continue;
+        }
+
+        using Type = std::decay_t<decltype(draw)>;
+
+        AbortV("unkown draw type {}", typeid(Type).name());
+    }
 }
 
 void gui_t::draw() {
@@ -177,6 +250,9 @@ void gui_t::draw() {
 }
 
 void gui_t::game_loop() {
+    // mark as in_game_loop
+    m_in_game_loop = true;
+
     // window configuration flags
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 
@@ -190,7 +266,7 @@ void gui_t::game_loop() {
 
     // detect window close button or ESC key
     // or when the main tells us so
-    while (!WindowShouldClose() && !a_stop) {
+    while (!share::e_stop_gui()) {
         if (IsKeyPressed(KEY_H)) {
             m_camera = {{0, 0}, {0, 0}, 0, 1.0};
         }

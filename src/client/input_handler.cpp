@@ -1,27 +1,35 @@
 // client
-#include <command_input.hpp>
+#include <cstring>
+#include <input_handler.hpp>
 
 // std
+#include <cstdint>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
 
+// unix
+#include <poll.h>
+#include <unistd.h>
+
+// common
+#include <types.hpp>
+
 // fmt
 #include <fmt/core.h>
 
+// share
+#include <share.hpp>
+
 namespace client {
 
-command_input_t::command_input_t(std::atomic_bool& stop)
-    : a_stop(stop) {
-}
-
-void command_input_t::operator()() {
+void input_handler_t::operator()() {
     start();
 }
 
-void command_input_t::start() {
+void input_handler_t::start() {
     do {
         std::string line{};
 
@@ -30,11 +38,42 @@ void command_input_t::start() {
         std::getline(std::cin, line);
 
         process_line(line);
-
     } while (!m_should_exit);
 
+    pollfd poll_fd{
+        share::e_network_thread_event_fd,
+        POLLOUT,
+        0
+    };
+
+    if (poll(&poll_fd, 1, -1) == -1) {
+        AbortV(
+            "poll of event file descriptor failed, reason: "
+            "{}",
+            strerror(errno)
+        );
+    }
+
+    if ((poll_fd.revents & POLLOUT) == 0) {
+        Abort("cannot write to event file descriptor");
+    }
+
+    uint64_t inc = 1;
+
+    if (write(
+            share::e_network_thread_event_fd,
+            &inc,
+            sizeof(uint64_t)
+        ) == -1) {
+        AbortV(
+            "failed to write to event file descriptor, "
+            "reason: {}",
+            strerror(errno)
+        );
+    }
+
     // make sure to stop the gui
-    a_stop = true;
+    common::mutable_t<bool>{share::e_stop_gui}() = true;
 }
 
 std::vector<std::string_view> split(
@@ -67,7 +106,7 @@ std::vector<std::string_view> split(
     return lexemes;
 }
 
-void command_input_t::process_line(
+void input_handler_t::process_line(
     std::string_view line_view
 ) {
     std::vector<std::string_view> tokens = split(line_view);
@@ -88,21 +127,19 @@ void command_input_t::process_line(
 
             return;
         }
+
         fmt::println(
             " 1. help - list all available commands and "
             "their usage"
-        );
-        fmt::println(
-            " 2. tool {{line | rectangle | circle | text}} "
+            "\n 2. tool {{line | rectangle | circle | "
+            "text}} "
             "- select a tool for drawing"
-        );
-        fmt::println(
-            " 3. colour {{RED}} {{GREEN}} {{BLUE}} - sets "
+            "\n 3. colour {{RED}} {{GREEN}} {{BLUE}} - "
+            "sets "
             "the drawing colour using RED, GREEN, BLUE "
             "values"
-        );
-        fmt::println(
-            " 4. draw {{...}}... - draw a shape according "
+            "\n 4. draw {{...}}... - draw a shape "
+            "according "
             "to the selected tool and colour on the canvas"
             "\n    \twhen tool is 'line', draw {{X0}} "
             "{{Y0}} {{X1}} {{Y1}} - draw a line between "
@@ -117,44 +154,35 @@ void command_input_t::process_line(
             "\n    \twhen tool is 'text', draw {{X}} {{Y}} "
             "{{STRING}} - draw a string at (X, Y) with the "
             "characters in STRING"
-        );
-        fmt::println(
-            " 5. list [all | line | rectangle | circle | "
+            "\n 5. list [all | line | rectangle | circle | "
             "text] [all | mine] - displays issued draw "
             "commands in the console, filtered by tool "
             "type and/or user"
-        );
-        fmt::println(
-            " 6. select {{none | ID}} - select an existing "
+            "\n 6. select {{none | ID}} - select an "
+            "existing "
             "draw command (with the specified id ID) to be "
             "modified by a subsequent "
             "draw command"
-        );
-        fmt::println(
-            " 7. delete {{ID}} - deletes the draw command "
+            "\n 7. delete {{ID}} - deletes the draw "
+            "command "
             "with the specified id ID"
-        );
-        fmt::println(" 8. undo - revert the last action");
-        fmt::println(
-            " 9. clear {{all | mine}} - clears the canvas"
+            "\n 8. undo - revert the last action"
+            "\n 9. clear {{all | mine}} - clears the canvas"
             "\n    \tusing 'all' clears all draw commands"
             "\n    \tusing 'mine' clears only draw "
             "commands "
             "issued by the running client"
-        );
-        fmt::println(
-            "10. show {{all | mine}} - controls what is "
+            "\n10. show {{all | mine}} - controls what is "
             "displayed on the canvas"
             "\n    \tusing 'all' displays all draw commands"
             "\n    \tusing 'mine' displays only draw "
             "commands "
             "issued by the running client"
-        );
-        fmt::println(
-            "11. exit - (if the client is running in "
+            "\n11. exit - (if the client is running in "
             "--server mode disconnect from the "
             "server and) exit the application"
         );
+
         return;
     }
 
@@ -172,25 +200,29 @@ void command_input_t::process_line(
         std::string_view second_token = tokens[1];
 
         if (second_token == "line") {
+            m_tool = common::option_e::LINE;
             return;
         }
 
         if (second_token == "rectangle") {
+            m_tool = common::option_e::RECTANGLE;
             return;
         }
 
         if (second_token == "circle") {
+            m_tool = common::option_e::CIRCLE;
             return;
         }
 
         if (second_token == "text") {
+            m_tool = common::option_e::TEXT;
             return;
         }
 
         fmt::println(
             stderr,
-            "warn: {} is not a known tool",
-            second_token
+            "warn: expected one of {{'line' | 'rectangle' "
+            "| 'circle' | 'text'}}"
         );
 
         return;
@@ -209,7 +241,7 @@ void command_input_t::process_line(
 
         std::string_view red = tokens[1];
 
-        int red_value{};
+        int red_value{0};
 
         bool red_has_error{false};
 
@@ -237,7 +269,7 @@ void command_input_t::process_line(
 
         std::string_view green = tokens[2];
 
-        int green_value{};
+        int green_value{0};
 
         bool green_has_error{false};
 
@@ -265,7 +297,7 @@ void command_input_t::process_line(
 
         std::string_view blue = tokens[3];
 
-        int blue_value{};
+        int blue_value{0};
 
         bool blue_has_error{false};
 
@@ -291,7 +323,11 @@ void command_input_t::process_line(
             return;
         }
 
-        // handle
+        m_colour = {
+            static_cast<uint8_t>(red_value),
+            static_cast<uint8_t>(green_value),
+            static_cast<uint8_t>(blue_value)
+        };
 
         return;
     }
@@ -301,7 +337,7 @@ void command_input_t::process_line(
     }
 
     if (first_token == "list") {
-        if (tokens.size() > 3) {
+        if (tokens.size() != 3) {
             fmt::println(
                 stderr,
                 "warn: an unexpected number of tokens for "
@@ -311,33 +347,62 @@ void command_input_t::process_line(
             return;
         }
 
+        std::string_view second_token = tokens[1];
 
-        if (tokens.size() == 2) {
-            std::string_view second_token = tokens[1];
+        bool second_match{false};
 
-            bool match{false};
-
-            if (second_token == "line") {
-            }
-
-            if (second_token == "rectangle") {
-            }
-
-            if (second_token == "circle") {
-            }
-
-            if (second_token == "text") {
-            }
-
-            if (!match) {
-                return;
-            }
+        if (second_token == "all") {
+            second_match = true;
         }
 
-        if (tokens.size() == 3) {
-            // handle
+        if (second_token == "line") {
+            second_match = true;
+        }
+
+        if (second_token == "rectangle") {
+            second_match = true;
+        }
+
+        if (second_token == "circle") {
+            second_match = true;
+        }
+
+        if (second_token == "text") {
+            second_match = true;
+        }
+
+        if (!second_match) {
+            fmt::println(
+                stderr,
+                "warn: expected one of {{'all' | 'line' | "
+                "'rectangle' | 'circle' | 'text'}}"
+            );
+
             return;
         }
+
+        std::string_view third_token = tokens[2];
+
+        bool third_match{false};
+
+        if (third_token == "all") {
+            third_match = true;
+        }
+
+        if (third_token == "mine") {
+            third_match = true;
+        }
+
+        if (!third_match) {
+            fmt::println(
+                stderr,
+                "warn: expected one of {{'all' | 'mine'}}"
+            );
+
+            return;
+        }
+
+        // handle
 
         return;
     }
@@ -352,6 +417,40 @@ void command_input_t::process_line(
 
             return;
         }
+
+        std::string_view second_token = tokens[1];
+
+        if (second_token == "none") {
+            m_selected_id = {};
+
+            return;
+        }
+
+        unsigned long id{0};
+
+        bool id_has_error{false};
+
+        try {
+            id = std::stoul(std::string{second_token});
+        } catch (std::invalid_argument&) {
+            id_has_error = true;
+        } catch (std::out_of_range&) {
+            id_has_error = true;
+        }
+
+        if (!id_has_error) {
+            fmt::println(
+                stderr,
+                "warn: expected an 'none' or an "
+                "integer greater than "
+                "or equal to 0 for ID"
+            );
+
+            return;
+        }
+
+        m_selected_id = id;
+
         return;
     }
 
@@ -365,6 +464,32 @@ void command_input_t::process_line(
 
             return;
         }
+
+        std::string_view second_token = tokens[1];
+
+        unsigned long id{0};
+
+        bool id_has_error{false};
+
+        try {
+            id = std::stoul(std::string{second_token});
+        } catch (std::invalid_argument&) {
+            id_has_error = true;
+        } catch (std::out_of_range&) {
+            id_has_error = true;
+        }
+
+        if (!id_has_error) {
+            fmt::println(
+                stderr,
+                "warn: expected an integer greater than or "
+                "equal to 0 for ID"
+            );
+
+            return;
+        }
+
+        (void)id;
 
         return;
     }
@@ -393,6 +518,22 @@ void command_input_t::process_line(
 
             return;
         }
+
+        std::string_view second_token = tokens[1];
+
+        if (second_token == "all") {
+            return;
+        }
+
+        if (second_token == "mine") {
+            return;
+        }
+
+        fmt::println(
+            stderr,
+            "warn: expected one of {{'all' | 'mine'}}"
+        );
+
         return;
     }
 
@@ -406,6 +547,28 @@ void command_input_t::process_line(
 
             return;
         }
+
+        std::string_view second_token = tokens[1];
+
+        if (second_token == "all") {
+            common::mutable_t<bool>{share::e_show_mine}() =
+                false;
+
+            return;
+        }
+
+        if (second_token == "mine") {
+            common::mutable_t<bool>{share::e_show_mine}() =
+                true;
+
+            return;
+        }
+
+        fmt::println(
+            stderr,
+            "warn: expected one of {{'all' | 'mine'}}"
+        );
+
         return;
     }
 

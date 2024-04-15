@@ -18,11 +18,19 @@
 #include <sys/eventfd.h>
 #endif
 
-namespace server {
+namespace common {
 
 class event_t {
    public:
+    event_t(const event_t&) = delete;
+    event_t& operator=(const event_t&) = delete;
+
+    event_t(event_t&& mE) = default;
+    event_t& operator=(event_t&& mE) = default;
+
     explicit event_t() {
+        fmt::println("event_t ctor");
+
 #ifdef __APPLE__
         if (pipe(m_stop_event_pipe) == -1) {
             AbortV(
@@ -45,6 +53,8 @@ class event_t {
     }
 
     ~event_t() {
+        fmt::println("event_t dtor");
+
 #ifdef __APPLE__
         if (close(m_stop_event_pipe[READ]) == -1) {
             AbortV(
@@ -96,4 +106,4 @@ class event_t {
 #endif
 };
 
-} // namespace server
+}  // namespace common

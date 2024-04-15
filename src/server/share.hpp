@@ -8,6 +8,6 @@
 
 namespace server::share {
 
-extern event_t e_stop_event;
+extern common::event_t* e_stop_event;
 
-} // namespace server::share
+}  // namespace server::share

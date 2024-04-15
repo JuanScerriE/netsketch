@@ -1,6 +1,7 @@
 #pragma once
 
 // common
+#include <event.hpp>
 #include <types.hpp>
 
 namespace client::share {
@@ -19,6 +20,6 @@ extern common::readonly_t<bool> e_stop_gui;
 // to show
 extern common::readonly_t<bool> e_show_mine;
 
-extern int e_network_thread_event_fd;
+extern common::event_t* e_network_thread_event;
 
 }  // namespace client::share

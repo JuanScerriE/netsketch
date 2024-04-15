@@ -2,7 +2,7 @@
 
 // common
 #include <cstdint>
-#include <logger.hpp>
+#include <log.hpp>
 #include <types.hpp>
 
 // client
@@ -19,8 +19,7 @@ class network_handler_t {
     explicit network_handler_t(
         uint32_t ipv4_addr,
         uint16_t port,
-        std::string nickname,
-        bool log = true
+        std::string nickname
     );
 
     void operator()();
@@ -32,11 +31,10 @@ class network_handler_t {
     const uint32_t m_ipv4_addr;
     const uint16_t m_port;
     const std::string m_nickname;
+
     std::string m_internal_nickname{};
 
-    // file logging
-    bool m_log{true};
-    static common::logger_t s_logger;
+    // log file
     static common::log_file_t s_log_file;
 
     // draws

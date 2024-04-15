@@ -20,7 +20,7 @@
 
 // common
 #include <abort.hpp>
-#include <logger.hpp>
+#include <log.hpp>
 
 // share
 #include <share.hpp>
@@ -29,14 +29,11 @@
 
 namespace server {
 
-server_t::server_t(uint16_t port, common::level_e log_level)
+server_t::server_t(uint16_t port)
     : m_port(port) {
-    m_logger.set_level(log_level);
 }
 
 int server_t::operator()() {
-    using level = common::level_e;
-
 #ifdef __APPLE__
     m_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -65,8 +62,7 @@ int server_t::operator()() {
 #endif
 
     if (m_socket_fd == -1) {
-        m_logger.log(
-            level::ERROR,
+        log::error(
             "could not create socket, reason: {}",
             strerror(errno)
         );
@@ -84,8 +80,7 @@ int server_t::operator()() {
             (sockaddr*)&server_addr,
             sizeof(server_addr)
         ) == -1) {
-        m_logger.log(
-            level::ERROR,
+        log::error(
             "could not bind socket, reason: {}",
             strerror(errno)
         );
@@ -99,8 +94,7 @@ int server_t::operator()() {
     // of outstanding connections on the socket's listen
     // queue.
     if (listen(m_socket_fd, BACKLOG) == -1) {
-        m_logger.log(
-            level::ERROR,
+        log::error(
             "could not listen on socket, reason: {}",
             strerror(errno)
         );
@@ -110,20 +104,14 @@ int server_t::operator()() {
         return EXIT_FAILURE;
     }
 
-    m_logger.log(
-        level::INFO,
-        "server listening on port {}",
-        m_port
-    );
+    log::info("server listening on port {}", m_port);
 
-    requests_handler();
+    requests_loop();
 
     return EXIT_SUCCESS;
 }
 
-void server_t::requests_handler() {
-    using level = common::level_e;
-
+void server_t::requests_loop() {
     std::list<std::future<void>> futures{};
 
     for (;;) {
@@ -138,10 +126,16 @@ void server_t::requests_handler() {
 
         pollfd poll_fds[nfds] = {
             {m_socket_fd, POLLIN, 0},
-            {share::e_stop_event_fd, POLLIN, 0},
+            {share::e_stop_event->read_fd(), POLLIN, 0},
         };
 
         if (poll(poll_fds, nfds, -1) == -1) {
+            if (errno == EINTR) {
+                log::warn("poll interrupted");
+
+                continue;
+            }
+
             AbortV(
                 "poll of socket or stop event failed, "
                 "reason: {}",
@@ -162,12 +156,9 @@ void server_t::requests_handler() {
         }
 
         if (!(poll_fds[socket_idx].revents & POLLIN)) {
-            // I think this should never be reached
+            // I think this should never be reached,
             // but I am not a 100% sure
-            m_logger.log(
-                level::WARN,
-                "unexpected socket event"
-            );
+            log::warn("unexpected socket event");
 
             continue;
         }
@@ -179,8 +170,7 @@ void server_t::requests_handler() {
         );
 
         if (conn_fd == -1) {
-            m_logger.log(
-                level::WARN,
+            log::warn(
                 "accepting incoming connection "
                 "failed, reason: {}",
                 strerror(errno)
@@ -225,10 +215,7 @@ void server_t::requests_handler() {
             strerror(errno)
         );
 
-        futures.emplace_back(std::async(
-            std::launch::async,
-            conn_handler_t{conn_fd, addr, m_logger}
-        ));
+        futures.push_back(std::async(std::launch::async, conn_handler_t{conn_fd, addr}));
     }
 
     for (auto& future : futures) {

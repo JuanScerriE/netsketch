@@ -24,6 +24,8 @@
 // share
 #include <share.hpp>
 
+#include "event.hpp"
+
 struct IPv4Validator : public CLI::Validator {
     IPv4Validator() {
         name_ = "IPv4";
@@ -85,19 +87,13 @@ int main(int argc, char **argv) {
         Abort("invalid IPv4 address");
     }
 
-    // NOTE: this is in human readable form
+    // NOTE: this is in human-readable form
     uint32_t ipv4_addr_int = ntohl(addr.s_addr);
 
-    client::share::e_network_thread_event_fd =
-        eventfd(0, 0);
+    common::event_t network_thread_event{};
 
-    if (client::share::e_network_thread_event_fd == -1) {
-        AbortV(
-            "creation of event file descriptor for "
-            "notifications failed, reason {}",
-            strerror(errno)
-        );
-    }
+    client::share::e_network_thread_event =
+        &network_thread_event;
 
     // this is the first since the
     // network handler and the input handler both
@@ -123,15 +119,6 @@ int main(int argc, char **argv) {
     network_thread.join();
 
     // gui closes last with the end of the program
-
-    if (close(client::share::e_network_thread_event_fd) ==
-        -1) {
-        AbortV(
-            "failed to close event file descriptor, reason "
-            "{}",
-            strerror(errno)
-        );
-    }
 
     return 0;
 }

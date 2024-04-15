@@ -41,7 +41,7 @@ void input_handler_t::start() {
     } while (!m_should_exit);
 
     pollfd poll_fd{
-        share::e_network_thread_event_fd,
+        share::e_network_thread_event->write_fd(),
         POLLOUT,
         0
     };
@@ -61,7 +61,7 @@ void input_handler_t::start() {
     uint64_t inc = 1;
 
     if (write(
-            share::e_network_thread_event_fd,
+            share::e_network_thread_event->write_fd(),
             &inc,
             sizeof(uint64_t)
         ) == -1) {

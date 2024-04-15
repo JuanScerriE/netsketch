@@ -3,8 +3,11 @@
 // common
 #include <types.hpp>
 
+// server
+#include <event.hpp>
+
 namespace server::share {
 
-extern int e_stop_event_fd;
+extern event_t e_stop_event;
 
 } // namespace server::share

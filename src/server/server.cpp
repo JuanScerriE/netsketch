@@ -37,8 +37,32 @@ server_t::server_t(uint16_t port, common::level_e log_level)
 int server_t::operator()() {
     using level = common::level_e;
 
+#ifdef __APPLE__
+    m_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+    int saved_flags = fcntl(m_socket_fd, F_GETFL);
+    AbortIfV(
+        saved_flags == -1,
+        "updating the socket file descriptor "
+        "failed, reason {}",
+        strerror(errno)
+    );
+    int is_non_blocking = fcntl(
+        m_socket_fd,
+        F_SETFL,
+        saved_flags & O_NONBLOCK
+    );
+    AbortIfV(
+        is_non_blocking == -1,
+        "attempt to modify the connection file "
+        "descriptor "
+        "failed, reason {}",
+        strerror(errno)
+    );
+#else
     m_socket_fd =
         socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+#endif
 
     if (m_socket_fd == -1) {
         m_logger.log(
@@ -188,13 +212,13 @@ void server_t::requests_handler() {
             "failed, reason {}",
             strerror(errno)
         );
-        int is_now_blocking = fcntl(
+        int is_non_blocking = fcntl(
             conn_fd,
             F_SETFL,
             saved_flags & ~O_NONBLOCK
         );
         AbortIfV(
-            is_now_blocking == -1,
+            is_non_blocking == -1,
             "attempt to modify the connection file "
             "descriptor "
             "failed, reason {}",

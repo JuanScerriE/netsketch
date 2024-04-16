@@ -7,6 +7,9 @@
 #include <poll.h>
 #include <unistd.h>
 
+// share
+#include <share.hpp>
+
 #define MINUTE (60000)
 
 namespace server {
@@ -28,10 +31,18 @@ void conn_handler_t::operator()() {
         m_port
     );
 
-    for (;;) {
-        pollfd poll_fd{m_conn_fd, POLLIN, 0};
+    constexpr nfds_t nfds{2};
 
-        if (poll(&poll_fd, 1, MINUTE) == -1) {
+    constexpr size_t conn_idx{0};
+    constexpr size_t event_idx{1};
+
+    for (;;) {
+        pollfd poll_fds[nfds] = {
+            {m_conn_fd, POLLIN, 0},
+            {share::e_stop_event->read_fd(), POLLIN, 0},
+        };
+
+        if (poll(poll_fds, nfds, MINUTE) == -1) {
             addr_log(
                 log::level::error,
                 "poll of connection failed, reason: {}",
@@ -43,14 +54,28 @@ void conn_handler_t::operator()() {
 
         addr_log(
             log::level::debug,
-            "wake up reasons ({}, {}, {})",
-            (poll_fd.revents & POLLIN) ? "POLLIN" : "",
-            (poll_fd.revents & POLLHUP) ? "POLLHUP" : "",
-            (poll_fd.revents & POLLERR) ? "POLLERR" : ""
-            // endif
+            "wake up reasons Socket({}, {}, {}), Event({}, "
+            "{}, {})",
+            (poll_fds[conn_idx].revents & POLLIN) ? "POLLIN"
+                                                  : "",
+            (poll_fds[conn_idx].revents & POLLHUP)
+                ? "POLLHUP"
+                : "",
+            (poll_fds[conn_idx].revents & POLLERR)
+                ? "POLLERR"
+                : "",
+            (poll_fds[event_idx].revents & POLLIN)
+                ? "POLLIN"
+                : "",
+            (poll_fds[event_idx].revents & POLLHUP)
+                ? "POLLHUP"
+                : "",
+            (poll_fds[event_idx].revents & POLLERR)
+                ? "POLLERR"
+                : ""
         );
 
-        if (poll_fd.revents & POLLHUP) {
+        if (poll_fds[conn_idx].revents & POLLHUP) {
             addr_log(
                 log::level::info,
                 "closing tcp connection"
@@ -59,11 +84,19 @@ void conn_handler_t::operator()() {
             break;
         }
 
-        if (!(poll_fd.revents & POLLIN)) {
+        if (!(poll_fds[conn_idx].revents & POLLIN) || poll_fds[event_idx].revents & POLLIN) {
             addr_log(
                 log::level::info,
                 "server initiated closing"
             );
+
+            if (shutdown(m_conn_fd, SHUT_WR) == -1) {
+                log::error(
+                    "connection shutdown failed, reason: "
+                    "{}",
+                    strerror(errno)
+                );
+            }
 
             break;
         }
@@ -109,6 +142,11 @@ void conn_handler_t::operator()() {
 
         addr_log(log::level::info, "response: {}", buf);
     }
+
+    addr_log(
+        log::level::info,
+        "closing connection handler"
+    );
 
     if (close(m_conn_fd) == -1) {
         AbortV(

@@ -108,6 +108,17 @@ int server_t::operator()() {
 
     requests_loop();
 
+    if (close(m_socket_fd) == -1) {
+        log::error(
+            "closing socket failed, reason: {}",
+            strerror(errno)
+        );
+
+        return EXIT_FAILURE;
+    }
+
+    log::info("socket closed");
+
     return EXIT_SUCCESS;
 }
 
@@ -215,7 +226,10 @@ void server_t::requests_loop() {
             strerror(errno)
         );
 
-        futures.push_back(std::async(std::launch::async, conn_handler_t{conn_fd, addr}));
+        futures.push_back(std::async(
+            std::launch::async,
+            conn_handler_t{conn_fd, addr}
+        ));
     }
 
     for (auto& future : futures) {

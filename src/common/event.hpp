@@ -10,6 +10,8 @@
 // common
 #include <abort.hpp>
 
+#define NOTIFY (1)
+
 #ifdef __APPLE__
 #define PIPE_SIZE (2)
 #define READ (0)
@@ -29,8 +31,6 @@ class event_t {
     event_t& operator=(event_t&& mE) = default;
 
     explicit event_t() {
-        fmt::println("event_t ctor");
-
 #ifdef __APPLE__
         if (pipe(m_stop_event_pipe) == -1) {
             AbortV(
@@ -53,8 +53,6 @@ class event_t {
     }
 
     ~event_t() {
-        fmt::println("event_t dtor");
-
 #ifdef __APPLE__
         if (close(m_stop_event_pipe[READ]) == -1) {
             AbortV(
@@ -75,6 +73,65 @@ class event_t {
         if (close(m_stop_event_fd) == -1) {
             AbortV(
                 "failed to close event file descriptor, "
+                "reason: {}",
+                strerror(errno)
+            );
+        }
+#endif
+    }
+
+    void notify() {
+        uint64_t notify{NOTIFY};
+
+#ifdef __APPLE__
+        if (write(
+                m_stop_event_pipe[WRITE],
+                &notify,
+                sizeof(notify)
+            ) == -1) {
+            AbortV(
+                "failed to write to pipe, reason: {}",
+                strerror(errno)
+            );
+        }
+#else
+        if (write(
+                m_stop_event_fd,
+                &notify,
+                sizeof(notify)
+            ) == -1) {
+            AbortV(
+                "failed to write to event file descriptor, "
+                "reason: {}",
+                strerror(errno)
+            );
+        }
+#endif
+    }
+
+    void reset() {
+        uint64_t throw_away{};
+
+#ifdef __APPLE__
+        if (read(
+                m_stop_event_pipe[READ],
+                &throw_away,
+                sizeof(throw_away)
+            ) == -1) {
+            AbortV(
+                "failed to read from pipe, reason: {}",
+                strerror(errno)
+            );
+        }
+#else
+        if (read(
+                m_stop_event_fd,
+                &throw_away,
+                sizeof(throw_away)
+            ) == -1) {
+            AbortV(
+                "failed to read from event file "
+                "descriptor, "
                 "reason: {}",
                 strerror(errno)
             );

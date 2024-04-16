@@ -20,6 +20,10 @@ extern common::readonly_t<bool> e_stop_gui;
 // to show
 extern common::readonly_t<bool> e_show_mine;
 
-extern common::event_t* e_network_thread_event;
+extern common::event_t* e_stop_event;
+
+// queues
+extern common::queue_st<std::string> e_reader_queue;
+extern common::queue_st<std::string> e_writer_queue;
 
 }  // namespace client::share

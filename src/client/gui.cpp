@@ -114,6 +114,11 @@ void gui_t::file_logger(
     fprintf(gui_t::s_log_file.native_handle(), "\n");
 }
 
+[[nodiscard]] Color to_raylib_colour(common::colour_t colour
+) {
+    return {colour.r, colour.g, colour.b, 255};
+}
+
 inline void gui_t::draw_scene() {
     for (auto &draw : m_draws) {
         if (std::holds_alternative<common::line_draw_t>(draw
@@ -127,7 +132,7 @@ inline void gui_t::draw_scene() {
                 {static_cast<float>(line.x1),
                  static_cast<float>(line.y1)},
                 1.1f,  // NOTE: maybe change this?
-                line.colour.to_raylib_colour()
+                to_raylib_colour(line.colour)
             );
             continue;
         }
@@ -140,7 +145,7 @@ inline void gui_t::draw_scene() {
                 rectangle.y,
                 rectangle.w,
                 rectangle.h,
-                rectangle.colour.to_raylib_colour()
+                to_raylib_colour(rectangle.colour)
             );
             continue;
         }
@@ -153,7 +158,7 @@ inline void gui_t::draw_scene() {
                 circle.x,
                 circle.y,
                 circle.r,
-                circle.colour.to_raylib_colour()
+                to_raylib_colour(circle.colour)
             );
             continue;
         }
@@ -166,7 +171,7 @@ inline void gui_t::draw_scene() {
                 text.x,
                 text.y,
                 16,  // NOTE: maybe change this?
-                text.colour.to_raylib_colour()
+                to_raylib_colour(text.colour)
             );
             continue;
         }

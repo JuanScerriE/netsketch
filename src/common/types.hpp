@@ -8,9 +8,6 @@
 #include <string>
 #include <variant>
 
-// raylib
-#include <raylib.h>
-
 namespace common {
 
 enum class option_e : uint8_t {
@@ -27,15 +24,13 @@ struct colour_t {
     uint8_t r;
     uint8_t g;
     uint8_t b;
-
-    [[nodiscard]] Color to_raylib_colour() const {
-        return {r, g, b, 255};
-    }
 };
 
 template <typename T>
 class queue_st {
    public:
+    queue_st() = default;
+
     queue_st(const queue_st&) = delete;
 
     queue_st& operator=(const queue_st&) = delete;

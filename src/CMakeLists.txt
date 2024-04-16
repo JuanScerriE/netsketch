@@ -19,7 +19,9 @@ add_executable(netsketch_client
         client/share.cpp
         client/gui.cpp
         client/input_handler.cpp
-        client/network_handler.cpp
+        client/network_manager.cpp
+        client/reader.cpp
+        client/writer.cpp
 )
 
  # Checks if OSX and links appropriate frameworks (only required on MacOS)

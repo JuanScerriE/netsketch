@@ -2,7 +2,7 @@
 #include <gui.hpp>
 #include <input_handler.hpp>
 #include <log_file.hpp>
-#include <network_handler.hpp>
+#include <network_manager.hpp>
 
 // common
 #include <types.hpp>
@@ -13,7 +13,6 @@
 
 // unix
 #include <arpa/inet.h>
-#include <sys/eventfd.h>
 #include <unistd.h>
 
 // cli11
@@ -23,8 +22,6 @@
 
 // share
 #include <share.hpp>
-
-#include "event.hpp"
 
 struct IPv4Validator : public CLI::Validator {
     IPv4Validator() {
@@ -90,24 +87,22 @@ int main(int argc, char **argv) {
     // NOTE: this is in human-readable form
     uint32_t ipv4_addr_int = ntohl(addr.s_addr);
 
-    common::event_t network_thread_event{};
+    common::event_t stop_event{};
 
-    client::share::e_network_thread_event =
-        &network_thread_event;
+    client::share::e_stop_event = &stop_event;
 
     // this is the first since the
     // network handler and the input handler both
     // have a reference to the gui
     client::gui_t gui{};
 
-    std::thread network_thread(client::network_handler_t{
+    std::thread network_thread{client::network_manager_t{
         ipv4_addr_int,
         port,
-        nickname
-    });
+    }};
 
     // the input thread has the main control
-    std::thread input_thread(client::input_handler_t{});
+    std::thread input_thread{client::input_handler_t{}};
 
     // NOTE: we are running the GUI in the main
     // thread because of macOS, that is macOS

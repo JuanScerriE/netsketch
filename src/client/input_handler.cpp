@@ -41,7 +41,7 @@ void input_handler_t::start() {
     } while (!m_should_exit);
 
     pollfd poll_fd{
-        share::e_network_thread_event->write_fd(),
+        share::e_stop_event->write_fd(),
         POLLOUT,
         0
     };
@@ -58,19 +58,7 @@ void input_handler_t::start() {
         Abort("cannot write to event file descriptor");
     }
 
-    uint64_t inc = 1;
-
-    if (write(
-            share::e_network_thread_event->write_fd(),
-            &inc,
-            sizeof(uint64_t)
-        ) == -1) {
-        AbortV(
-            "failed to write to event file descriptor, "
-            "reason: {}",
-            strerror(errno)
-        );
-    }
+    share::e_stop_event->notify();
 
     // make sure to stop the gui
     common::mutable_t<bool>{share::e_stop_gui}() = true;

@@ -6,7 +6,6 @@
 
 // unix
 #include <poll.h>
-#include <sys/eventfd.h>
 #include <unistd.h>
 
 // std
@@ -52,9 +51,6 @@ void sigint_handler(int) {
             strerror(errno)
         );
     }
-
-    // just so printing of ^C is nice
-    fmt::println("");
 }
 
 int main(int argc, char** argv) {

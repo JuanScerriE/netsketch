@@ -24,6 +24,6 @@ extern common::event_t* e_stop_event;
 
 // queues
 extern common::queue_st<std::string> e_reader_queue;
-extern common::queue_st<std::string> e_writer_queue;
+extern common::queue_st<common::draw_t> e_writer_queue;
 
-}  // namespace client::share
+} // namespace client::share

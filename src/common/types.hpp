@@ -2,7 +2,9 @@
 
 // std
 #include <condition_variable>
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <deque>
 #include <mutex>
 #include <string>
@@ -26,77 +28,96 @@ struct colour_t {
     uint8_t b;
 };
 
-template <typename T>
-class queue_st {
-   public:
+template <typename T> class queue_st {
+public:
     queue_st() = default;
 
     queue_st(const queue_st&) = delete;
 
     queue_st& operator=(const queue_st&) = delete;
 
-    void push_back(const T& value) {
-        std::lock_guard<std::mutex> lock{m_mutex};
-        m_deque.push_back(std::forward<T>(value));
+    void push_back(const T& value)
+    {
+        {
+            std::scoped_lock<std::mutex> lock { m_mutex };
+            m_deque.push_back(value);
+        }
         m_cond_var.notify_one();
     }
 
-    void push_back(T&& value) {
-        std::lock_guard<std::mutex> lock{m_mutex};
-        m_deque.push_back(std::forward<T>(value));
+    void push_back(T&& value)
+    {
+        {
+            std::scoped_lock<std::mutex> lock { m_mutex };
+            m_deque.push_back(value);
+        }
         m_cond_var.notify_one();
     }
 
     template <typename... Args>
-    void emplace_back(Args&&... args) {
-        std::lock_guard<std::mutex> lock{m_mutex};
-        m_deque.emplace_back(std::forward<Args>(args)...);
+    void emplace_back(Args&&... args)
+    {
+        {
+            std::scoped_lock<std::mutex> lock { m_mutex };
+            m_deque.emplace_back(
+                std::forward<Args>(args)...);
+        }
         m_cond_var.notify_one();
     }
 
-    T pop_back() {
-        std::unique_lock<std::mutex> lock{m_mutex};
-        m_cond_var.wait(lock, [this]() {
-            return this->m_deque.empty();
-        });
+    T pop_back()
+    {
+        std::unique_lock<std::mutex> lock { m_mutex };
+        m_cond_var.wait(lock,
+            [this]() { return !this->m_deque.empty(); });
         T value = m_deque.back();
         m_deque.pop_back();
         return value;
     }
 
-    void push_front(const T& value) {
-        std::lock_guard<std::mutex> lock{m_mutex};
-        m_deque.push_front(std::forward<T>(value));
+    void push_front(const T& value)
+    {
+        {
+            std::scoped_lock<std::mutex> lock { m_mutex };
+            m_deque.push_front(value);
+        }
         m_cond_var.notify_one();
     }
 
-    void push_front(T&& value) {
-        std::lock_guard<std::mutex> lock{m_mutex};
-        m_deque.push_front(std::forward<T>(value));
+    void push_front(T&& value)
+    {
+        {
+            std::scoped_lock<std::mutex> lock { m_mutex };
+            m_deque.push_front(value);
+        }
         m_cond_var.notify_one();
     }
 
     template <typename... Args>
-    void emplace_front(Args&&... args) {
-        std::lock_guard<std::mutex> lock{m_mutex};
-        m_deque.emplace_front(std::forward<Args>(args)...);
+    void emplace_front(Args&&... args)
+    {
+        {
+            std::scoped_lock<std::mutex> lock { m_mutex };
+            m_deque.emplace_front(
+                std::forward<Args>(args)...);
+        }
         m_cond_var.notify_one();
     }
 
-    T pop_front() {
-        std::unique_lock<std::mutex> lock{m_mutex};
-        m_cond_var.wait(lock, [this]() {
-            return this->m_deque.empty();
-        });
+    T pop_front()
+    {
+        std::unique_lock<std::mutex> lock { m_mutex };
+        m_cond_var.wait(lock,
+            [this]() { return !this->m_deque.empty(); });
         T value = m_deque.front();
         m_deque.pop_front();
         return value;
     }
 
-   private:
-    std::deque<T> m_deque{};
-    std::mutex m_mutex{};
-    std::condition_variable m_cond_var{};
+private:
+    std::deque<T> m_deque {};
+    std::mutex m_mutex {};
+    std::condition_variable m_cond_var {};
 };
 
 struct line_draw_t {
@@ -129,48 +150,39 @@ struct text_draw_t {
     std::string string;
 };
 
-using draw_t = std::variant<
-    line_draw_t,
-    rectangle_draw_t,
-    circle_draw_t,
-    text_draw_t>;
+using draw_t = std::variant<line_draw_t, rectangle_draw_t,
+    circle_draw_t, text_draw_t>;
 
 template <typename T> class mutable_t;
 
-template <typename T>
-class readonly_t {
-   public:
+template <typename T> class readonly_t {
+public:
     explicit readonly_t(T value)
-        : m_value(value) {
+        : m_value(value)
+    {
     }
 
-    const T& operator()() const {
-        return m_value;
-    }
-
+    const T& operator()() const { return m_value; }
 
     friend class mutable_t<T>;
 
-   private:
+private:
     T m_value;
 };
 
 // we use this when we want to forcefully
 // modify a readonly_t
-template <typename T>
-class mutable_t {
-   public:
-
+template <typename T> class mutable_t {
+public:
     explicit mutable_t(readonly_t<T>& readonly)
-        : m_readonly(readonly) {
+        : m_readonly(readonly)
+    {
     }
 
-    T& operator()() {
-        return m_readonly.m_value;
-    }
+    T& operator()() { return m_readonly.m_value; }
 
-   private:
+private:
     readonly_t<T>& m_readonly;
 };
 
-}  // namespace common
+} // namespace common

@@ -14,64 +14,56 @@
 
 #ifndef NDEBUG
 
-#define AbortIf(cond, msg)                         \
-    do {                                           \
-        if (cond) {                                \
-            fmt::println(                          \
-                stderr,                            \
-                __FILE__ ":" LINE_STRING ":: " msg \
-            );                                     \
-            std::abort();                          \
-        }                                          \
+#define AbortIf(cond, msg)                                 \
+    do {                                                   \
+        if (cond) {                                        \
+            fmt::println(stderr,                           \
+                __FILE__ ":" LINE_STRING ":: " msg);       \
+            std::abort();                                  \
+        }                                                  \
     } while (0)
 
-#define AbortIfV(cond, msg, ...)                    \
-    do {                                            \
-        if (cond) {                                 \
-            fmt::println(                           \
-                stderr,                             \
-                __FILE__ ":" LINE_STRING ":: " msg, \
-                __VA_ARGS__                         \
-            );                                      \
-            std::abort();                           \
-        }                                           \
+#define AbortIfV(cond, msg, ...)                           \
+    do {                                                   \
+        if (cond) {                                        \
+            fmt::println(stderr,                           \
+                __FILE__ ":" LINE_STRING ":: " msg,        \
+                __VA_ARGS__);                              \
+            std::abort();                                  \
+        }                                                  \
     } while (0)
 
-#define Abort(msg)                             \
-    do {                                       \
-        fmt::println(                          \
-            stderr,                            \
-            __FILE__ ":" LINE_STRING ":: " msg \
-        );                                     \
-        std::abort();                          \
+#define Abort(msg)                                         \
+    do {                                                   \
+        fmt::println(                                      \
+            stderr, __FILE__ ":" LINE_STRING ":: " msg);   \
+        std::abort();                                      \
     } while (0)
 
-#define AbortV(msg, ...)                        \
-    do {                                        \
-        fmt::println(                           \
-            stderr,                             \
-            __FILE__ ":" LINE_STRING ":: " msg, \
-            __VA_ARGS__                         \
-        );                                      \
-        std::abort();                           \
+#define AbortV(msg, ...)                                   \
+    do {                                                   \
+        fmt::println(stderr,                               \
+            __FILE__ ":" LINE_STRING ":: " msg,            \
+            __VA_ARGS__);                                  \
+        std::abort();                                      \
     } while (0)
 
 #else
 
-#define AbortIf(cond, msg) \
-    do {                   \
+#define AbortIf(cond, msg)                                 \
+    do {                                                   \
     } while (0)
 
-#define AbortIfV(cond, msg, ...) \
-    do {                         \
+#define AbortIfV(cond, msg, ...)                           \
+    do {                                                   \
     } while (0)
 
-#define Abort(msg) \
-    do {           \
+#define Abort(msg)                                         \
+    do {                                                   \
     } while (0)
 
-#define AbortV(msg, ...) \
-    do {                 \
+#define AbortV(msg, ...)                                   \
+    do {                                                   \
     } while (0)
 
 #endif

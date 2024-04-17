@@ -13,19 +13,21 @@
 namespace client {
 
 class input_handler_t {
-   public:
+public:
     void start();
 
     void operator()();
 
-   private:
+private:
     void process_line(std::string_view line_view);
 
     // defaults
-    std::optional<unsigned long> m_selected_id{};
-    common::option_e m_tool{common::option_e::LINE};
-    common::colour_t m_colour{255, 255, 255};
-    bool m_should_exit{false};
+    std::optional<unsigned long> m_selected_id {};
+
+    common::option_e m_tool { common::option_e::LINE };
+    common::colour_t m_colour { 255, 255, 255 };
+
+    bool m_should_exit { false };
 };
 
-}  // namespace client
+} // namespace client

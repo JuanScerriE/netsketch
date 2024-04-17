@@ -3,6 +3,6 @@
 
 namespace server::share {
 
-common::event_t* e_stop_event{nullptr};
+common::event_t* e_stop_event { nullptr };
 
-}  // namespace server::share
+} // namespace server::share

@@ -1,6 +1,7 @@
 // client
 #include <cstring>
 #include <input_handler.hpp>
+#include <input_parser.hpp>
 
 // std
 #include <cstdint>
@@ -12,7 +13,6 @@
 
 // unix
 #include <poll.h>
-#include <unistd.h>
 
 // common
 #include <types.hpp>
@@ -25,13 +25,12 @@
 
 namespace client {
 
-void input_handler_t::operator()() {
-    start();
-}
+void input_handler_t::operator()() { start(); }
 
-void input_handler_t::start() {
+void input_handler_t::start()
+{
     do {
-        std::string line{};
+        std::string line {};
 
         fmt::print("> ");
 
@@ -40,18 +39,14 @@ void input_handler_t::start() {
         process_line(line);
     } while (!m_should_exit);
 
-    pollfd poll_fd{
-        share::e_stop_event->write_fd(),
-        POLLOUT,
-        0
-    };
+    pollfd poll_fd { share::e_stop_event->write_fd(),
+        POLLOUT, 0 };
 
     if (poll(&poll_fd, 1, -1) == -1) {
         AbortV(
             "poll of event file descriptor failed, reason: "
             "{}",
-            strerror(errno)
-        );
+            strerror(errno));
     }
 
     if ((poll_fd.revents & POLLOUT) == 0) {
@@ -61,13 +56,12 @@ void input_handler_t::start() {
     share::e_stop_event->notify();
 
     // make sure to stop the gui
-    common::mutable_t<bool>{share::e_stop_gui}() = true;
+    common::mutable_t<bool> { share::e_stop_gui }() = true;
 }
 
-std::vector<std::string_view> split(
-    std::string_view line_view
-) {
-    std::vector<std::string_view> lexemes{};
+std::vector<std::string> split(std::string_view line_view)
+{
+    std::vector<std::string> lexemes {};
 
     size_t pos = 0;
 
@@ -80,13 +74,60 @@ std::vector<std::string_view> split(
             break;
         }
 
-        size_t count = 0;
+        if (line_view[pos] == '"') {
+            pos++;
+
+            std::string string {};
+
+            while (pos < line_view.length()
+                && line_view[pos] != '"') {
+                if (line_view[pos] == '\\') {
+                    if (pos + 1 >= line_view.length()) {
+                        throw std::runtime_error(
+                            "start of escape at the end of "
+                            "stream");
+                    }
+
+                    if (line_view[pos + 1] == '"') {
+                        string.push_back('"');
+                        pos += 2;
+                        continue;
+                    }
+
+                    if (line_view[pos + 1] == '\\') {
+                        string.push_back('\\');
+                        pos += 2;
+                        continue;
+                    }
+
+                    throw std::runtime_error(fmt::format(
+                        "unexpected escape sequence \\{}",
+                        line_view[pos + 1]));
+                }
+
+                string.push_back(line_view[pos++]);
+            }
+
+            pos++;
+
+            if (pos >= line_view.length()
+                && line_view[pos - 1] != '"') {
+                throw std::runtime_error(
+                    "string not closed");
+            }
+
+            lexemes.push_back(string);
+
+            continue;
+        }
+
+        size_t count { 0 };
 
         while (!isspace(line_view[pos + count])) {
             count++;
         }
 
-        lexemes.push_back(line_view.substr(pos, count));
+        lexemes.emplace_back(line_view.substr(pos, count));
 
         pos += count;
     }
@@ -95,23 +136,31 @@ std::vector<std::string_view> split(
 }
 
 void input_handler_t::process_line(
-    std::string_view line_view
-) {
-    std::vector<std::string_view> tokens = split(line_view);
+    std::string_view line_view)
+{
+    input_parser_t parser { line_view };
+
+    try {
+        parser.scan_tokens();
+    } catch (std::runtime_error& err) {
+        fmt::println(stderr, "warn: {}", err.what());
+
+        return;
+    }
+
+    std::vector<std::string> tokens = parser.get_tokens();
 
     if (tokens.empty()) {
         return;
     }
 
-    std::string_view& first_token = tokens[0];
+    std::string& first_token = tokens[0];
 
     if (first_token == "help") {
         if (tokens.size() != 1) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: an unexpected number of token for "
-                "tool"
-            );
+                "tool");
 
             return;
         }
@@ -168,19 +217,16 @@ void input_handler_t::process_line(
             "issued by the running client"
             "\n11. exit - (if the client is running in "
             "--server mode disconnect from the "
-            "server and) exit the application"
-        );
+            "server and) exit the application");
 
         return;
     }
 
     if (first_token == "tool") {
         if (tokens.size() != 2) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: an unexpected number of token for "
-                "tool"
-            );
+                "tool");
 
             return;
         }
@@ -207,34 +253,30 @@ void input_handler_t::process_line(
             return;
         }
 
-        fmt::println(
-            stderr,
+        fmt::println(stderr,
             "warn: expected one of {{'line' | 'rectangle' "
-            "| 'circle' | 'text'}}"
-        );
+            "| 'circle' | 'text'}}");
 
         return;
     }
 
     if (first_token == "colour") {
         if (tokens.size() != 4) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: an unexpected number of tokens for "
-                "colour"
-            );
+                "colour");
 
             return;
         }
 
-        std::string_view red = tokens[1];
+        std::string red = tokens[1];
 
-        int red_value{0};
+        int red_value { 0 };
 
-        bool red_has_error{false};
+        bool red_has_error { false };
 
         try {
-            red_value = std::stoi(std::string{red});
+            red_value = std::stoi(red);
         } catch (std::invalid_argument&) {
             red_has_error = true;
         } catch (std::out_of_range&) {
@@ -246,23 +288,21 @@ void input_handler_t::process_line(
         }
 
         if (red_has_error) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: expected an integer in the range "
-                "0-255 (inclusive) for RED"
-            );
+                "0-255 (inclusive) for RED");
 
             return;
         }
 
-        std::string_view green = tokens[2];
+        std::string green = tokens[2];
 
-        int green_value{0};
+        int green_value { 0 };
 
-        bool green_has_error{false};
+        bool green_has_error { false };
 
         try {
-            green_value = std::stoi(std::string{green});
+            green_value = std::stoi(green);
         } catch (std::invalid_argument&) {
             green_has_error = true;
         } catch (std::out_of_range&) {
@@ -274,23 +314,21 @@ void input_handler_t::process_line(
         }
 
         if (green_has_error) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: expected an integer in the range "
-                "0-255 (inclusive) for GREEN"
-            );
+                "0-255 (inclusive) for GREEN");
 
             return;
         }
 
-        std::string_view blue = tokens[3];
+        std::string blue = tokens[3];
 
-        int blue_value{0};
+        int blue_value { 0 };
 
-        bool blue_has_error{false};
+        bool blue_has_error { false };
 
         try {
-            blue_value = std::stoi(std::string{blue});
+            blue_value = std::stoi(blue);
         } catch (std::invalid_argument&) {
             blue_has_error = true;
         } catch (std::out_of_range&) {
@@ -302,42 +340,340 @@ void input_handler_t::process_line(
         }
 
         if (blue_has_error) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: expected an integer in the range "
-                "0-255 (inclusive) for BLUE"
-            );
+                "0-255 (inclusive) for BLUE");
 
             return;
         }
 
-        m_colour = {
-            static_cast<uint8_t>(red_value),
+        m_colour = { static_cast<uint8_t>(red_value),
             static_cast<uint8_t>(green_value),
-            static_cast<uint8_t>(blue_value)
-        };
+            static_cast<uint8_t>(blue_value) };
 
         return;
     }
 
     if (first_token == "draw") {
+        switch (m_tool) {
+        case common::option_e::LINE: {
+            if (tokens.size() != 5) {
+                fmt::println(stderr,
+                    "warn: an unexpected number of "
+                    "tokens for draw with line selected");
+
+                return;
+            }
+
+            int x0 {};
+
+            try {
+                x0 = std::stoi(tokens[1]);
+            } catch (std::invalid_argument&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for x0");
+
+                return;
+            } catch (std::out_of_range&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for x0");
+
+                return;
+            }
+
+            int y0 {};
+
+            try {
+                y0 = std::stoi(tokens[2]);
+            } catch (std::invalid_argument&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for y0");
+
+                return;
+            } catch (std::out_of_range&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for y0");
+
+                return;
+            }
+
+            int x1 {};
+
+            try {
+                x1 = std::stoi(tokens[3]);
+            } catch (std::invalid_argument&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for x1");
+
+                return;
+            } catch (std::out_of_range&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for x1");
+
+                return;
+            }
+
+            int y1 {};
+
+            try {
+                y1 = std::stoi(tokens[4]);
+            } catch (std::invalid_argument&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for y1");
+
+                return;
+            } catch (std::out_of_range&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for y1");
+
+                return;
+            }
+
+            common::draw_t draw_command
+                = common::line_draw_t { m_colour, x0, y0,
+                      x1, y1 };
+
+            share::e_writer_queue.push_front(draw_command);
+        } break;
+        case common::option_e::RECTANGLE: {
+            if (tokens.size() != 5) {
+                fmt::println(stderr,
+                    "warn: an unexpected number of "
+                    "tokens for draw with rectangle "
+                    "selected");
+
+                return;
+            }
+
+            int x {};
+
+            try {
+                x = std::stoi(tokens[1]);
+            } catch (std::invalid_argument&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for x");
+
+                return;
+            } catch (std::out_of_range&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for x");
+
+                return;
+            }
+
+            int y {};
+
+            try {
+                y = std::stoi(tokens[2]);
+            } catch (std::invalid_argument&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for y");
+
+                return;
+            } catch (std::out_of_range&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for y");
+
+                return;
+            }
+
+            int w {};
+
+            try {
+                w = std::stoi(tokens[3]);
+            } catch (std::invalid_argument&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for w");
+
+                return;
+            } catch (std::out_of_range&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for w");
+
+                return;
+            }
+
+            int h {};
+
+            try {
+                h = std::stoi(tokens[4]);
+            } catch (std::invalid_argument&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for h");
+
+                return;
+            } catch (std::out_of_range&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for h");
+
+                return;
+            }
+
+            common::draw_t draw_command
+                = common::rectangle_draw_t { m_colour, x, y,
+                      w, h };
+
+            share::e_writer_queue.push_front(draw_command);
+        } break;
+        case common::option_e::CIRCLE: {
+            if (tokens.size() != 4) {
+                fmt::println(stderr,
+                    "warn: an unexpected number of "
+                    "tokens for draw with circle "
+                    "selected");
+
+                return;
+            }
+
+            int x {};
+
+            try {
+                x = std::stoi(tokens[1]);
+            } catch (std::invalid_argument&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for x");
+
+                return;
+            } catch (std::out_of_range&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for x");
+
+                return;
+            }
+
+            int y {};
+
+            try {
+                y = std::stoi(tokens[2]);
+            } catch (std::invalid_argument&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for y");
+
+                return;
+            } catch (std::out_of_range&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for y");
+
+                return;
+            }
+
+            float r {};
+
+            try {
+                r = std::stof(tokens[3]);
+            } catch (std::invalid_argument&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for r");
+
+                return;
+            } catch (std::out_of_range&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for r");
+
+                return;
+            }
+
+            common::draw_t draw_command
+                = common::circle_draw_t { m_colour, x, y,
+                      r };
+
+            share::e_writer_queue.push_front(draw_command);
+        } break;
+        case common::option_e::TEXT: {
+            if (tokens.size() != 4) {
+                fmt::println(stderr,
+                    "warn: an unexpected number of "
+                    "tokens for draw with text selected");
+
+                return;
+            }
+
+            int x {};
+
+            try {
+                x = std::stoi(tokens[1]);
+            } catch (std::invalid_argument&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for x");
+
+                return;
+            } catch (std::out_of_range&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for x");
+
+                return;
+            }
+
+            int y {};
+
+            try {
+                y = std::stoi(tokens[2]);
+            } catch (std::invalid_argument&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for y");
+
+                return;
+            } catch (std::out_of_range&) {
+                fmt::println(stderr,
+                    "warn: expected integer (32-bit) "
+                    "for y");
+
+                return;
+            }
+
+            std::string text { tokens[3] };
+
+            common::draw_t draw_command
+                = common::text_draw_t { m_colour, x, y,
+                      text };
+
+            share::e_writer_queue.push_front(draw_command);
+
+        } break;
+        default:
+            Abort("unreachable");
+        }
+
         return;
     }
 
     if (first_token == "list") {
         if (tokens.size() != 3) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: an unexpected number of tokens for "
-                "list"
-            );
+                "list");
 
             return;
         }
 
         std::string_view second_token = tokens[1];
 
-        bool second_match{false};
+        bool second_match { false };
 
         if (second_token == "all") {
             second_match = true;
@@ -360,18 +696,16 @@ void input_handler_t::process_line(
         }
 
         if (!second_match) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: expected one of {{'all' | 'line' | "
-                "'rectangle' | 'circle' | 'text'}}"
-            );
+                "'rectangle' | 'circle' | 'text'}}");
 
             return;
         }
 
         std::string_view third_token = tokens[2];
 
-        bool third_match{false};
+        bool third_match { false };
 
         if (third_token == "all") {
             third_match = true;
@@ -382,10 +716,8 @@ void input_handler_t::process_line(
         }
 
         if (!third_match) {
-            fmt::println(
-                stderr,
-                "warn: expected one of {{'all' | 'mine'}}"
-            );
+            fmt::println(stderr,
+                "warn: expected one of {{'all' | 'mine'}}");
 
             return;
         }
@@ -397,11 +729,9 @@ void input_handler_t::process_line(
 
     if (first_token == "select") {
         if (tokens.size() != 2) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: an unexpected number of tokens for "
-                "select"
-            );
+                "select");
 
             return;
         }
@@ -414,12 +744,12 @@ void input_handler_t::process_line(
             return;
         }
 
-        unsigned long id{0};
+        unsigned long id { 0 };
 
-        bool id_has_error{false};
+        bool id_has_error { false };
 
         try {
-            id = std::stoul(std::string{second_token});
+            id = std::stoul(std::string { second_token });
         } catch (std::invalid_argument&) {
             id_has_error = true;
         } catch (std::out_of_range&) {
@@ -427,12 +757,10 @@ void input_handler_t::process_line(
         }
 
         if (!id_has_error) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: expected an 'none' or an "
                 "integer greater than "
-                "or equal to 0 for ID"
-            );
+                "or equal to 0 for ID");
 
             return;
         }
@@ -444,23 +772,21 @@ void input_handler_t::process_line(
 
     if (first_token == "delete") {
         if (tokens.size() != 2) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: an unexpected number of tokens for "
-                "delete"
-            );
+                "delete");
 
             return;
         }
 
         std::string_view second_token = tokens[1];
 
-        unsigned long id{0};
+        unsigned long id { 0 };
 
-        bool id_has_error{false};
+        bool id_has_error { false };
 
         try {
-            id = std::stoul(std::string{second_token});
+            id = std::stoul(std::string { second_token });
         } catch (std::invalid_argument&) {
             id_has_error = true;
         } catch (std::out_of_range&) {
@@ -468,11 +794,9 @@ void input_handler_t::process_line(
         }
 
         if (!id_has_error) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: expected an integer greater than or "
-                "equal to 0 for ID"
-            );
+                "equal to 0 for ID");
 
             return;
         }
@@ -484,11 +808,9 @@ void input_handler_t::process_line(
 
     if (first_token == "undo") {
         if (tokens.size() != 1) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: an unexpected number of tokens for "
-                "undo"
-            );
+                "undo");
 
             return;
         }
@@ -498,11 +820,9 @@ void input_handler_t::process_line(
 
     if (first_token == "clear") {
         if (tokens.size() != 2) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: an unexpected number of tokens for "
-                "clear"
-            );
+                "clear");
 
             return;
         }
@@ -517,21 +837,17 @@ void input_handler_t::process_line(
             return;
         }
 
-        fmt::println(
-            stderr,
-            "warn: expected one of {{'all' | 'mine'}}"
-        );
+        fmt::println(stderr,
+            "warn: expected one of {{'all' | 'mine'}}");
 
         return;
     }
 
     if (first_token == "show") {
         if (tokens.size() != 2) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: an unexpected number of tokens for "
-                "show"
-            );
+                "show");
 
             return;
         }
@@ -539,34 +855,30 @@ void input_handler_t::process_line(
         std::string_view second_token = tokens[1];
 
         if (second_token == "all") {
-            common::mutable_t<bool>{share::e_show_mine}() =
-                false;
+            common::mutable_t<bool> { share::e_show_mine }()
+                = false;
 
             return;
         }
 
         if (second_token == "mine") {
-            common::mutable_t<bool>{share::e_show_mine}() =
-                true;
+            common::mutable_t<bool> { share::e_show_mine }()
+                = true;
 
             return;
         }
 
-        fmt::println(
-            stderr,
-            "warn: expected one of {{'all' | 'mine'}}"
-        );
+        fmt::println(stderr,
+            "warn: expected one of {{'all' | 'mine'}}");
 
         return;
     }
 
     if (first_token == "exit") {
         if (tokens.size() != 1) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: an unexpected number of tokens for "
-                "exit"
-            );
+                "exit");
 
             return;
         }
@@ -576,11 +888,8 @@ void input_handler_t::process_line(
         return;
     }
 
-    fmt::println(
-        stderr,
-        "warn: {} is not a known command",
-        first_token
-    );
+    fmt::println(stderr, "warn: {} is not a known command",
+        first_token);
 }
 
-}  // namespace client
+} // namespace client

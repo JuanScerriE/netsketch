@@ -19,30 +19,29 @@
 namespace client {
 
 reader_t::reader_t(int conn_fd)
-    : m_conn_fd(conn_fd) {
+    : m_conn_fd(conn_fd)
+{
 }
 
-void reader_t::operator()() {
-    handle_loop();
-}
+void reader_t::operator()() { handle_loop(); }
 
-void reader_t::handle_loop() {
-    constexpr nfds_t nfds{2};
+void reader_t::handle_loop()
+{
+    constexpr nfds_t nfds { 2 };
 
-    constexpr size_t socket_idx{0};
-    constexpr size_t event_idx{1};
+    constexpr size_t socket_idx { 0 };
+    constexpr size_t event_idx { 1 };
 
     for (;;) {
         pollfd poll_fds[nfds] = {
-            {m_conn_fd, POLLIN, 0},
-            {share::e_stop_event->read_fd(), POLLIN, 0},
+            { m_conn_fd, POLLIN, 0 },
+            { share::e_stop_event->read_fd(), POLLIN, 0 },
         };
 
         if (poll(poll_fds, nfds, -1) == -1) {
             log::error(
                 "poll of connection failed, reason: {}",
-                strerror(errno)
-            );
+                strerror(errno));
 
             break;
         }
@@ -67,8 +66,7 @@ void reader_t::handle_loop() {
                 : "",
             (poll_fds[event_idx].revents & POLLERR)
                 ? "POLLERR"
-                : ""
-        );
+                : "");
 
         if (poll_fds[socket_idx].revents & POLLHUP) {
             log::info("closing tcp connection");
@@ -83,8 +81,7 @@ void reader_t::handle_loop() {
                 log::error(
                     "connection shutdown failed, reason: "
                     "{}",
-                    strerror(errno)
-                );
+                    strerror(errno));
             }
 
             // NOTE: waiting on POLLHUP to actually exit
@@ -95,10 +92,8 @@ void reader_t::handle_loop() {
             break;
         }
 
-        AbortIf(
-            !(poll_fds[socket_idx].revents & POLLIN),
-            "expected POLLIN"
-        );
+        AbortIf(!(poll_fds[socket_idx].revents & POLLIN),
+            "expected POLLIN");
 
         char buf[1024];
 
@@ -110,8 +105,7 @@ void reader_t::handle_loop() {
             log::warn(
                 "reading from connection failed, reason: "
                 "{}",
-                strerror(errno)
-            );
+                strerror(errno));
 
             continue;
         }
@@ -122,15 +116,13 @@ void reader_t::handle_loop() {
             // connection was close
             log::warn(
                 "input of length 0 bytes (server closed "
-                "write)"
-            );
+                "write)");
 
             if (shutdown(m_conn_fd, SHUT_WR) == -1) {
                 log::error(
                     "connection shutdown failed, reason: "
                     "{}",
-                    strerror(errno)
-                );
+                    strerror(errno));
             }
 
             continue;
@@ -140,4 +132,4 @@ void reader_t::handle_loop() {
     }
 }
 
-}  // namespace client
+} // namespace client

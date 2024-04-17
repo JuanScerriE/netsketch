@@ -1,0 +1,4 @@
+[debug] : wake up reasons Conn(POLLIN, , ), Stop(, , )
+[warn] : input of length 0 bytes (server closed write)
+[debug] : wake up reasons Conn(POLLIN, POLLHUP, ), Stop(, , )
+[info] : closing tcp connection

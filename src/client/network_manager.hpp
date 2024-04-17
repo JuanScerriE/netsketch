@@ -10,19 +10,17 @@
 namespace client {
 
 class network_manager_t {
-   public:
+public:
     explicit network_manager_t(
-        uint32_t ipv4_addr,
-        uint16_t port
-    );
+        uint32_t ipv4_addr, uint16_t port);
 
     void operator()();
 
-   private:
-    void setup_logging();
-    void close_logging();
+private:
+    static void setup_logging();
+    static void close_logging();
 
-    void setup_connection();
+    bool setup_connection();
     void close_connection();
 
     void setup_writer_thread();
@@ -36,13 +34,13 @@ class network_manager_t {
     const uint16_t m_port;
 
     // socket
-    int m_conn_fd{};
+    int m_conn_fd {};
 
     // writer thread
-    static std::thread m_writer_thread;
+    std::thread m_writer_thread {};
 
     // log file
-    common::log_file_t m_log_file{};
+    static common::log_file_t s_log_file;
 };
 
-}  // namespace client
+} // namespace client

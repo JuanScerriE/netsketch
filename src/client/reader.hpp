@@ -4,16 +4,14 @@ namespace client {
 
 class reader_t {
 public:
-    explicit reader_t(
-        int conn_fd
-    );
+    explicit reader_t(int conn_fd);
 
     void operator()();
 
-   private:
+private:
     void handle_loop();
 
     const int m_conn_fd;
 };
 
-}  // namespace client
+} // namespace client

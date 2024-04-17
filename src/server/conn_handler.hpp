@@ -5,40 +5,37 @@
 
 // common
 #include <log.hpp>
+#include <serialization.hpp>
 
 namespace server {
 
 class conn_handler_t {
-   public:
+public:
     explicit conn_handler_t(int conn_fd, sockaddr_in addr);
 
     void operator()();
 
-   private:
+private:
     void setup_readable_net_info();
 
+    void handle_payload(common::byte_vector payload);
+
     template <typename... T>
-    void addr_log(  // specific log
-        log::level log_level,
-        fmt::format_string<T...> fmt,
-        T &&...args
-    ) {
-        log::write(
-            log_level,
-            "[{}:{}] {}",
-            m_ipv4,
-            m_port,
-            fmt::format(fmt, args...)
-        );
+    void addr_log( // specific log
+        log::level log_level, fmt::format_string<T...> fmt,
+        T&&... args)
+    {
+        log::write(log_level, "[{}:{}] {}", m_ipv4, m_port,
+            fmt::format(fmt, args...));
     }
 
-    int m_conn_fd{};
+    int m_conn_fd {};
 
-    sockaddr_in m_addr{};
+    sockaddr_in m_addr {};
 
-    std::string m_ipv4{};
+    std::string m_ipv4 {};
 
-    uint16_t m_port{};
+    uint16_t m_port {};
 };
 
-}  // namespace server
+} // namespace server

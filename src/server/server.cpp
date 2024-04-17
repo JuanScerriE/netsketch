@@ -30,60 +30,49 @@
 namespace server {
 
 server_t::server_t(uint16_t port)
-    : m_port(port) {
+    : m_port(port)
+{
 }
 
-int server_t::operator()() {
+int server_t::operator()()
+{
 #ifdef __APPLE__
     m_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     int saved_flags = fcntl(m_socket_fd, F_GETFL);
-    AbortIfV(
-        saved_flags == -1,
+    AbortIfV(saved_flags == -1,
         "updating the socket file descriptor "
         "failed, reason {}",
-        strerror(errno)
-    );
+        strerror(errno));
     int is_non_blocking = fcntl(
-        m_socket_fd,
-        F_SETFL,
-        saved_flags & O_NONBLOCK
-    );
-    AbortIfV(
-        is_non_blocking == -1,
+        m_socket_fd, F_SETFL, saved_flags & O_NONBLOCK);
+    AbortIfV(is_non_blocking == -1,
         "attempt to modify the connection file "
         "descriptor "
         "failed, reason {}",
-        strerror(errno)
-    );
+        strerror(errno));
 #else
-    m_socket_fd =
-        socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    m_socket_fd
+        = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 #endif
 
     if (m_socket_fd == -1) {
-        log::error(
-            "could not create socket, reason: {}",
-            strerror(errno)
-        );
+        log::error("could not create socket, reason: {}",
+            strerror(errno));
 
         return EXIT_FAILURE;
     }
 
-    sockaddr_in server_addr{};
+    sockaddr_in server_addr {};
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons(m_port);
 
-    if (bind(
-            m_socket_fd,
-            (sockaddr*)&server_addr,
-            sizeof(server_addr)
-        ) == -1) {
-        log::error(
-            "could not bind socket, reason: {}",
-            strerror(errno)
-        );
+    if (bind(m_socket_fd, (sockaddr*)&server_addr,
+            sizeof(server_addr))
+        == -1) {
+        log::error("could not bind socket, reason: {}",
+            strerror(errno));
 
         close(m_socket_fd);
 
@@ -94,10 +83,8 @@ int server_t::operator()() {
     // of outstanding connections on the socket's listen
     // queue.
     if (listen(m_socket_fd, BACKLOG) == -1) {
-        log::error(
-            "could not listen on socket, reason: {}",
-            strerror(errno)
-        );
+        log::error("could not listen on socket, reason: {}",
+            strerror(errno));
 
         close(m_socket_fd);
 
@@ -109,10 +96,8 @@ int server_t::operator()() {
     requests_loop();
 
     if (close(m_socket_fd) == -1) {
-        log::error(
-            "closing socket failed, reason: {}",
-            strerror(errno)
-        );
+        log::error("closing socket failed, reason: {}",
+            strerror(errno));
 
         return EXIT_FAILURE;
     }
@@ -122,22 +107,23 @@ int server_t::operator()() {
     return EXIT_SUCCESS;
 }
 
-void server_t::requests_loop() {
-    std::list<std::future<void>> futures{};
+void server_t::requests_loop()
+{
+    std::list<std::future<void>> futures {};
 
     for (;;) {
-        sockaddr_in addr{};
-        socklen_t addr_len{sizeof(sockaddr_in)};
+        sockaddr_in addr {};
+        socklen_t addr_len { sizeof(sockaddr_in) };
 
         // we need to poll here (these get
         // optimised out)
-        constexpr nfds_t nfds{2};
-        constexpr size_t socket_idx{0};
-        constexpr size_t event_idx{1};
+        constexpr nfds_t nfds { 2 };
+        constexpr size_t socket_idx { 0 };
+        constexpr size_t event_idx { 1 };
 
         pollfd poll_fds[nfds] = {
-            {m_socket_fd, POLLIN, 0},
-            {share::e_stop_event->read_fd(), POLLIN, 0},
+            { m_socket_fd, POLLIN, 0 },
+            { share::e_stop_event->read_fd(), POLLIN, 0 },
         };
 
         if (poll(poll_fds, nfds, -1) == -1) {
@@ -147,11 +133,9 @@ void server_t::requests_loop() {
                 continue;
             }
 
-            AbortV(
-                "poll of socket or stop event failed, "
-                "reason: {}",
-                strerror(errno)
-            );
+            AbortV("poll of socket or stop event failed, "
+                   "reason: {}",
+                strerror(errno));
         }
 
         // we should first check for the
@@ -175,17 +159,12 @@ void server_t::requests_loop() {
         }
 
         int conn_fd = accept(
-            m_socket_fd,
-            (sockaddr*)&addr,
-            &addr_len
-        );
+            m_socket_fd, (sockaddr*)&addr, &addr_len);
 
         if (conn_fd == -1) {
-            log::warn(
-                "accepting incoming connection "
-                "failed, reason: {}",
-                strerror(errno)
-            );
+            log::warn("accepting incoming connection "
+                      "failed, reason: {}",
+                strerror(errno));
 
             continue;
         }
@@ -207,29 +186,20 @@ void server_t::requests_loop() {
         //    explicitly set all required flags on the
         //    socket returned from accept().
         int saved_flags = fcntl(conn_fd, F_GETFL);
-        AbortIfV(
-            saved_flags == -1,
+        AbortIfV(saved_flags == -1,
             "updating the connection file descriptor "
             "failed, reason {}",
-            strerror(errno)
-        );
+            strerror(errno));
         int is_non_blocking = fcntl(
-            conn_fd,
-            F_SETFL,
-            saved_flags & ~O_NONBLOCK
-        );
-        AbortIfV(
-            is_non_blocking == -1,
+            conn_fd, F_SETFL, saved_flags & ~O_NONBLOCK);
+        AbortIfV(is_non_blocking == -1,
             "attempt to modify the connection file "
             "descriptor "
             "failed, reason {}",
-            strerror(errno)
-        );
+            strerror(errno));
 
-        futures.push_back(std::async(
-            std::launch::async,
-            conn_handler_t{conn_fd, addr}
-        ));
+        futures.push_back(std::async(std::launch::async,
+            conn_handler_t { conn_fd, addr }));
     }
 
     for (auto& future : futures) {
@@ -239,4 +209,4 @@ void server_t::requests_loop() {
     }
 }
 
-}  // namespace server
+} // namespace server

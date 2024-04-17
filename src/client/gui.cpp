@@ -24,17 +24,17 @@
 
 namespace client {
 
-common::log_file_t gui_t::s_log_file{};
+common::log_file_t gui_t::s_log_file {};
 
 gui_t::gui_t(bool log)
-    : m_log(log) {
+    : m_log(log)
+{
 }
 
-void gui_t::operator()() {
-    AbortIf(
-        m_in_game_loop,
-        "calling operator()() twice on a gui_t object"
-    );
+void gui_t::operator()()
+{
+    AbortIf(m_in_game_loop,
+        "calling operator()() twice on a gui_t object");
 
     SetTraceLogCallback(noop_logger);
 
@@ -45,16 +45,13 @@ void gui_t::operator()() {
 
         s_log_file.open(fmt::format(
             "netsketch-raylib-log {:%Y-%m-%d %H:%M:%S}",
-            now
-        ));
+            now));
 
         if (s_log_file.error()) {
-            fmt::println(
-                stderr,
+            fmt::println(stderr,
                 "warn: opening a log file failed because - "
                 "{}",
-                s_log_file.reason()
-            );
+                s_log_file.reason());
         } else {
             SetTraceLogCallback(file_logger);
         }
@@ -69,44 +66,35 @@ void gui_t::operator()() {
     }
 }
 
-void gui_t::noop_logger(int, const char *, va_list) {
+void gui_t::noop_logger(int, const char*, va_list)
+{
     // do nothing
 }
 
 void gui_t::file_logger(
-    int msg_type,
-    const char *text,
-    va_list args
-) {
+    int msg_type, const char* text, va_list args)
+{
     // TODO: add error handling for each call to printf (and
     // friends)
     switch (msg_type) {
-        case LOG_INFO:
-            fprintf(
-                gui_t::s_log_file.native_handle(),
-                "[INFO]: "
-            );
-            break;
-        case LOG_ERROR:
-            fprintf(
-                gui_t::s_log_file.native_handle(),
-                "[ERROR]: "
-            );
-            break;
-        case LOG_WARNING:
-            fprintf(
-                gui_t::s_log_file.native_handle(),
-                "[WARN] : "
-            );
-            break;
-        case LOG_DEBUG:
-            fprintf(
-                gui_t::s_log_file.native_handle(),
-                "[DEBUG]: "
-            );
-            break;
-        default:
-            break;
+    case LOG_INFO:
+        fprintf(
+            gui_t::s_log_file.native_handle(), "[INFO]: ");
+        break;
+    case LOG_ERROR:
+        fprintf(
+            gui_t::s_log_file.native_handle(), "[ERROR]: ");
+        break;
+    case LOG_WARNING:
+        fprintf(
+            gui_t::s_log_file.native_handle(), "[WARN] : ");
+        break;
+    case LOG_DEBUG:
+        fprintf(
+            gui_t::s_log_file.native_handle(), "[DEBUG]: ");
+        break;
+    default:
+        break;
     }
 
     vfprintf(gui_t::s_log_file.native_handle(), text, args);
@@ -114,65 +102,52 @@ void gui_t::file_logger(
     fprintf(gui_t::s_log_file.native_handle(), "\n");
 }
 
-[[nodiscard]] Color to_raylib_colour(common::colour_t colour
-) {
-    return {colour.r, colour.g, colour.b, 255};
+[[nodiscard]] Color to_raylib_colour(
+    common::colour_t colour)
+{
+    return { colour.r, colour.g, colour.b, 255 };
 }
 
-inline void gui_t::draw_scene() {
-    for (auto &draw : m_draws) {
-        if (std::holds_alternative<common::line_draw_t>(draw
-            )) {
-            auto &line =
-                std::get<common::line_draw_t>(draw);
+inline void gui_t::draw_scene()
+{
+    for (auto& draw : m_draws) {
+        if (std::holds_alternative<common::line_draw_t>(
+                draw)) {
+            auto& line
+                = std::get<common::line_draw_t>(draw);
 
-            DrawLineEx(
-                {static_cast<float>(line.x0),
-                 static_cast<float>(line.y0)},
-                {static_cast<float>(line.x1),
-                 static_cast<float>(line.y1)},
-                1.1f,  // NOTE: maybe change this?
-                to_raylib_colour(line.colour)
-            );
+            DrawLineEx({ static_cast<float>(line.x0),
+                           static_cast<float>(line.y0) },
+                { static_cast<float>(line.x1),
+                    static_cast<float>(line.y1) },
+                1.1f, // NOTE: maybe change this?
+                to_raylib_colour(line.colour));
             continue;
         }
         if (std::holds_alternative<
                 common::rectangle_draw_t>(draw)) {
-            auto &rectangle =
-                std::get<common::rectangle_draw_t>(draw);
-            DrawRectangle(
-                rectangle.x,
-                rectangle.y,
-                rectangle.w,
-                rectangle.h,
-                to_raylib_colour(rectangle.colour)
-            );
+            auto& rectangle
+                = std::get<common::rectangle_draw_t>(draw);
+            DrawRectangle(rectangle.x, rectangle.y,
+                rectangle.w, rectangle.h,
+                to_raylib_colour(rectangle.colour));
             continue;
         }
         if (std::holds_alternative<common::circle_draw_t>(
-                draw
-            )) {
-            auto &circle =
-                std::get<common::circle_draw_t>(draw);
-            DrawCircle(
-                circle.x,
-                circle.y,
-                circle.r,
-                to_raylib_colour(circle.colour)
-            );
+                draw)) {
+            auto& circle
+                = std::get<common::circle_draw_t>(draw);
+            DrawCircle(circle.x, circle.y, circle.r,
+                to_raylib_colour(circle.colour));
             continue;
         }
-        if (std::holds_alternative<common::text_draw_t>(draw
-            )) {
-            auto &text =
-                std::get<common::text_draw_t>(draw);
-            DrawText(
-                text.string.c_str(),
-                text.x,
-                text.y,
-                16,  // NOTE: maybe change this?
-                to_raylib_colour(text.colour)
-            );
+        if (std::holds_alternative<common::text_draw_t>(
+                draw)) {
+            auto& text
+                = std::get<common::text_draw_t>(draw);
+            DrawText(text.string.c_str(), text.x, text.y,
+                16, // NOTE: maybe change this?
+                to_raylib_colour(text.colour));
             continue;
         }
 
@@ -182,21 +157,22 @@ inline void gui_t::draw_scene() {
     }
 }
 
-void gui_t::draw() {
+void gui_t::draw()
+{
     BeginDrawing();
     {
-        Vector2 target_world_pos =
-            GetScreenToWorld2D({0, 0}, m_camera);
+        Vector2 target_world_pos
+            = GetScreenToWorld2D({ 0, 0 }, m_camera);
 
         Vector2 mouse_world_pos = GetScreenToWorld2D(
-            GetMousePosition(),
-            m_camera
-        );
+            GetMousePosition(), m_camera);
 
         ClearBackground(WHITE);
 
         BeginMode2D(m_camera);
-        { draw_scene(); }
+        {
+            draw_scene();
+        }
         EndMode2D();
 
         int gap = static_cast<int>(50 * m_camera.zoom);
@@ -205,18 +181,12 @@ void gui_t::draw() {
         // round to the nearest 100
         left = 100 * roundf(left / 100);
         int screenLeft = static_cast<int>(
-            GetWorldToScreen2D({left, 0}, m_camera).x
-        );
+            GetWorldToScreen2D({ left, 0 }, m_camera).x);
         int widthSteps = width / gap;
 
         for (int x = 0; x <= widthSteps; x++) {
-            DrawLine(
-                screenLeft + (x * gap),
-                0,
-                screenLeft + x * gap,
-                20,
-                GRAY
-            );
+            DrawLine(screenLeft + (x * gap), 0,
+                screenLeft + x * gap, 20, GRAY);
         }
 
         int height = GetScreenHeight();
@@ -224,48 +194,32 @@ void gui_t::draw() {
         // round to the nearest 100
         top = 100 * roundf(top / 100);
         int screenTop = static_cast<int>(
-            GetWorldToScreen2D({0, top}, m_camera).y
-        );
+            GetWorldToScreen2D({ 0, top }, m_camera).y);
         int heightSteps = height / gap;
 
         for (int y = 0; y <= heightSteps; y++) {
-            DrawLine(
-                0,
-                screenTop + y * gap,
-                20,
-                screenTop + y * gap,
-                GRAY
-            );
+            DrawLine(0, screenTop + y * gap, 20,
+                screenTop + y * gap, GRAY);
         }
 
-        DrawText(
-            TextFormat(
-                "X:%f, Y:%f, ZOOM:%f",
-                mouse_world_pos.x,
-                mouse_world_pos.y,
-                m_camera.zoom
-            ),
-            30,
-            height - 25,
-            20,
-            BLACK
-        );
+        DrawText(TextFormat("X:%f, Y:%f, ZOOM:%f",
+                     mouse_world_pos.x, mouse_world_pos.y,
+                     m_camera.zoom),
+            30, height - 25, 20, BLACK);
     }
     EndDrawing();
 }
 
-void gui_t::game_loop() {
+void gui_t::game_loop()
+{
     // mark as in_game_loop
     m_in_game_loop = true;
 
     // window configuration flags
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 
-    InitWindow(
-        m_screen_width,
-        m_screen_height,
-        m_window_name.c_str()
-    );
+    InitWindow(m_screen_width, m_screen_height,
+        m_window_name.c_str());
 
     SetTargetFPS(m_target_fps);
 
@@ -273,17 +227,17 @@ void gui_t::game_loop() {
     // or when the main tells us so
     while (!share::e_stop_gui()) {
         if (IsKeyPressed(KEY_H)) {
-            m_camera = {{0, 0}, {0, 0}, 0, 1.0};
+            m_camera = { { 0, 0 }, { 0, 0 }, 0, 1.0 };
         }
 
         // translate based on mouse left click
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
             Vector2 delta = GetMouseDelta();
-            delta =
-                Vector2Scale(delta, -1.0f / m_camera.zoom);
+            delta = Vector2Scale(
+                delta, -1.0f / m_camera.zoom);
 
-            m_camera.target =
-                Vector2Add(m_camera.target, delta);
+            m_camera.target
+                = Vector2Add(m_camera.target, delta);
         }
 
         // zoom based on mouse wheel
@@ -292,9 +246,7 @@ void gui_t::game_loop() {
         if (wheel != 0) {
             // get the world point that is under the mouse
             Vector2 mouseWorldPos = GetScreenToWorld2D(
-                GetMousePosition(),
-                m_camera
-            );
+                GetMousePosition(), m_camera);
 
             // get the offset to where the mouse is
             m_camera.offset = GetMousePosition();
@@ -315,21 +267,17 @@ void gui_t::game_loop() {
         }
 
         if (IsWindowResized()) {
-            TraceLog(
-                LOG_INFO,
-                "Width: %d, Height: %d",
-                GetScreenWidth(),
-                GetScreenHeight()
-            );
+            TraceLog(LOG_INFO, "Width: %d, Height: %d",
+                GetScreenWidth(), GetScreenHeight());
         }
 
         draw();
     }
 
-    CloseWindow();  // Close window and OpenGL context
+    CloseWindow(); // Close window and OpenGL context
 }
 
-}  // namespace client
+} // namespace client
 
 /*******************************************************************************************
  *

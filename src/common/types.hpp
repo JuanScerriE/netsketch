@@ -22,11 +22,6 @@ enum class option_e : uint8_t {
     TEXT
 };
 
-struct colour_t {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-};
 
 template <typename T> class queue_st {
 public:
@@ -120,38 +115,6 @@ private:
     std::condition_variable m_cond_var {};
 };
 
-struct line_draw_t {
-    colour_t colour;
-    int x0;
-    int y0;
-    int x1;
-    int y1;
-};
-
-struct rectangle_draw_t {
-    colour_t colour;
-    int x;
-    int y;
-    int w;
-    int h;
-};
-
-struct circle_draw_t {
-    colour_t colour;
-    int x;
-    int y;
-    float r;
-};
-
-struct text_draw_t {
-    colour_t colour;
-    int x;
-    int y;
-    std::string string;
-};
-
-using draw_t = std::variant<line_draw_t, rectangle_draw_t,
-    circle_draw_t, text_draw_t>;
 
 template <typename T> class mutable_t;
 

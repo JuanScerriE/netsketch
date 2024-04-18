@@ -20,8 +20,14 @@ common::readonly_t<bool> e_show_mine { false };
 // used to stop the network thread upon user exit
 common::event_t* e_stop_event { nullptr };
 
+// log file
+common::log_file_t e_log_file {};
+
 // queues
 common::queue_st<std::string> e_reader_queue {};
-common::queue_st<common::draw_t> e_writer_queue {};
+common::queue_st<prot::tagged_command_t> e_writer_queue {};
+
+// nickname
+std::string e_nickname {};
 
 } // namespace client::share

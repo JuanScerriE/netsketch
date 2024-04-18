@@ -1,11 +1,12 @@
 // client
+#include "protocol.hpp"
+#include <utils.hpp>
 #include <writer.hpp>
 
 // share
 #include <share.hpp>
 
 // common
-#include <serialization.hpp>
 #include <types.hpp>
 
 // unix
@@ -22,24 +23,46 @@ writer_t::writer_t(int conn_fd)
 {
 }
 
-common::message_t writer_t::get_message()
+util::byte_vector writer_t::get_message(
+    prot::tagged_command_t& tagged_command)
 {
-    common::draw_t msg
-        = share::e_writer_queue.pop_back(); // wait
+    prot::serialize_t serializer { tagged_command };
 
-    common::serialized_t serialised_msg
-        = common::serialize(msg);
+    util::byte_vector payload_bytes = serializer.bytes();
 
-    common::message_t message
-        = common::pack(serialised_msg);
-
-    return message;
+    return payload_bytes;
 }
 
 void writer_t::operator()()
 {
     for (;;) {
-        common::message_t message = get_message();
+        // wait for tagged_command
+        prot::tagged_command_t tagged_command
+            = share::e_writer_queue.pop_back();
+
+        // serialize the command
+        auto payload = get_message(tagged_command);
+
+        // setup the header
+        prot::header_t header { MAGIC_BYTES,
+            payload.size() };
+
+        // build the full packet
+        util::byte_vector packet {};
+
+        packet.reserve(sizeof(header) + payload.size());
+
+        for (auto& byte : util::to_bytes(header)) {
+            packet.push_back(byte);
+        }
+
+        for (auto& byte : payload) {
+            packet.push_back(byte);
+        }
+
+        log::debug("payload size {}", payload.size());
+
+        log::debug("packet size {}", packet.size());
 
         pollfd conn_poll { m_conn_fd, POLLOUT, 0 };
 
@@ -57,7 +80,7 @@ void writer_t::operator()()
             return;
         }
 
-        if (write(m_conn_fd, message.data(), message.size())
+        if (write(m_conn_fd, packet.data(), packet.size())
             == -1) {
             log::error(
                 "writing to connection failed, reason: {}",

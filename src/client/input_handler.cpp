@@ -1,4 +1,5 @@
 // client
+#include "protocol.hpp"
 #include <cstring>
 #include <input_handler.hpp>
 #include <input_parser.hpp>
@@ -57,82 +58,6 @@ void input_handler_t::start()
 
     // make sure to stop the gui
     common::mutable_t<bool> { share::e_stop_gui }() = true;
-}
-
-std::vector<std::string> split(std::string_view line_view)
-{
-    std::vector<std::string> lexemes {};
-
-    size_t pos = 0;
-
-    while (pos < line_view.length()) {
-        while (isspace(line_view[pos])) {
-            pos++;
-        }
-
-        if (pos >= line_view.length()) {
-            break;
-        }
-
-        if (line_view[pos] == '"') {
-            pos++;
-
-            std::string string {};
-
-            while (pos < line_view.length()
-                && line_view[pos] != '"') {
-                if (line_view[pos] == '\\') {
-                    if (pos + 1 >= line_view.length()) {
-                        throw std::runtime_error(
-                            "start of escape at the end of "
-                            "stream");
-                    }
-
-                    if (line_view[pos + 1] == '"') {
-                        string.push_back('"');
-                        pos += 2;
-                        continue;
-                    }
-
-                    if (line_view[pos + 1] == '\\') {
-                        string.push_back('\\');
-                        pos += 2;
-                        continue;
-                    }
-
-                    throw std::runtime_error(fmt::format(
-                        "unexpected escape sequence \\{}",
-                        line_view[pos + 1]));
-                }
-
-                string.push_back(line_view[pos++]);
-            }
-
-            pos++;
-
-            if (pos >= line_view.length()
-                && line_view[pos - 1] != '"') {
-                throw std::runtime_error(
-                    "string not closed");
-            }
-
-            lexemes.push_back(string);
-
-            continue;
-        }
-
-        size_t count { 0 };
-
-        while (!isspace(line_view[pos + count])) {
-            count++;
-        }
-
-        lexemes.emplace_back(line_view.substr(pos, count));
-
-        pos += count;
-    }
-
-    return lexemes;
 }
 
 void input_handler_t::process_line(
@@ -437,11 +362,12 @@ void input_handler_t::process_line(
                 return;
             }
 
-            common::draw_t draw_command
-                = common::line_draw_t { m_colour, x0, y0,
-                      x1, y1 };
+            prot::draw_t draw_command
+                = prot::line_draw_t { m_colour, x0, y0, x1,
+                      y1 };
 
-            share::e_writer_queue.push_front(draw_command);
+            share::e_writer_queue.push_front(
+                { share::e_nickname, draw_command });
         } break;
         case common::option_e::RECTANGLE: {
             if (tokens.size() != 5) {
@@ -525,11 +451,12 @@ void input_handler_t::process_line(
                 return;
             }
 
-            common::draw_t draw_command
-                = common::rectangle_draw_t { m_colour, x, y,
+            prot::draw_t draw_command
+                = prot::rectangle_draw_t { m_colour, x, y,
                       w, h };
 
-            share::e_writer_queue.push_front(draw_command);
+            share::e_writer_queue.push_front(
+                { share::e_nickname, draw_command });
         } break;
         case common::option_e::CIRCLE: {
             if (tokens.size() != 4) {
@@ -595,11 +522,11 @@ void input_handler_t::process_line(
                 return;
             }
 
-            common::draw_t draw_command
-                = common::circle_draw_t { m_colour, x, y,
-                      r };
+            prot::draw_t draw_command
+                = prot::circle_draw_t { m_colour, x, y, r };
 
-            share::e_writer_queue.push_front(draw_command);
+            share::e_writer_queue.push_front(
+                { share::e_nickname, draw_command });
         } break;
         case common::option_e::TEXT: {
             if (tokens.size() != 4) {
@@ -648,11 +575,12 @@ void input_handler_t::process_line(
 
             std::string text { tokens[3] };
 
-            common::draw_t draw_command
-                = common::text_draw_t { m_colour, x, y,
+            prot::draw_t draw_command
+                = prot::text_draw_t { m_colour, x, y,
                       text };
 
-            share::e_writer_queue.push_front(draw_command);
+            share::e_writer_queue.push_front(
+                { share::e_nickname, draw_command });
 
         } break;
         default:
@@ -801,7 +729,10 @@ void input_handler_t::process_line(
             return;
         }
 
-        (void)id;
+        prot::delete_t delete_command { id };
+
+        share::e_writer_queue.push_front(
+            { share::e_nickname, delete_command });
 
         return;
     }
@@ -814,6 +745,9 @@ void input_handler_t::process_line(
 
             return;
         }
+
+        share::e_writer_queue.push_front(
+            { share::e_nickname, prot::undo_t {} });
 
         return;
     }
@@ -830,10 +764,20 @@ void input_handler_t::process_line(
         std::string_view second_token = tokens[1];
 
         if (second_token == "all") {
+            share::e_writer_queue.push_front(
+                { share::e_nickname,
+                    prot::clear_t {
+                        prot::qualifier_e::ALL } });
+
             return;
         }
 
         if (second_token == "mine") {
+            share::e_writer_queue.push_front(
+                { share::e_nickname,
+                    prot::clear_t {
+                        prot::qualifier_e::ALL } });
+
             return;
         }
 

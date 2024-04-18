@@ -21,8 +21,6 @@
 
 namespace client {
 
-common::log_file_t network_manager_t::s_log_file {};
-
 network_manager_t::network_manager_t(
     uint32_t ipv4_addr, uint16_t port)
     : m_ipv4_addr(ipv4_addr)
@@ -33,9 +31,7 @@ network_manager_t::network_manager_t(
 void network_manager_t::operator()()
 {
     // construction
-    setup_logging();
     if (!setup_connection()) {
-        close_logging();
         return;
     }
     setup_writer_thread();
@@ -44,42 +40,8 @@ void network_manager_t::operator()()
 
     reader();
 
-    // destruction
     close_writer_thread();
     close_connection();
-    close_logging();
-}
-
-void network_manager_t::setup_logging()
-{
-    log::disable();
-
-    using std::chrono::system_clock;
-
-    auto now = system_clock::now();
-
-    s_log_file.open(fmt::format(
-        "netsketch-client-networking-log {:%Y-%m-%d "
-        "%H:%M:%S}",
-        now));
-
-    if (s_log_file.error()) {
-        fmt::println(stderr,
-            "warn: opening a log file failed because - "
-            "{}",
-            s_log_file.reason());
-    } else {
-        log::set_file(s_log_file);
-
-        log::set_level(log::level::debug);
-    }
-}
-
-void network_manager_t::close_logging()
-{
-    if (s_log_file.is_open()) {
-        s_log_file.close();
-    }
 }
 
 bool network_manager_t::setup_connection()

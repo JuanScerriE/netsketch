@@ -19,6 +19,8 @@ public:
 
     log() = delete;
 
+    static void set_file(FILE* file) { s_file = file; }
+
     // NOTE: this is not ideal we are specifying the
     // log_file_t because we have some semblance of security
     // in the sense that a log_file_t is at least guaranteed

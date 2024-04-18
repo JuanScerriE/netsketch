@@ -2,7 +2,12 @@
 
 // common
 #include <log.hpp>
-#include <serialization.hpp>
+
+// util
+#include <utils.hpp>
+
+// prot
+#include <protocol.hpp>
 
 namespace client {
 
@@ -12,7 +17,8 @@ public:
 
     void operator()();
 
-    common::message_t get_message();
+    util::byte_vector get_message(
+        prot::tagged_command_t& tagged_command);
 
 private:
     // connection

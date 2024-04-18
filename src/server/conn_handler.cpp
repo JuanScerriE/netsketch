@@ -9,13 +9,13 @@
 #include <unistd.h>
 
 // share
-#include <iterator>
-#include <optional>
 #include <share.hpp>
 
-// common
-#include <header.hpp>
-#include <serialization.hpp>
+// prot
+#include <protocol.hpp>
+
+// utils
+#include <utils.hpp>
 
 #define MINUTE (60000)
 
@@ -26,6 +26,22 @@ conn_handler_t::conn_handler_t(
     : m_conn_fd(conn_fd)
     , m_addr(addr)
 {
+}
+
+void conn_handler_t::setup_readable_net_info()
+{
+    char ipv4[INET_ADDRSTRLEN + 1];
+
+    if (inet_ntop(AF_INET, &m_addr.sin_addr, ipv4,
+            INET_ADDRSTRLEN)
+        == nullptr) {
+        AbortV("inet_ntop(...) failed, reason: {}",
+            strerror(errno));
+    }
+
+    m_ipv4 = std::string { ipv4 };
+
+    m_port = ntohs(m_addr.sin_port);
 }
 
 void conn_handler_t::operator()()
@@ -149,7 +165,11 @@ void conn_handler_t::operator()()
             continue;
         }
 
-        common::byte_vector payload { header.payload_size };
+        addr_log(log::level::debug,
+            "expected payload size si {} bytes",
+            header.payload_size);
+
+        util::byte_vector payload { header.payload_size };
 
         ssize_t actual_size = read(
             m_conn_fd, payload.data(), header.payload_size);
@@ -186,20 +206,14 @@ void conn_handler_t::operator()()
     }
 }
 
-void conn_handler_t::setup_readable_net_info()
+void conn_handler_t::handle_payload(
+    const util::byte_vector& payload)
 {
-    char ipv4[INET_ADDRSTRLEN + 1];
+    prot::deserialize_t deserialize { payload };
 
-    if (inet_ntop(AF_INET, &m_addr.sin_addr, ipv4,
-            INET_ADDRSTRLEN)
-        == nullptr) {
-        AbortV("inet_ntop(...) failed, reason: {}",
-            strerror(errno));
-    }
-
-    m_ipv4 = std::string { ipv4 };
-
-    m_port = ntohs(m_addr.sin_port);
+    prot::payload_t payload_object {
+        deserialize.payload()
+    };
 }
 
 } // namespace server

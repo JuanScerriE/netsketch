@@ -64,7 +64,7 @@ using draw_t = std::variant<line_draw_t, rectangle_draw_t,
     circle_draw_t, text_draw_t>;
 
 struct delete_t {
-    uint32_t id;
+    unsigned long id;
 };
 
 struct undo_t { };
@@ -82,9 +82,12 @@ enum class command_type_e : uint16_t {
     CLEAR
 };
 
+using command_t
+    = std::variant<draw_t, delete_t, undo_t, clear_t>;
+
 struct tagged_command_t {
     std::string username;
-    std::variant<draw_t, delete_t, undo_t, clear_t> command;
+    command_t command;
 };
 
 enum class payload_type_e : uint16_t { COMMAND };
@@ -245,142 +248,102 @@ private:
 class deserialize_t {
 public:
     explicit deserialize_t(util::byte_vector bytes)
-        : m_bserial(bytes)
+        : m_bserial(std::move(bytes))
     {
-        deser_payload();
+        m_payload = deser_payload();
     }
 
-    void deser_payload()
+    [[nodiscard]] payload_t payload() const
     {
-        if (std::holds_alternative<tagged_command_t>(
-                payload)) {
-            serial.write(payload_type_e::COMMAND);
-
-            auto& command
-                = std::get<tagged_command_t>(payload);
-
-            ser_command(command);
-
-            return;
-        }
-
-        Abort("unreachable");
+        return m_payload;
     }
 
-    void ser_command(tagged_command_t& tagged_command)
+    payload_t deser_payload()
     {
-        serial.write(tagged_command.username.size());
+        auto payload_type
+            = m_bserial.read<payload_type_e>();
 
-        for (char character : tagged_command.username) {
-            serial.write(character);
+        switch (payload_type) {
+        case payload_type_e::COMMAND:
+            return deser_command();
+        default:
+            throw util::serial_error_t("unexpected type");
         }
-
-        if (std::holds_alternative<draw_t>(
-                tagged_command.command)) {
-            serial.write(command_type_e::DRAW);
-
-            auto& draw
-                = std::get<draw_t>(tagged_command.command);
-
-            ser_draw(draw);
-
-            return;
-        }
-
-        if (std::holds_alternative<delete_t>(
-                tagged_command.command)) {
-            serial.write(command_type_e::DELETE);
-
-            auto& delete_ = std::get<delete_t>(
-                tagged_command.command);
-
-            serial.write(delete_.id);
-
-            return;
-        }
-
-        if (std::holds_alternative<undo_t>(
-                tagged_command.command)) {
-            serial.write(command_type_e::UNDO);
-
-            return;
-        }
-
-        if (std::holds_alternative<clear_t>(
-                tagged_command.command)) {
-            serial.write(command_type_e::CLEAR);
-
-            auto& clear
-                = std::get<clear_t>(tagged_command.command);
-
-            serial.write(clear.quailifier);
-
-            return;
-        }
-
-        Abort("unreachable");
     }
 
-    void ser_draw(draw_t& draw)
+    tagged_command_t deser_command()
     {
-        if (std::holds_alternative<line_draw_t>(draw)) {
-            serial.write(tool_e::LINE);
+        auto username_size = m_bserial.read<size_t>();
 
-            auto& line = std::get<line_draw_t>(draw);
+        std::string username {};
 
-            serial.write(line);
-
-            return;
+        for (size_t i = 0; i < username_size; i++) {
+            username.push_back(m_bserial.read<char>());
         }
 
-        if (std::holds_alternative<rectangle_draw_t>(
-                draw)) {
-            serial.write(tool_e::RECTANGLE);
+        auto command_type
+            = m_bserial.read<command_type_e>();
 
-            auto& rectangle
-                = std::get<rectangle_draw_t>(draw);
+        command_t command {};
 
-            serial.write(rectangle);
-
-            return;
+        switch (command_type) {
+        case command_type_e::DRAW:
+            command = deser_draw();
+            break;
+        case command_type_e::DELETE:
+            command = delete_t {
+                m_bserial.read<decltype(delete_t::id)>()
+            };
+            break;
+        case command_type_e::UNDO:
+            command = undo_t {};
+            break;
+        case command_type_e::CLEAR:
+            command
+                = clear_t { m_bserial.read<qualifier_e>() };
+            break;
+        default:
+            throw util::serial_error_t("unexpected type");
         }
 
-        if (std::holds_alternative<circle_draw_t>(draw)) {
-            serial.write(tool_e::CIRCLE);
+        return { username, command };
+    }
 
-            auto& circle = std::get<circle_draw_t>(draw);
+    draw_t deser_draw()
+    {
+        auto tool = m_bserial.read<tool_e>();
 
-            serial.write(circle);
+        switch (tool) {
+        case tool_e::LINE:
+            return m_bserial.read<line_draw_t>();
+        case tool_e::RECTANGLE:
+            return m_bserial.read<rectangle_draw_t>();
+        case tool_e::CIRCLE:
+            return m_bserial.read<circle_draw_t>();
+        case tool_e::TEXT: {
+            auto colour = m_bserial.read<colour_t>();
+            auto x = m_bserial
+                         .read<decltype(text_draw_t::x)>();
+            auto y = m_bserial
+                         .read<decltype(text_draw_t::y)>();
+            auto size = m_bserial.read<size_t>();
 
-            return;
-        }
+            std::string text {};
 
-        if (std::holds_alternative<text_draw_t>(draw)) {
-            serial.write(tool_e::TEXT);
-
-            auto& text = std::get<text_draw_t>(draw);
-
-            serial.write(text.colour);
-            serial.write(text.x);
-            serial.write(text.y);
-            serial.write(text.string.length());
-
-            for (auto character : text.string) {
-                serial.write(character);
+            for (size_t i = 0; i < size; i++) {
+                text.push_back(m_bserial.read<char>());
             }
 
-            return;
+            return text_draw_t { colour, x, y, text };
         }
-
-        Abort("unreachable");
-    }
-
-    [[nodiscard]] util::byte_vector bytes() const
-    {
-        return serial.bytes();
+        default:
+            throw util::serial_error_t("unexpected type");
+        }
     }
 
 private:
+    payload_t m_payload;
+
     util::bserial_t m_bserial;
 };
 

@@ -128,6 +128,7 @@ void server_t::requests_loop()
 
         if (poll(poll_fds, nfds, -1) == -1) {
             if (errno == EINTR) {
+                // TODO: add info about interrupt
                 log::warn("poll interrupted");
 
                 continue;

@@ -25,7 +25,8 @@ private:
     std::optional<unsigned long> m_selected_id {};
 
     common::option_e m_tool { common::option_e::LINE };
-    common::colour_t m_colour { 255, 255, 255 };
+
+    prot::colour_t m_colour { 255, 255, 255 };
 
     bool m_should_exit { false };
 };

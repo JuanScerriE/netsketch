@@ -2,13 +2,9 @@
 
 // std
 #include <condition_variable>
-#include <cstddef>
 #include <cstdint>
-#include <cstring>
 #include <deque>
 #include <mutex>
-#include <string>
-#include <variant>
 
 namespace common {
 
@@ -21,7 +17,6 @@ enum class option_e : uint8_t {
     CIRCLE,
     TEXT
 };
-
 
 template <typename T> class queue_st {
 public:
@@ -114,7 +109,6 @@ private:
     std::mutex m_mutex {};
     std::condition_variable m_cond_var {};
 };
-
 
 template <typename T> class mutable_t;
 

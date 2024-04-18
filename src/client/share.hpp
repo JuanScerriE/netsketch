@@ -2,7 +2,12 @@
 
 // common
 #include <event.hpp>
+#include <log_file.hpp>
+#include <protocol.hpp>
 #include <types.hpp>
+
+// std
+#include <string>
 
 namespace client::share {
 
@@ -22,8 +27,15 @@ extern common::readonly_t<bool> e_show_mine;
 
 extern common::event_t* e_stop_event;
 
+// log file
+extern common::log_file_t e_log_file;
+
 // queues
 extern common::queue_st<std::string> e_reader_queue;
-extern common::queue_st<common::draw_t> e_writer_queue;
+
+extern common::queue_st<prot::tagged_command_t> e_writer_queue;
+
+// nickname
+extern std::string e_nickname;
 
 } // namespace client::share

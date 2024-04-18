@@ -19,51 +19,22 @@
 #include <abort.hpp>
 #include <types.hpp>
 
+// prot
+#include <protocol.hpp>
+
 // share
 #include <share.hpp>
 
 namespace client {
-
-common::log_file_t gui_t::s_log_file {};
-
-gui_t::gui_t(bool log)
-    : m_log(log)
-{
-}
 
 void gui_t::operator()()
 {
     AbortIf(m_in_game_loop,
         "calling operator()() twice on a gui_t object");
 
-    SetTraceLogCallback(noop_logger);
-
-    if (m_log) {
-        using std::chrono::system_clock;
-
-        auto now = system_clock::now();
-
-        s_log_file.open(fmt::format(
-            "netsketch-raylib-log {:%Y-%m-%d %H:%M:%S}",
-            now));
-
-        if (s_log_file.error()) {
-            fmt::println(stderr,
-                "warn: opening a log file failed because - "
-                "{}",
-                s_log_file.reason());
-        } else {
-            SetTraceLogCallback(file_logger);
-        }
-    }
+    SetTraceLogCallback(file_logger);
 
     game_loop();
-
-    if (m_log) {
-        if (s_log_file.is_open()) {
-            s_log_file.close();
-        }
-    }
 }
 
 void gui_t::noop_logger(int, const char*, va_list)
@@ -71,6 +42,14 @@ void gui_t::noop_logger(int, const char*, va_list)
     // do nothing
 }
 
+// HACK: this is quite an ugly piece of code.
+// I don't know how I am going to convert from
+// va_args to packted template arguements for use
+// with fmtlib. I honestly don't think its
+// possible since va_args is purely a runtime
+// construct and it would only work if you some
+// how port fmtlib to using va_args were every
+// specified.
 void gui_t::file_logger(
     int msg_type, const char* text, va_list args)
 {
@@ -78,32 +57,31 @@ void gui_t::file_logger(
     // friends)
     switch (msg_type) {
     case LOG_INFO:
-        fprintf(
-            gui_t::s_log_file.native_handle(), "[INFO]: ");
+        fprintf(share::e_log_file.native_handle(),
+            "[RAYLIB][INFO]: ");
         break;
     case LOG_ERROR:
-        fprintf(
-            gui_t::s_log_file.native_handle(), "[ERROR]: ");
+        fprintf(share::e_log_file.native_handle(),
+            "[RAYLIB][ERROR]: ");
         break;
     case LOG_WARNING:
-        fprintf(
-            gui_t::s_log_file.native_handle(), "[WARN] : ");
+        fprintf(share::e_log_file.native_handle(),
+            "[RAYLIB][WARN] : ");
         break;
     case LOG_DEBUG:
-        fprintf(
-            gui_t::s_log_file.native_handle(), "[DEBUG]: ");
+        fprintf(share::e_log_file.native_handle(),
+            "[RAYLIB][DEBUG]: ");
         break;
     default:
         break;
     }
 
-    vfprintf(gui_t::s_log_file.native_handle(), text, args);
+    vfprintf(share::e_log_file.native_handle(), text, args);
 
-    fprintf(gui_t::s_log_file.native_handle(), "\n");
+    fprintf(share::e_log_file.native_handle(), "\n");
 }
 
-[[nodiscard]] Color to_raylib_colour(
-    common::colour_t colour)
+[[nodiscard]] Color to_raylib_colour(prot::colour_t colour)
 {
     return { colour.r, colour.g, colour.b, 255 };
 }
@@ -111,10 +89,9 @@ void gui_t::file_logger(
 inline void gui_t::draw_scene()
 {
     for (auto& draw : m_draws) {
-        if (std::holds_alternative<common::line_draw_t>(
+        if (std::holds_alternative<prot::line_draw_t>(
                 draw)) {
-            auto& line
-                = std::get<common::line_draw_t>(draw);
+            auto& line = std::get<prot::line_draw_t>(draw);
 
             DrawLineEx({ static_cast<float>(line.x0),
                            static_cast<float>(line.y0) },
@@ -124,27 +101,26 @@ inline void gui_t::draw_scene()
                 to_raylib_colour(line.colour));
             continue;
         }
-        if (std::holds_alternative<
-                common::rectangle_draw_t>(draw)) {
+        if (std::holds_alternative<prot::rectangle_draw_t>(
+                draw)) {
             auto& rectangle
-                = std::get<common::rectangle_draw_t>(draw);
+                = std::get<prot::rectangle_draw_t>(draw);
             DrawRectangle(rectangle.x, rectangle.y,
                 rectangle.w, rectangle.h,
                 to_raylib_colour(rectangle.colour));
             continue;
         }
-        if (std::holds_alternative<common::circle_draw_t>(
+        if (std::holds_alternative<prot::circle_draw_t>(
                 draw)) {
             auto& circle
-                = std::get<common::circle_draw_t>(draw);
+                = std::get<prot::circle_draw_t>(draw);
             DrawCircle(circle.x, circle.y, circle.r,
                 to_raylib_colour(circle.colour));
             continue;
         }
-        if (std::holds_alternative<common::text_draw_t>(
+        if (std::holds_alternative<prot::text_draw_t>(
                 draw)) {
-            auto& text
-                = std::get<common::text_draw_t>(draw);
+            auto& text = std::get<prot::text_draw_t>(draw);
             DrawText(text.string.c_str(), text.x, text.y,
                 16, // NOTE: maybe change this?
                 to_raylib_colour(text.colour));

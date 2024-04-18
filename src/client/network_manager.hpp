@@ -38,9 +38,6 @@ private:
 
     // writer thread
     std::thread m_writer_thread {};
-
-    // log file
-    static common::log_file_t s_log_file;
 };
 
 } // namespace client

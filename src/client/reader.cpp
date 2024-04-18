@@ -99,6 +99,7 @@ void reader_t::handle_loop()
 
         bzero(buf, 1024);
 
+        // read you are not guaranteed to read 1023 bytes
         ssize_t size = read(m_conn_fd, buf, 1024 - 1);
 
         if (size == -1) {

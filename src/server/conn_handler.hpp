@@ -5,7 +5,9 @@
 
 // common
 #include <log.hpp>
-#include <serialization.hpp>
+
+// util
+#include <utils.hpp>
 
 namespace server {
 
@@ -18,7 +20,7 @@ public:
 private:
     void setup_readable_net_info();
 
-    void handle_payload(common::byte_vector payload);
+    void handle_payload(const util::byte_vector& payload);
 
     template <typename... T>
     void addr_log( // specific log

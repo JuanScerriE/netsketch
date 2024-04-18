@@ -5,6 +5,7 @@
 #include <network_manager.hpp>
 
 // common
+#include <log.hpp>
 #include <types.hpp>
 
 // std
@@ -22,6 +23,10 @@
 
 // share
 #include <share.hpp>
+
+// fmt
+#include <fmt/chrono.h>
+#include <fmt/core.h>
 
 struct IPv4Validator : public CLI::Validator {
     IPv4Validator()
@@ -68,6 +73,9 @@ int main(int argc, char** argv)
 
     CLI11_PARSE(app, argc, argv);
 
+    // set the nickname of the user
+    client::share::e_nickname = nickname;
+
     in_addr addr {};
 
     if (inet_pton(AF_INET, ipv4_addr.c_str(), &addr) <= 0) {
@@ -83,6 +91,22 @@ int main(int argc, char** argv)
     common::event_t stop_event {};
 
     client::share::e_stop_event = &stop_event;
+
+    log::set_level(log::level::debug);
+
+    using std::chrono::system_clock;
+
+    auto now = system_clock::now();
+
+    client::share::e_log_file.open(fmt::format(
+        "netsketch-client-log {:%Y-%m-%d %H:%M:%S}", now));
+
+    if (client::share::e_log_file.error()) {
+        log::warn("opening a log file failed, reason: {}",
+            client::share::e_log_file.reason());
+    } else {
+        log::set_file(client::share::e_log_file);
+    }
 
     // this is the first since the
     // network handler and the input handler both
@@ -107,6 +131,17 @@ int main(int argc, char** argv)
     network_thread.join();
 
     // gui closes last with the end of the program
+
+    // NOTE: one must be careful here since we are
+    // closing our log file before the gui.
+    if (client::share::e_log_file.is_open()) {
+        client::share::e_log_file.close();
+
+        // because of the above note we reset
+        // to stderr to get other errors if there
+        // are any
+        log::set_file(stderr);
+    }
 
     return 0;
 }

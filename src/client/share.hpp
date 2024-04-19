@@ -33,9 +33,13 @@ extern common::log_file_t e_log_file;
 // queues
 extern common::queue_st<std::string> e_reader_queue;
 
-extern common::queue_st<prot::tagged_command_t> e_writer_queue;
+extern common::queue_st<prot::tagged_command_t>
+    e_writer_queue;
 
 // nickname
 extern std::string e_nickname;
+
+extern prot::tagged_draw_list_t* current_list;
+extern prot::tagged_draw_list_t lists[2];
 
 } // namespace client::share

@@ -86,50 +86,59 @@ void gui_t::file_logger(
     return { colour.r, colour.g, colour.b, 255 };
 }
 
+inline void gui_t::process_draw(prot::draw_t& draw)
+{
+    if (std::holds_alternative<prot::line_draw_t>(draw)) {
+        auto& line = std::get<prot::line_draw_t>(draw);
+
+        DrawLineEx({ static_cast<float>(line.x0),
+                       static_cast<float>(line.y0) },
+            { static_cast<float>(line.x1),
+                static_cast<float>(line.y1) },
+            1.1f, // NOTE: maybe change this?
+            to_raylib_colour(line.colour));
+        return;
+    }
+    if (std::holds_alternative<prot::rectangle_draw_t>(
+            draw)) {
+        auto& rectangle
+            = std::get<prot::rectangle_draw_t>(draw);
+        DrawRectangle(rectangle.x, rectangle.y, rectangle.w,
+            rectangle.h,
+            to_raylib_colour(rectangle.colour));
+        return;
+    }
+    if (std::holds_alternative<prot::circle_draw_t>(draw)) {
+        auto& circle = std::get<prot::circle_draw_t>(draw);
+        DrawCircle(circle.x, circle.y, circle.r,
+            to_raylib_colour(circle.colour));
+        return;
+    }
+    if (std::holds_alternative<prot::text_draw_t>(draw)) {
+        auto& text = std::get<prot::text_draw_t>(draw);
+        DrawText(text.string.c_str(), text.x, text.y,
+            16, // NOTE: maybe change this?
+            to_raylib_colour(text.colour));
+        return;
+    }
+
+    using Type = std::decay_t<decltype(draw)>;
+
+    AbortV("unknown draw type {}", typeid(Type).name());
+}
+
 inline void gui_t::draw_scene()
 {
-    for (auto& draw : m_draws) {
-        if (std::holds_alternative<prot::line_draw_t>(
-                draw)) {
-            auto& line = std::get<prot::line_draw_t>(draw);
-
-            DrawLineEx({ static_cast<float>(line.x0),
-                           static_cast<float>(line.y0) },
-                { static_cast<float>(line.x1),
-                    static_cast<float>(line.y1) },
-                1.1f, // NOTE: maybe change this?
-                to_raylib_colour(line.colour));
-            continue;
+    if (share::e_show_mine()) {
+        for (auto& tagged_draw : *share::current_list) {
+            if (tagged_draw.username == share::e_nickname) {
+                process_draw(tagged_draw.draw);
+            }
         }
-        if (std::holds_alternative<prot::rectangle_draw_t>(
-                draw)) {
-            auto& rectangle
-                = std::get<prot::rectangle_draw_t>(draw);
-            DrawRectangle(rectangle.x, rectangle.y,
-                rectangle.w, rectangle.h,
-                to_raylib_colour(rectangle.colour));
-            continue;
+    } else {
+        for (auto& tagged_draw : *share::current_list) {
+            process_draw(tagged_draw.draw);
         }
-        if (std::holds_alternative<prot::circle_draw_t>(
-                draw)) {
-            auto& circle
-                = std::get<prot::circle_draw_t>(draw);
-            DrawCircle(circle.x, circle.y, circle.r,
-                to_raylib_colour(circle.colour));
-            continue;
-        }
-        if (std::holds_alternative<prot::text_draw_t>(
-                draw)) {
-            auto& text = std::get<prot::text_draw_t>(draw);
-            DrawText(text.string.c_str(), text.x, text.y,
-                16, // NOTE: maybe change this?
-                to_raylib_colour(text.colour));
-            continue;
-        }
-
-        using Type = std::decay_t<decltype(draw)>;
-
-        AbortV("unkown draw type {}", typeid(Type).name());
     }
 }
 

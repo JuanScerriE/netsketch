@@ -27,6 +27,7 @@ private:
     static void file_logger(
         int msg_type, const char* text, va_list args);
 
+    inline void process_draw(prot::draw_t& draw);
     inline void draw_scene();
     void draw();
     void game_loop();
@@ -42,31 +43,6 @@ private:
     const int m_target_fps { 60 };
     const int m_screen_width { 800 };
     const int m_screen_height { 450 };
-
-    // draws
-    std::vector<prot::draw_t> m_draws {
-        prot::rectangle_draw_t {
-            { 0, 255, 0 }, 100, 100, 200, 150 },
-        prot::circle_draw_t {
-            { 255, 255, 0 },
-            150,
-            150,
-            30.5,
-        },
-        prot::line_draw_t {
-            { 0, 0, 0 },
-            150,
-            150,
-            200,
-            200,
-        },
-        prot::text_draw_t {
-            { 0, 0, 0 },
-            20,
-            20,
-            "this is some example text",
-        },
-    };
 };
 
 } // namespace client

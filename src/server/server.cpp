@@ -82,6 +82,7 @@ int server_t::operator()()
     // NOTE: the backlog parameter limits the number
     // of outstanding connections on the socket's listen
     // queue.
+    // TODO: check if the backlog can fail us
     if (listen(m_socket_fd, BACKLOG) == -1) {
         log::error("could not listen on socket, reason: {}",
             strerror(errno));
@@ -198,6 +199,8 @@ void server_t::requests_loop()
             "descriptor "
             "failed, reason {}",
             strerror(errno));
+
+        share::e_connections.push_back(conn_fd);
 
         futures.push_back(std::async(std::launch::async,
             conn_handler_t { conn_fd, addr }));

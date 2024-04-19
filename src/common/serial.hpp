@@ -2,6 +2,7 @@
 
 // std
 #include <exception>
+#include <string>
 
 // util
 #include <utils.hpp>
@@ -10,18 +11,18 @@ namespace util {
 
 class serial_error_t : public std::exception {
 public:
-    explicit serial_error_t(const char* message)
-        : m_message(message)
+    explicit serial_error_t(std::string message)
+        : m_message(std::move(message))
     {
     }
 
     [[nodiscard]] const char* what() const noexcept override
     {
-        return m_message;
+        return m_message.c_str();
     }
 
 private:
-    const char* m_message;
+    std::string m_message {};
 };
 
 class fserial_t {

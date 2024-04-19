@@ -19,7 +19,7 @@ public:
 
 private:
     void setup_readable_net_info();
-
+    void send_full_list();
     void handle_payload(const util::byte_vector& payload);
 
     template <typename... T>

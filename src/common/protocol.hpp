@@ -63,8 +63,18 @@ enum class tool_e : uint16_t {
 using draw_t = std::variant<line_draw_t, rectangle_draw_t,
     circle_draw_t, text_draw_t>;
 
+struct tagged_draw_t {
+    std::string username;
+    draw_t draw;
+};
+
+struct select_t {
+    long id;
+    draw_t draw;
+};
+
 struct delete_t {
-    unsigned long id;
+    long id;
 };
 
 struct undo_t { };
@@ -77,22 +87,30 @@ struct clear_t {
 
 enum class command_type_e : uint16_t {
     DRAW,
+    SELECT,
     DELETE,
     UNDO,
     CLEAR
 };
 
-using command_t
-    = std::variant<draw_t, delete_t, undo_t, clear_t>;
+using command_t = std::variant<draw_t, select_t, delete_t,
+    undo_t, clear_t>;
 
 struct tagged_command_t {
-    std::string username;
-    command_t command;
+    std::string username {};
+    command_t command {};
 };
 
-enum class payload_type_e : uint16_t { COMMAND };
+using tagged_draw_list_t = std::vector<tagged_draw_t>;
 
-using payload_t = std::variant<tagged_command_t>;
+enum class payload_type_e : uint16_t {
+    TAGGED_COMMAND,
+    TAGGED_DRAW,
+    TAGGED_DRAW_LIST
+};
+
+using payload_t = std::variant<tagged_command_t,
+    tagged_draw_t, tagged_draw_list_t>;
 
 struct header_t {
     uint16_t magic_bytes;
@@ -115,12 +133,40 @@ public:
     {
         if (std::holds_alternative<tagged_command_t>(
                 payload)) {
-            m_fserial.write(payload_type_e::COMMAND);
+            m_fserial.write(payload_type_e::TAGGED_COMMAND);
 
             auto& command
                 = std::get<tagged_command_t>(payload);
 
-            ser_command(command);
+            ser_tagged_command(command);
+
+            return;
+        }
+
+        if (std::holds_alternative<tagged_draw_t>(
+                payload)) {
+            m_fserial.write(payload_type_e::TAGGED_DRAW);
+
+            auto& tagged_draw
+                = std::get<tagged_draw_t>(payload);
+
+            ser_tagged_draw(tagged_draw);
+
+            return;
+        }
+
+        if (std::holds_alternative<tagged_draw_list_t>(
+                payload)) {
+            m_fserial.write(payload_type_e::TAGGED_DRAW_LIST);
+
+            auto& tagged_draw_list
+                = std::get<tagged_draw_list_t>(payload);
+
+            m_fserial.write(tagged_draw_list.size());
+
+            for (auto& tagged_draw : tagged_draw_list) {
+                ser_tagged_draw(tagged_draw);
+            }
 
             return;
         }
@@ -128,7 +174,19 @@ public:
         Abort("unreachable");
     }
 
-    void ser_command(tagged_command_t& tagged_command)
+    void ser_tagged_draw(tagged_draw_t& tagged_draw)
+    {
+        m_fserial.write(tagged_draw.username.size());
+
+        for (char character : tagged_draw.username) {
+            m_fserial.write(character);
+        }
+
+        ser_draw(tagged_draw.draw);
+    }
+
+    void ser_tagged_command(
+        tagged_command_t& tagged_command)
     {
         m_fserial.write(tagged_command.username.size());
 
@@ -144,6 +202,20 @@ public:
                 = std::get<draw_t>(tagged_command.command);
 
             ser_draw(draw);
+
+            return;
+        }
+
+        if (std::holds_alternative<select_t>(
+                tagged_command.command)) {
+            m_fserial.write(command_type_e::SELECT);
+
+            auto& select = std::get<select_t>(
+                tagged_command.command);
+
+            m_fserial.write(select.id);
+
+            ser_draw(select.draw);
 
             return;
         }
@@ -264,14 +336,44 @@ public:
             = m_bserial.read<payload_type_e>();
 
         switch (payload_type) {
-        case payload_type_e::COMMAND:
-            return deser_command();
+        case payload_type_e::TAGGED_COMMAND:
+            return deser_tagged_command();
+        case payload_type_e::TAGGED_DRAW:
+            return deser_tagged_draw();
+        case payload_type_e::TAGGED_DRAW_LIST:
+            return deser_tagged_draw_list();
         default:
             throw util::serial_error_t("unexpected type");
         }
     }
 
-    tagged_command_t deser_command()
+    tagged_draw_list_t deser_tagged_draw_list()
+    {
+        auto list_size = m_bserial.read<size_t>();
+
+        tagged_draw_list_t list {};
+
+        for (size_t i = 0; i < list_size; i++) {
+            list.push_back(deser_tagged_draw());
+        }
+
+        return list;
+    }
+
+    tagged_draw_t deser_tagged_draw()
+    {
+        auto username_size = m_bserial.read<size_t>();
+
+        std::string username {};
+
+        for (size_t i = 0; i < username_size; i++) {
+            username.push_back(m_bserial.read<char>());
+        }
+
+        return { username, deser_draw() };
+    }
+
+    tagged_command_t deser_tagged_command()
     {
         auto username_size = m_bserial.read<size_t>();
 
@@ -290,6 +392,13 @@ public:
         case command_type_e::DRAW:
             command = deser_draw();
             break;
+        case command_type_e::SELECT:
+            command = select_t {
+                m_bserial.read<decltype(select_t::id)>(),
+                deser_draw()
+            };
+            break;
+
         case command_type_e::DELETE:
             command = delete_t {
                 m_bserial.read<decltype(delete_t::id)>()
@@ -342,7 +451,7 @@ public:
     }
 
 private:
-    payload_t m_payload;
+    payload_t m_payload {};
 
     util::bserial_t m_bserial;
 };

@@ -30,4 +30,7 @@ common::queue_st<prot::tagged_command_t> e_writer_queue {};
 // nickname
 std::string e_nickname {};
 
+prot::tagged_draw_list_t lists[2] { {}, {} };
+prot::tagged_draw_list_t* current_list { &lists[0] };
+
 } // namespace client::share

@@ -1,4 +1,5 @@
 // server
+#include "updater.hpp"
 #include <server.hpp>
 
 // common
@@ -10,6 +11,7 @@
 
 // std
 #include <csignal>
+#include <thread>
 
 // share
 #include <share.hpp>
@@ -76,9 +78,13 @@ int main(int argc, char** argv)
             strerror(errno));
     }
 
+    std::thread updater { server::updater_t {} };
+
     server::server_t server { port };
 
     int status = server();
+
+    updater.join();
 
     return status;
 }

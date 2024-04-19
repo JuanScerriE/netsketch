@@ -366,8 +366,15 @@ void input_handler_t::process_line(
                 = prot::line_draw_t { m_colour, x0, y0, x1,
                       y1 };
 
-            share::e_writer_queue.push_front(
-                { share::e_nickname, draw_command });
+            if (m_selected_id.has_value()) {
+                share::e_writer_queue.push_front(
+                    { share::e_nickname,
+                        prot::select_t { *m_selected_id,
+                            draw_command } });
+            } else {
+                share::e_writer_queue.push_front(
+                    { share::e_nickname, draw_command });
+            }
         } break;
         case common::option_e::RECTANGLE: {
             if (tokens.size() != 5) {
@@ -455,8 +462,15 @@ void input_handler_t::process_line(
                 = prot::rectangle_draw_t { m_colour, x, y,
                       w, h };
 
-            share::e_writer_queue.push_front(
-                { share::e_nickname, draw_command });
+            if (m_selected_id.has_value()) {
+                share::e_writer_queue.push_front(
+                    { share::e_nickname,
+                        prot::select_t { *m_selected_id,
+                            draw_command } });
+            } else {
+                share::e_writer_queue.push_front(
+                    { share::e_nickname, draw_command });
+            }
         } break;
         case common::option_e::CIRCLE: {
             if (tokens.size() != 4) {
@@ -525,8 +539,15 @@ void input_handler_t::process_line(
             prot::draw_t draw_command
                 = prot::circle_draw_t { m_colour, x, y, r };
 
-            share::e_writer_queue.push_front(
-                { share::e_nickname, draw_command });
+            if (m_selected_id.has_value()) {
+                share::e_writer_queue.push_front(
+                    { share::e_nickname,
+                        prot::select_t { *m_selected_id,
+                            draw_command } });
+            } else {
+                share::e_writer_queue.push_front(
+                    { share::e_nickname, draw_command });
+            }
         } break;
         case common::option_e::TEXT: {
             if (tokens.size() != 4) {
@@ -579,9 +600,15 @@ void input_handler_t::process_line(
                 = prot::text_draw_t { m_colour, x, y,
                       text };
 
-            share::e_writer_queue.push_front(
-                { share::e_nickname, draw_command });
-
+            if (m_selected_id.has_value()) {
+                share::e_writer_queue.push_front(
+                    { share::e_nickname,
+                        prot::select_t { *m_selected_id,
+                            draw_command } });
+            } else {
+                share::e_writer_queue.push_front(
+                    { share::e_nickname, draw_command });
+            }
         } break;
         default:
             Abort("unreachable");
@@ -672,12 +699,12 @@ void input_handler_t::process_line(
             return;
         }
 
-        unsigned long id { 0 };
+        long id { 0 };
 
         bool id_has_error { false };
 
         try {
-            id = std::stoul(std::string { second_token });
+            id = std::stol(std::string { second_token });
         } catch (std::invalid_argument&) {
             id_has_error = true;
         } catch (std::out_of_range&) {
@@ -709,12 +736,12 @@ void input_handler_t::process_line(
 
         std::string_view second_token = tokens[1];
 
-        unsigned long id { 0 };
+        long id { 0 };
 
         bool id_has_error { false };
 
         try {
-            id = std::stoul(std::string { second_token });
+            id = std::stol(std::string { second_token });
         } catch (std::invalid_argument&) {
             id_has_error = true;
         } catch (std::out_of_range&) {

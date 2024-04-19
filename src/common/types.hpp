@@ -4,6 +4,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <deque>
+#include <vector>
 #include <mutex>
 
 namespace common {
@@ -108,6 +109,10 @@ private:
     std::deque<T> m_deque {};
     std::mutex m_mutex {};
     std::condition_variable m_cond_var {};
+};
+
+template <typename T> class vector_st {
+public:
 };
 
 template <typename T> class mutable_t;

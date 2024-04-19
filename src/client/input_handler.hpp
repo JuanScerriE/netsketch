@@ -22,11 +22,11 @@ private:
     void process_line(std::string_view line_view);
 
     // defaults
-    std::optional<unsigned long> m_selected_id {};
+    std::optional<long> m_selected_id {};
 
     common::option_e m_tool { common::option_e::LINE };
 
-    prot::colour_t m_colour { 255, 255, 255 };
+    prot::colour_t m_colour { 0, 0, 0 };
 
     bool m_should_exit { false };
 };

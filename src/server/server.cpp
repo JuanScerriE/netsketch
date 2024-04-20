@@ -15,7 +15,6 @@
 
 // std
 #include <cstdlib>
-#include <future>
 #include <list>
 
 // common
@@ -24,6 +23,9 @@
 
 // share
 #include <share.hpp>
+
+// threading
+#include <threading.hpp>
 
 #define BACKLOG (16)
 
@@ -34,7 +36,7 @@ server_t::server_t(uint16_t port)
 {
 }
 
-int server_t::operator()()
+void server_t::operator()()
 {
 #ifdef __APPLE__
     m_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -57,10 +59,10 @@ int server_t::operator()()
 #endif
 
     if (m_socket_fd == -1) {
-        log::error("could not create socket, reason: {}",
+        log.error("could not create socket, reason: {}",
             strerror(errno));
 
-        return EXIT_FAILURE;
+        return;
     }
 
     sockaddr_in server_addr {};
@@ -71,12 +73,12 @@ int server_t::operator()()
     if (bind(m_socket_fd, (sockaddr*)&server_addr,
             sizeof(server_addr))
         == -1) {
-        log::error("could not bind socket, reason: {}",
+        log.error("could not bind socket, reason: {}",
             strerror(errno));
 
         close(m_socket_fd);
 
-        return EXIT_FAILURE;
+        return;
     }
 
     // NOTE: the backlog parameter limits the number
@@ -84,88 +86,90 @@ int server_t::operator()()
     // queue.
     // TODO: check if the backlog can fail us
     if (listen(m_socket_fd, BACKLOG) == -1) {
-        log::error("could not listen on socket, reason: {}",
+        log.error("could not listen on socket, reason: {}",
             strerror(errno));
 
         close(m_socket_fd);
 
-        return EXIT_FAILURE;
+        return;
     }
 
-    log::info("server listening on port {}", m_port);
+    log.info("server listening on port {}", m_port);
 
     requests_loop();
+}
 
-    if (close(m_socket_fd) == -1) {
-        log::error("closing socket failed, reason: {}",
-            strerror(errno));
+void server_t::dtor()
+{
+    if (m_current_conn_fd != -1) {
+        threading::lock_guard guard {
+            share::e_connections_mutex
+        };
 
-        return EXIT_FAILURE;
+        if (shutdown(m_current_conn_fd, SHUT_WR) == -1) {
+            log.error("connection shutdown failed, "
+                      "reason: {}",
+                strerror(errno));
+        }
+
+        if (close(m_current_conn_fd) == -1) {
+            AbortV("closing connection failed, reason: {}",
+                strerror(errno));
+        }
+
+        share::e_connections.erase(m_current_conn_fd);
     }
 
-    log::info("socket closed");
+    for (auto& thread : share::e_threads) {
+        thread.join();
+    }
 
-    return EXIT_SUCCESS;
+    if (close(m_socket_fd) == -1) {
+        log.error("closing socket failed, reason: {}",
+            strerror(errno));
+
+        return;
+    }
+
+    log.info("socket closed");
+
+    log.flush();
 }
 
 void server_t::requests_loop()
 {
-    std::list<std::future<void>> futures {};
-
     for (;;) {
         sockaddr_in addr {};
+
         socklen_t addr_len { sizeof(sockaddr_in) };
 
-        // we need to poll here (these get
-        // optimised out)
-        constexpr nfds_t nfds { 2 };
-        constexpr size_t socket_idx { 0 };
-        constexpr size_t event_idx { 1 };
+        pollfd poll_fd = { m_socket_fd, POLLIN, 0 };
 
-        pollfd poll_fds[nfds] = {
-            { m_socket_fd, POLLIN, 0 },
-            { share::e_stop_event->read_fd(), POLLIN, 0 },
-        };
-
-        if (poll(poll_fds, nfds, -1) == -1) {
+        if (poll(&poll_fd, 1, -1) == -1) {
             if (errno == EINTR) {
                 // TODO: add info about interrupt
-                log::warn("poll interrupted");
+                log.warn("poll interrupted");
 
                 continue;
             }
 
-            AbortV("poll of socket or stop event failed, "
-                   "reason: {}",
+            AbortV("poll of socket failed, reason: {}",
                 strerror(errno));
         }
 
-        // we should first check for the
-        // stop event, if we ignore m_socket_fd
-        // that is fine I think since
-        // connections to the socket are first
-        // placed on queue before they become
-        // full connections
-
-        if (poll_fds[event_idx].revents & POLLIN) {
-            // break and stop everything
-            break;
-        }
-
-        if (!(poll_fds[socket_idx].revents & POLLIN)) {
-            // I think this should never be reached,
-            // but I am not a 100% sure
-            log::warn("unexpected socket event");
+        if (!(poll_fd.revents & POLLIN)) {
+            // TODO: investigate when this happens if at all
+            log.warn("unexpected socket event");
 
             continue;
         }
 
-        int conn_fd = accept(
+        m_current_conn_fd = accept(
             m_socket_fd, (sockaddr*)&addr, &addr_len);
 
-        if (conn_fd == -1) {
-            log::warn("accepting incoming connection "
-                      "failed, reason: {}",
+        if (m_current_conn_fd == -1) {
+            log.warn("accepting incoming connection "
+                     "failed, reason: {}",
                 strerror(errno));
 
             continue;
@@ -174,7 +178,7 @@ void server_t::requests_loop()
         // Make sure that the connection is
         // blocking just to be safe, you never
         // know someone might try to run
-        // your code on System V or BSD God knows.
+        // the code on System V or BSD, God knows.
         //
         // Due to the Versions section in
         // the man page accept(2):
@@ -187,30 +191,100 @@ void server_t::requests_loop()
         //    noninheritance of file status flags and always
         //    explicitly set all required flags on the
         //    socket returned from accept().
-        int saved_flags = fcntl(conn_fd, F_GETFL);
+        int saved_flags = fcntl(m_current_conn_fd, F_GETFL);
         AbortIfV(saved_flags == -1,
             "updating the connection file descriptor "
             "failed, reason {}",
             strerror(errno));
-        int is_non_blocking = fcntl(
-            conn_fd, F_SETFL, saved_flags & ~O_NONBLOCK);
+        int is_non_blocking = fcntl(m_current_conn_fd,
+            F_SETFL, saved_flags & ~O_NONBLOCK);
         AbortIfV(is_non_blocking == -1,
             "attempt to modify the connection file "
             "descriptor "
             "failed, reason {}",
             strerror(errno));
 
-        share::e_connections.push_back(conn_fd);
+        // NOTE: e_connection can be in the process
+        // of being read from by the updater thread. So we
+        // should lock
+        {
+            threading::lock_guard guard {
+                share::e_connections_mutex
+            };
 
-        futures.push_back(std::async(std::launch::async,
-            conn_handler_t { conn_fd, addr }));
-    }
+            share::e_connections.insert(m_current_conn_fd);
+        }
 
-    for (auto& future : futures) {
-        // maybe we should use wait_for()? Just
-        // in case something hangs?
-        future.wait();
+        // Additionally, if we receive a SIGINT
+        // here we'd have an open connection
+        // but no conn_handler thread which will
+        // close the connection upon exit.
+        //
+        // The above is wrong we only stop
+        // at cancellation points if we receive a
+        // cancel which good.
+
+        {
+            threading::lock_guard guard {
+                share::e_threads_mutex
+            };
+
+            threading::pthread::test_cancel();
+
+            // So, what we'll do is we will test for
+            // cancellation after acquiring the lock. This
+            // ensures that if a cancellation happened
+            // we just unwind and we never start the thread
+            // and we never reset the m_current_conn_fd
+            // essentially allowing us to close it in the
+            // dtor of the server (this is fine since a
+            // server can only handle one connection at a
+            // time). We don't need to worry about it
+            // being already pushed on the e_connections
+            // list, since as far as I can tell it does
+            // not yield any effects.
+            //
+            // TODO: test this out a bit more since there
+            // is the possibility of more bugs
+            //
+            // Actually, all the above analysis is not
+            // need the program will only stop at specified
+            // cancellation points and because of this the
+            // thread will be started. The only issue I have
+            // with this approach is that it will go through
+            // all of this and if it receives a cancel it
+            // will open another thread which did not
+            // receive a cancellation yet. Hence we have to
+            // test for a cancellation before we actually
+            // start the thread cancelled if cancelling if
+            // properly done.
+
+            share::e_threads.emplace_back(
+                conn_handler_t { m_current_conn_fd, addr });
+
+            m_current_conn_fd = -1;
+
+            // trim any finished threads
+            share::e_threads.erase(
+                std::remove_if(share::e_threads.begin(),
+                    share::e_threads.end(),
+                    [](auto& thread) {
+                        return !thread.is_alive();
+                    }),
+                share::e_threads.end());
+        }
+
+        log.flush();
     }
+}
+
+logging::log server_t::log {};
+
+void server_t::setup_logging()
+{
+    using namespace logging;
+
+    log.set_level(log::level::debug);
 }
 
 } // namespace server

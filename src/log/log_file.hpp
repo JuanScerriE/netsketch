@@ -8,19 +8,18 @@
 // fmt
 #include <fmt/core.h>
 
-// client
+// common
 #include <abort.hpp>
 
-namespace common {
+namespace logging {
 
-class log_file_t {
+class log_file {
 public:
-    log_file_t() = default;
+    log_file() = default;
 
-    log_file_t(const common::log_file_t&) = delete;
+    log_file(const log_file&) = delete;
 
-    log_file_t& operator=(const common::log_file_t&)
-        = delete;
+    log_file& operator=(const log_file&) = delete;
 
     void open(const std::string& filename) noexcept
     {
@@ -35,7 +34,7 @@ public:
 
     [[nodiscard]] bool is_open() const noexcept
     {
-        return !m_file;
+        return m_file;
     }
 
     [[nodiscard]] char* reason() const noexcept
@@ -122,4 +121,4 @@ private:
     FILE* m_file { nullptr };
 };
 
-} // namespace common
+} // namespace logging

@@ -14,9 +14,11 @@ namespace client {
 
 class input_handler_t {
 public:
-    void start();
-
     void operator()();
+
+    void shutdown();
+
+    void dtor();
 
 private:
     void process_line(std::string_view line_view);

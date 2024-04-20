@@ -9,35 +9,37 @@
 // std
 #include <string>
 
+// threading
+#include <threading.hpp>
+
 namespace client::share {
 
-// NOTE: for these two variables below we
-// are not using atomics since
-// only one thread writes whilst the others
-// only read additionally, since these are
-// just primitive types there is not complexity
-// in operations (might change these)
+extern threading::pthread reader_thread;
+extern threading::pthread writer_thread;
 
-// used to stop the hole program
+extern threading::pthread input_thread;
+
+// used to stop the gui
 extern common::readonly_t<bool> e_stop_gui;
 
-// used in the gui to decided which file
+// used in the gui to decided which draws
 // to show
 extern common::readonly_t<bool> e_show_mine;
 
-extern common::event_t* e_stop_event;
-
 // log file
-extern common::log_file_t e_log_file;
+extern logging::log_file e_log_file;
 
-// queues
-extern common::queue_st<std::string> e_reader_queue;
-
-extern common::queue_st<prot::tagged_command_t>
+// writer queue
+extern common::ts_queue<prot::tagged_command_t>
     e_writer_queue;
 
 // nickname
 extern std::string e_nickname;
+
+// TODO: figure out a better data structure which
+// allows for reading with out locking or acquiring a
+// mutex
+extern common::ts_queue<std::string> e_reader_queue;
 
 extern prot::tagged_draw_list_t* current_list;
 extern prot::tagged_draw_list_t lists[2];

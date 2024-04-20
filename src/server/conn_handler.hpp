@@ -17,19 +17,14 @@ public:
 
     void operator()();
 
+    void dtor();
+
 private:
     void setup_readable_net_info();
-    void send_full_list();
-    void handle_payload(const util::byte_vector& payload);
 
-    template <typename... T>
-    void addr_log( // specific log
-        log::level log_level, fmt::format_string<T...> fmt,
-        T&&... args)
-    {
-        log::write(log_level, "[{}:{}] {}", m_ipv4, m_port,
-            fmt::format(fmt, args...));
-    }
+    void send_full_list();
+
+    void handle_payload(const util::byte_vector& payload);
 
     int m_conn_fd {};
 
@@ -38,6 +33,12 @@ private:
     std::string m_ipv4 {};
 
     uint16_t m_port {};
+
+    // logging
+    static logging::log log;
+
+    static void setup_logging(
+        std::string ipv4, uint16_t port);
 };
 
 } // namespace server

@@ -1,7 +1,11 @@
 #pragma once
 
+// logging
+#include <log.hpp>
+
 #include "protocol.hpp"
 #include "utils.hpp"
+
 namespace client {
 
 class reader_t {
@@ -9,6 +13,8 @@ public:
     explicit reader_t(int conn_fd);
 
     void operator()();
+
+    void dtor();
 
 private:
     void handle_loop();
@@ -20,6 +26,11 @@ private:
     void update_whole_list(prot::tagged_draw_list_t& list);
 
     const int m_conn_fd;
+
+    // logging
+    static logging::log log;
+
+    static void setup_logging();
 };
 
 } // namespace client

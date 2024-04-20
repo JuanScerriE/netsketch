@@ -1,5 +1,6 @@
 // server
 #include "serial.hpp"
+#include "threading.hpp"
 #include <conn_handler.hpp>
 
 // unix
@@ -51,71 +52,37 @@ void conn_handler_t::operator()()
 {
     setup_readable_net_info();
 
-    log::set_level(log::level::debug);
+    setup_logging(m_ipv4, m_port);
 
-    log::info(
+    log.info(
         "received a connection from {}:{}", m_ipv4, m_port);
 
     send_full_list();
 
-    constexpr nfds_t nfds { 2 };
-
-    constexpr size_t conn_idx { 0 };
-    constexpr size_t event_idx { 1 };
-
     for (;;) {
-        pollfd poll_fds[nfds] = {
-            { m_conn_fd, POLLIN, 0 },
-            { share::e_stop_event->read_fd(), POLLIN, 0 },
-        };
+        pollfd poll_fd = { m_conn_fd, POLLIN, 0 };
 
-        if (poll(poll_fds, nfds, 10 * MINUTE) == -1) {
-            addr_log(log::level::error,
+        if (poll(&poll_fd, 1, 10 * MINUTE) == -1) {
+            log.error(
                 "poll of connection failed, reason: {}",
                 strerror(errno));
 
             break;
         }
 
-        addr_log(log::level::debug,
-            "wake up reasons Socket({}, {}, {}), Event({}, "
-            "{}, {})",
-            (poll_fds[conn_idx].revents & POLLIN) ? "POLLIN"
-                                                  : "",
-            (poll_fds[conn_idx].revents & POLLHUP)
-                ? "POLLHUP"
-                : "",
-            (poll_fds[conn_idx].revents & POLLERR)
-                ? "POLLERR"
-                : "",
-            (poll_fds[event_idx].revents & POLLIN)
-                ? "POLLIN"
-                : "",
-            (poll_fds[event_idx].revents & POLLHUP)
-                ? "POLLHUP"
-                : "",
-            (poll_fds[event_idx].revents & POLLERR)
-                ? "POLLERR"
-                : "");
+        log.debug("wake up reasons {}, {}, {}",
+            (poll_fd.revents & POLLIN) ? "POLLIN" : "",
+            (poll_fd.revents & POLLHUP) ? "POLLHUP" : "",
+            (poll_fd.revents & POLLERR) ? "POLLERR" : "");
 
-        if (poll_fds[conn_idx].revents & POLLHUP) {
-            addr_log(
-                log::level::info, "closing tcp connection");
+        if (poll_fd.revents & POLLHUP) {
+            log.info("closing tcp connection");
 
             break;
         }
 
-        if (!(poll_fds[conn_idx].revents & POLLIN)
-            || poll_fds[event_idx].revents & POLLIN) {
-            addr_log(log::level::info,
-                "server initiated closing");
-
-            if (shutdown(m_conn_fd, SHUT_WR) == -1) {
-                log::error(
-                    "connection shutdown failed, reason: "
-                    "{}",
-                    strerror(errno));
-            }
+        if (!(poll_fd.revents & POLLIN)) {
+            log.info("server initiated closing");
 
             break;
         }
@@ -126,9 +93,8 @@ void conn_handler_t::operator()()
             m_conn_fd, &header, sizeof(prot::header_t));
 
         if (header_size == -1) {
-            addr_log(log::level::warn,
-                "reading from connection failed, reason: "
-                "{}",
+            log.warn("reading from connection failed, "
+                     "reason: {}",
                 strerror(errno));
 
             continue;
@@ -138,40 +104,30 @@ void conn_handler_t::operator()()
             // we will assume that if header_size == 0 and
             // the poll returns POLLIN that the write end of
             // the connection was close
-            addr_log(log::level::warn,
-                "input of length 0 bytes, hence client "
-                "closed write");
+            log.warn("input of length 0 bytes, hence "
+                     "client closed write");
 
-            if (shutdown(m_conn_fd, SHUT_WR) == -1) {
-                addr_log(log::level::error,
-                    "connection shutdown failed, reason: "
-                    "{}",
-                    strerror(errno));
-            }
-
-            continue;
+            break;
         }
 
         if (static_cast<size_t>(header_size)
             < sizeof(prot::header_t)) {
-            addr_log(log::level::warn,
-                "smallest possible read is {} bytes "
-                "instead got {} bytes",
+            log.warn("smallest possible read is {} bytes "
+                     "instead got {} bytes",
                 sizeof(prot::header_t), header_size);
 
             continue;
         }
 
         if (header.is_malformed()) {
-            addr_log(log::level::warn,
+            log.warn(
                 "expected header start {} instead got {}",
                 MAGIC_BYTES, header.magic_bytes);
 
             continue;
         }
 
-        addr_log(log::level::debug,
-            "expected payload size is {} bytes",
+        log.debug("expected payload size is {} bytes",
             header.payload_size);
 
         util::byte_vector payload { header.payload_size };
@@ -180,7 +136,7 @@ void conn_handler_t::operator()()
             m_conn_fd, payload.data(), header.payload_size);
 
         if (actual_size == -1) {
-            addr_log(log::level::warn,
+            log.warn(
                 "continued reading from connection failed, "
                 "reason: {}",
                 strerror(errno));
@@ -190,10 +146,9 @@ void conn_handler_t::operator()()
 
         if (static_cast<size_t>(actual_size)
             < header.payload_size) {
-            addr_log(log::level::warn,
-                "header_size of payload ({} bytes) is "
-                "smaller than expected "
-                "({} bytes)",
+            log.warn("header_size of payload ({} bytes) is "
+                     "smaller than expected "
+                     "({} bytes)",
                 actual_size, header.payload_size);
 
             continue;
@@ -202,30 +157,46 @@ void conn_handler_t::operator()()
         try {
             handle_payload(payload);
         } catch (util::serial_error_t& err) {
-            addr_log(log::level::warn,
-                "handling payload failed, reason: {}",
+            log.warn("handling payload failed, reason: {}",
                 err.what());
         } catch (std::runtime_error& err) {
-            addr_log(log::level::warn,
-                "handling payload failed, reason: {}",
+            log.warn("handling payload failed, reason: {}",
                 err.what());
         }
+
+        log.flush();
     }
 
-    addr_log(
-        log::level::info, "closing connection handler");
+    log.info("closing connection handler");
+}
 
-    // TODO: make sure to update the e_connections
-    // that is, remove the connection from
-    // e_connections because the updater will
-    // still use try to send to that (technically
-    // it still shouldn't fail it just gives
-    // us an error but that's no good)
+void conn_handler_t::dtor()
+{
+    // make sure to update the e_connections that is, remove
+    // the connection from e_connections because the updater
+    // will still try to send to the connection (technically
+    // it still shouldn't fail it just gives us an error but
+    // that's no good)
+    {
+        threading::lock_guard guard {
+            share::e_connections_mutex
+        };
 
-    if (close(m_conn_fd) == -1) {
-        AbortV("closing connection failed, reason: {}",
-            strerror(errno));
+        if (shutdown(m_conn_fd, SHUT_WR) == -1) {
+            log.error("connection shutdown failed, "
+                      "reason: {}",
+                strerror(errno));
+        }
+
+        if (close(m_conn_fd) == -1) {
+            AbortV("closing connection failed, reason: {}",
+                strerror(errno));
+        }
+
+        share::e_connections.erase(m_conn_fd);
     }
+
+    log.flush();
 }
 
 void conn_handler_t::send_full_list()
@@ -255,28 +226,28 @@ void conn_handler_t::send_full_list()
         packet.push_back(byte);
     }
 
-    log::debug("payload size {}", payload.size());
+    log.debug("payload size {}", payload.size());
 
-    log::debug("packet size {}", packet.size());
+    log.debug("packet size {}", packet.size());
 
     pollfd conn_poll { m_conn_fd, POLLOUT, 0 };
 
     if (poll(&conn_poll, 1, -1) == -1) {
-        log::error("poll of connection failed, reason: {}",
+        log.error("poll of connection failed, reason: {}",
             strerror(errno));
 
         return;
     }
 
     if (conn_poll.revents & POLLHUP) {
-        log::error("connection hung up");
+        log.error("connection hung up");
 
         return;
     }
 
     if (write(m_conn_fd, packet.data(), packet.size())
         == -1) {
-        log::error(
+        log.error(
             "writing to connection failed, reason: {}",
             strerror(errno));
 
@@ -301,11 +272,23 @@ void conn_handler_t::handle_payload(
 
     // NOTE: if we block on the push queue we might actually
     // miss data or overflow data that is sent to us in
-    // buffer.
+    // buffer. That's what we are doing right now
     share::e_command_queue.push_back(
         std::get<prot::tagged_command_t>(payload_object));
     share::e_draw_list.update(
         std::get<prot::tagged_command_t>(payload_object));
+}
+
+logging::log conn_handler_t::log {};
+
+void conn_handler_t::setup_logging(
+    std::string ipv4, uint16_t port)
+{
+    using namespace logging;
+
+    log.set_level(log::level::debug);
+
+    log.set_prefix(fmt::format("[{}:{}]", ipv4, port));
 }
 
 } // namespace server

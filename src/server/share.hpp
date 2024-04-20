@@ -1,7 +1,11 @@
 #pragma once
 
+// std
+#include <list>
+#include <unordered_set>
+
 // common
-#include "draw_list.hpp"
+#include <draw_list.hpp>
 #include <types.hpp>
 
 // server
@@ -10,13 +14,24 @@
 // protocol
 #include <protocol.hpp>
 
+// threading
+#include <threading.hpp>
+
 namespace server::share {
 
-extern common::event_t* e_stop_event;
+extern threading::mutex e_threads_mutex;
 
-extern std::vector<int> e_connections;
+extern std::list<threading::pthread> e_threads;
 
-extern common::queue_st<prot::tagged_command_t>
+extern threading::pthread e_updater_thread;
+
+extern threading::pthread e_server_thread;
+
+extern threading::mutex e_connections_mutex;
+
+extern std::unordered_set<int> e_connections;
+
+extern common::ts_queue<prot::tagged_command_t>
     e_command_queue;
 
 extern common::ts_draw_list e_draw_list;

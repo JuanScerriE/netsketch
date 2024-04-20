@@ -51,12 +51,7 @@ void input_parser_t::scan_token()
         string();
         break;
     default:
-        if (is_alpha_numeric(c)) {
-            identifier();
-        } else {
-            throw std::runtime_error(fmt::format(
-                "unexpected start token {}", c));
-        }
+        identifier();
         break;
     }
 }
@@ -110,6 +105,25 @@ void input_parser_t::string()
     m_tokens.push_back(value);
 }
 
+void input_parser_t::number()
+{
+    while (is_digit(peek())) {
+        advance();
+    }
+
+    // look for fractional part
+    if (peek() == '.' && is_digit(peek_next())) {
+        // consume the "."
+        advance();
+        while (is_digit(peek())) {
+            advance();
+        }
+    }
+
+    m_tokens.push_back(
+        m_source.substr(m_start, m_current - m_start));
+}
+
 char input_parser_t::peek_next()
 {
     if (m_current + 1 >= m_source.length()) {
@@ -121,7 +135,7 @@ char input_parser_t::peek_next()
 
 void input_parser_t::identifier()
 {
-    while (is_alpha_numeric(peek())) {
+    while (!is_at_end() && !is_space(peek())) {
         advance();
     }
 
@@ -129,6 +143,11 @@ void input_parser_t::identifier()
         m_current - m_start };
 
     m_tokens.push_back(value);
+}
+
+bool input_parser_t::is_space(char c)
+{
+    return c == ' ' || c == '\r' || c == '\t' || c == '\n';
 }
 
 bool input_parser_t::is_digit(char c)

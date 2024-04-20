@@ -1,32 +1,33 @@
 // client
+#include <cstdlib>
 #include <gui.hpp>
 #include <input_handler.hpp>
 #include <log_file.hpp>
 #include <network_manager.hpp>
 
 // common
-#include <log.hpp>
 #include <types.hpp>
+
+// threading
+#include <threading.hpp>
 
 // std
 #include <regex>
-#include <thread>
 
 // unix
 #include <arpa/inet.h>
-#include <unistd.h>
 
 // cli11
 #include <CLI/App.hpp>
 #include <CLI/CLI.hpp>
 #include <CLI/Validators.hpp>
 
-// share
-#include <share.hpp>
-
 // fmt
 #include <fmt/chrono.h>
-#include <fmt/core.h>
+#include <fmt/format.h>
+
+// share
+#include <share.hpp>
 
 struct IPv4Validator : public CLI::Validator {
     IPv4Validator()
@@ -53,8 +54,8 @@ int main(int argc, char** argv)
 {
     CLI::App app;
 
-    std::string ipv4_addr { "127.0.0.1" };
-    app.add_option("--server", ipv4_addr,
+    std::string ipv4_addr_str { "127.0.0.1" };
+    app.add_option("--server", ipv4_addr_str,
            "The IPv4 address of a machine hosting a "
            "NetSketch server")
         ->capture_default_str()
@@ -78,22 +79,18 @@ int main(int argc, char** argv)
 
     in_addr addr {};
 
-    if (inet_pton(AF_INET, ipv4_addr.c_str(), &addr) <= 0) {
+    if (inet_pton(AF_INET, ipv4_addr_str.c_str(), &addr)
+        <= 0) {
         // NOTE: not using AbortIf since the above is
         // actually causing a mutation, so I just
         // want that to be clear
         Abort("invalid IPv4 address");
     }
 
-    // NOTE: this is in human-readable form
-    uint32_t ipv4_addr_int = ntohl(addr.s_addr);
+    // NOTE: this is in host-readable form
+    uint32_t ipv4_addr = ntohl(addr.s_addr);
 
-    common::event_t stop_event {};
-
-    client::share::e_stop_event = &stop_event;
-
-    log::set_level(log::level::debug);
-
+    // create a log file
     using std::chrono::system_clock;
 
     auto now = system_clock::now();
@@ -101,46 +98,39 @@ int main(int argc, char** argv)
     client::share::e_log_file.open(fmt::format(
         "netsketch-client-log {:%Y-%m-%d %H:%M:%S}", now));
 
-    if (client::share::e_log_file.error()) {
-        log::warn("opening a log file failed, reason: {}",
-            client::share::e_log_file.reason());
-    } else {
-        log::set_file(client::share::e_log_file);
+    AbortIfV(client::share::e_log_file.error(),
+        "opening a log file failed, reason: {}",
+        client::share::e_log_file.reason());
+
+    client::network_manager_t manager { ipv4_addr, port };
+
+    if (!manager.setup()) {
+        if (client::share::e_log_file.is_open()) {
+            client::share::e_log_file.close();
+        }
+
+        fmt::println("error: failed to connect to server");
+
+        return EXIT_FAILURE;
     }
 
-    // this is the first since the
-    // network handler and the input handler both
-    // have a reference to the gui
+    client::share::input_thread
+        = threading::pthread { client::input_handler_t {} };
+
     client::gui_t gui {};
-
-    std::thread network_thread { client::network_manager_t {
-        ipv4_addr_int,
-        port,
-    } };
-
-    // the input thread has the main control
-    std::thread input_thread { client::input_handler_t {} };
 
     // NOTE: we are running the GUI in the main
     // thread because of macOS, that is macOS
-    // does not like the GLFW which raylib uses
+    // does not like GLFW which raylib uses
     // running in a separate thread
     gui();
 
-    input_thread.join();
-    network_thread.join();
+    client::share::input_thread.join();
 
-    // gui closes last with the end of the program
+    manager.close();
 
-    // NOTE: one must be careful here since we are
-    // closing our log file before the gui.
     if (client::share::e_log_file.is_open()) {
         client::share::e_log_file.close();
-
-        // because of the above note we reset
-        // to stderr to get other errors if there
-        // are any
-        log::set_file(stderr);
     }
 
     return 0;

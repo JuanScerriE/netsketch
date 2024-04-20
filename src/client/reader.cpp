@@ -17,6 +17,7 @@
 // unix
 #include <netinet/in.h>
 #include <poll.h>
+#include <sys/poll.h>
 #include <unistd.h>
 #include <variant>
 
@@ -27,77 +28,36 @@ reader_t::reader_t(int conn_fd)
 {
 }
 
-void reader_t::operator()() { handle_loop(); }
+void reader_t::operator()()
+{
+    setup_logging();
+
+    handle_loop();
+}
 
 void reader_t::handle_loop()
 {
-    constexpr nfds_t nfds { 2 };
-
-    constexpr size_t socket_idx { 0 };
-    constexpr size_t event_idx { 1 };
-
     for (;;) {
-        pollfd poll_fds[nfds] = {
-            { m_conn_fd, POLLIN, 0 },
-            { share::e_stop_event->read_fd(), POLLIN, 0 },
-        };
+        pollfd poll_fd = { m_conn_fd, POLLIN, 0 };
 
-        if (poll(poll_fds, nfds, -1) == -1) {
-            log::error(
+        if (poll(&poll_fd, 1, -1) == -1) {
+            log.error(
                 "poll of connection failed, reason: {}",
                 strerror(errno));
 
             break;
         }
 
-        log::debug(
-            "wake up reasons Conn({}, {}, {}), Stop({}, "
-            "{}, {})",
-            (poll_fds[socket_idx].revents & POLLIN)
-                ? "POLLIN"
-                : "",
-            (poll_fds[socket_idx].revents & POLLHUP)
-                ? "POLLHUP"
-                : "",
-            (poll_fds[socket_idx].revents & POLLERR)
-                ? "POLLERR"
-                : "",
-            (poll_fds[event_idx].revents & POLLIN)
-                ? "POLLIN"
-                : "",
-            (poll_fds[event_idx].revents & POLLHUP)
-                ? "POLLHUP"
-                : "",
-            (poll_fds[event_idx].revents & POLLERR)
-                ? "POLLERR"
-                : "");
+        log.debug("wake up reasons ({}, {}, {})",
+            (poll_fd.revents & POLLIN) ? "POLLIN" : "",
+            (poll_fd.revents & POLLHUP) ? "POLLHUP" : "",
+            (poll_fd.revents & POLLERR) ? "POLLERR" : "");
 
-        if (poll_fds[socket_idx].revents & POLLHUP) {
-            log::info("closing tcp connection");
+        if (poll_fd.revents & POLLHUP) {
+            log.info("closing tcp connection");
 
             break;
         }
-
-        if (poll_fds[event_idx].revents & POLLIN) {
-            log::info("initiated closing");
-
-            if (shutdown(m_conn_fd, SHUT_WR) == -1) {
-                log::error(
-                    "connection shutdown failed, reason: "
-                    "{}",
-                    strerror(errno));
-            }
-
-            // NOTE: waiting on POLLHUP to actually exit
-            // seems to be a bad idea since by the time
-            // actually get a POLLHUP we would have
-            // iterated and checked the event mutltiple
-            // times.
-            break;
-        }
-
-        AbortIf(!(poll_fds[socket_idx].revents & POLLIN),
-            "expected POLLIN");
 
         prot::header_t header {};
 
@@ -105,9 +65,8 @@ void reader_t::handle_loop()
             m_conn_fd, &header, sizeof(prot::header_t));
 
         if (header_size == -1) {
-            log::warn(
-                "reading from connection failed, reason: "
-                "{}",
+            log.warn("reading from connection failed, "
+                     "reason: {}",
                 strerror(errno));
 
             continue;
@@ -117,38 +76,37 @@ void reader_t::handle_loop()
             // we will assume that if header_size == 0 and
             // the poll returns POLLIN that the write end of
             // the connection was close
-            log::warn(
-                "input of length 0 bytes (server closed "
-                "write)");
+            log.warn("input of length 0 bytes (server "
+                     "closed write)");
 
             if (shutdown(m_conn_fd, SHUT_WR) == -1) {
-                log::error(
-                    "connection shutdown failed, reason: "
-                    "{}",
+                log.error("connection shutdown failed, "
+                          "reason: {}",
                     strerror(errno));
             }
 
-            continue;
+            // for now break
+            break;
         }
 
         if (static_cast<size_t>(header_size)
             < sizeof(prot::header_t)) {
-            log::warn("smallest possible read is {} bytes "
-                      "instead got {} bytes",
+            log.warn("smallest possible read is {} bytes "
+                     "instead got {} bytes",
                 sizeof(prot::header_t), header_size);
 
             continue;
         }
 
         if (header.is_malformed()) {
-            log::warn(
+            log.warn(
                 "expected header start {} instead got {}",
                 MAGIC_BYTES, header.magic_bytes);
 
             continue;
         }
 
-        log::debug("expected payload size is {} bytes",
+        log.debug("payload size is {} bytes",
             header.payload_size);
 
         util::byte_vector payload { header.payload_size };
@@ -157,9 +115,8 @@ void reader_t::handle_loop()
             m_conn_fd, payload.data(), header.payload_size);
 
         if (actual_size == -1) {
-            log::warn(
-                "continued reading from connection failed, "
-                "reason: {}",
+            log.warn("continued reading from connection "
+                     "failed, reason: {}",
                 strerror(errno));
 
             continue;
@@ -167,10 +124,8 @@ void reader_t::handle_loop()
 
         if (static_cast<size_t>(actual_size)
             < header.payload_size) {
-            log::warn(
-                "header_size of payload ({} bytes) is "
-                "smaller than expected "
-                "({} bytes)",
+            log.warn("header_size of payload ({} bytes) is "
+                     "smaller than expected ({} bytes)",
                 actual_size, header.payload_size);
 
             continue;
@@ -179,14 +134,39 @@ void reader_t::handle_loop()
         try {
             handle_payload(payload);
         } catch (util::serial_error_t& err) {
-            log::warn("handling payload failed, reason: {}",
+            log.warn("handling payload failed, reason: {}",
                 err.what());
         } catch (std::runtime_error& err) {
-            log::warn("handling payload failed, reason: {}",
+            log.warn("handling payload failed, reason: {}",
                 err.what());
+        }
+
+        log.flush();
+    }
+}
+
+void reader_t::dtor()
+{
+    log.info("initiated closing");
+
+    if (shutdown(m_conn_fd, SHUT_WR) == -1) {
+        if (errno == ENOTCONN) {
+            log.warn(
+                "connection shutdown failed, reason: {}",
+                strerror(errno));
+        } else {
+            log.error(
+                "connection shutdown failed, reason: {}",
+                strerror(errno));
         }
     }
 }
+
+// payload section
+//
+// (TODO: update the double buffer, cause currently
+// it is not thread-safe and with enough context
+// switching it will fail)
 
 void reader_t::handle_payload(util::byte_vector& payload)
 {
@@ -200,6 +180,8 @@ void reader_t::handle_payload(util::byte_vector& payload)
             = std::get<prot::tagged_command_t>(
                 payload_object);
         update_list(tagged_command);
+
+        return;
     }
 
     if (std::holds_alternative<prot::tagged_draw_t>(
@@ -207,6 +189,8 @@ void reader_t::handle_payload(util::byte_vector& payload)
         auto& tagged_draw
             = std::get<prot::tagged_draw_t>(payload_object);
         (void)tagged_draw;
+
+        return;
     }
 
     if (std::holds_alternative<prot::tagged_draw_list_t>(
@@ -216,6 +200,8 @@ void reader_t::handle_payload(util::byte_vector& payload)
                 payload_object);
 
         update_whole_list(tagged_draw_list);
+
+        return;
     }
 
     throw std::runtime_error("does not contain known type");
@@ -254,6 +240,21 @@ void reader_t::update_list(
         .update(tagged_command);
     share::current_list = &share::lists[index];
     share::lists[1 - index] = share::lists[index];
+}
+
+// end section
+
+logging::log reader_t::log {};
+
+void reader_t::setup_logging()
+{
+    using namespace logging;
+
+    log.set_level(log::level::debug);
+
+    log.set_prefix("[reader]");
+
+    log.set_file(share::e_log_file);
 }
 
 } // namespace client

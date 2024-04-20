@@ -1,11 +1,11 @@
 #pragma once
 
 // std
-#include <condition_variable>
 #include <cstdint>
 #include <deque>
-#include <vector>
-#include <mutex>
+
+// threading
+#include <threading.hpp>
 
 namespace common {
 
@@ -19,18 +19,18 @@ enum class option_e : uint8_t {
     TEXT
 };
 
-template <typename T> class queue_st {
+template <typename T> class ts_queue {
 public:
-    queue_st() = default;
+    ts_queue() = default;
 
-    queue_st(const queue_st&) = delete;
+    ts_queue(const ts_queue&) = delete;
 
-    queue_st& operator=(const queue_st&) = delete;
+    ts_queue& operator=(const ts_queue&) = delete;
 
     void push_back(const T& value)
     {
         {
-            std::scoped_lock<std::mutex> lock { m_mutex };
+            threading::lock_guard lock { m_mutex };
             m_deque.push_back(value);
         }
         m_cond_var.notify_one();
@@ -39,7 +39,7 @@ public:
     void push_back(T&& value)
     {
         {
-            std::scoped_lock<std::mutex> lock { m_mutex };
+            threading::lock_guard lock { m_mutex };
             m_deque.push_back(value);
         }
         m_cond_var.notify_one();
@@ -49,7 +49,7 @@ public:
     void emplace_back(Args&&... args)
     {
         {
-            std::scoped_lock<std::mutex> lock { m_mutex };
+            threading::lock_guard lock { m_mutex };
             m_deque.emplace_back(
                 std::forward<Args>(args)...);
         }
@@ -58,7 +58,7 @@ public:
 
     T pop_back()
     {
-        std::unique_lock<std::mutex> lock { m_mutex };
+        threading::unique_lock lock { m_mutex };
         m_cond_var.wait(lock,
             [this]() { return !this->m_deque.empty(); });
         T value = m_deque.back();
@@ -69,7 +69,7 @@ public:
     void push_front(const T& value)
     {
         {
-            std::scoped_lock<std::mutex> lock { m_mutex };
+            threading::lock_guard lock { m_mutex };
             m_deque.push_front(value);
         }
         m_cond_var.notify_one();
@@ -78,7 +78,7 @@ public:
     void push_front(T&& value)
     {
         {
-            std::scoped_lock<std::mutex> lock { m_mutex };
+            threading::lock_guard lock { m_mutex };
             m_deque.push_front(value);
         }
         m_cond_var.notify_one();
@@ -88,7 +88,7 @@ public:
     void emplace_front(Args&&... args)
     {
         {
-            std::scoped_lock<std::mutex> lock { m_mutex };
+            threading::lock_guard lock { m_mutex };
             m_deque.emplace_front(
                 std::forward<Args>(args)...);
         }
@@ -97,7 +97,7 @@ public:
 
     T pop_front()
     {
-        std::unique_lock<std::mutex> lock { m_mutex };
+        threading::unique_lock lock { m_mutex };
         m_cond_var.wait(lock,
             [this]() { return !this->m_deque.empty(); });
         T value = m_deque.front();
@@ -107,12 +107,8 @@ public:
 
 private:
     std::deque<T> m_deque {};
-    std::mutex m_mutex {};
-    std::condition_variable m_cond_var {};
-};
-
-template <typename T> class vector_st {
-public:
+    threading::mutex m_mutex {};
+    threading::cond_var m_cond_var {};
 };
 
 template <typename T> class mutable_t;
@@ -146,5 +142,38 @@ public:
 private:
     readonly_t<T>& m_readonly;
 };
+
+// class double_buffered_vector_t {
+// public:
+//    void write(size_t idx, float value) {
+//       std::lock_guard<std::mutex> lk(mutWrite);
+//       (*next)[idx] = value; // write to next buffer
+//    }
+//
+//    float read(size_t idx) const {
+//       std::lock_guard<std::mutex> lk(mutRead);
+//       return (*current)[idx]; // read from current buffer
+//    }
+//
+//    void swap() noexcept {
+//       // Lock both mutexes safely using a deadlock avoidance algorithm
+//       std::lock(mutWrite, mutRead);
+//       std::lock_guard<std::mutex> lkWrite(mutWrite, std::adopt_lock);
+//       std::lock_guard<std::mutex> lkRead(mutRead, std::adopt_lock);
+//
+//       // In C++17, you can replace the 3 lines above with just the following:
+//       // std::scoped_lock lk( mutWrite, mutRead );
+//
+//       std::swap(current, next); // swap pointers
+//    }
+//
+//    Buffer() : buf0(32), buf1(32), current(&buf0), next(&buf1) { }
+// private:
+//    std::vector<float> buf0, buf1; // two buffers
+//    std::vector<float> *current, *next;
+//    mutable std::mutex mutRead;
+//    std::mutex mutWrite;
+//
+// };
 
 } // namespace common

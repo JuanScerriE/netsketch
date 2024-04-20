@@ -157,7 +157,8 @@ public:
 
         if (std::holds_alternative<tagged_draw_list_t>(
                 payload)) {
-            m_fserial.write(payload_type_e::TAGGED_DRAW_LIST);
+            m_fserial.write(
+                payload_type_e::TAGGED_DRAW_LIST);
 
             auto& tagged_draw_list
                 = std::get<tagged_draw_list_t>(payload);

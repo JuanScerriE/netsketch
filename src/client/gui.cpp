@@ -2,8 +2,9 @@
 #include <gui.hpp>
 
 // std
-#include <chrono>
 #include <cmath>
+#include <thread>
+#include <chrono>
 #include <typeinfo>
 #include <variant>
 
@@ -29,56 +30,9 @@ namespace client {
 
 void gui_t::operator()()
 {
-    AbortIf(m_in_game_loop,
-        "calling operator()() twice on a gui_t object");
-
-    SetTraceLogCallback(file_logger);
+    setup_logging();
 
     game_loop();
-}
-
-void gui_t::noop_logger(int, const char*, va_list)
-{
-    // do nothing
-}
-
-// HACK: this is quite an ugly piece of code.
-// I don't know how I am going to convert from
-// va_args to packted template arguements for use
-// with fmtlib. I honestly don't think its
-// possible since va_args is purely a runtime
-// construct and it would only work if you some
-// how port fmtlib to using va_args were every
-// specified.
-void gui_t::file_logger(
-    int msg_type, const char* text, va_list args)
-{
-    // TODO: add error handling for each call to printf (and
-    // friends)
-    switch (msg_type) {
-    case LOG_INFO:
-        fprintf(share::e_log_file.native_handle(),
-            "[RAYLIB][INFO]: ");
-        break;
-    case LOG_ERROR:
-        fprintf(share::e_log_file.native_handle(),
-            "[RAYLIB][ERROR]: ");
-        break;
-    case LOG_WARNING:
-        fprintf(share::e_log_file.native_handle(),
-            "[RAYLIB][WARN] : ");
-        break;
-    case LOG_DEBUG:
-        fprintf(share::e_log_file.native_handle(),
-            "[RAYLIB][DEBUG]: ");
-        break;
-    default:
-        break;
-    }
-
-    vfprintf(share::e_log_file.native_handle(), text, args);
-
-    fprintf(share::e_log_file.native_handle(), "\n");
 }
 
 [[nodiscard]] Color to_raylib_colour(prot::colour_t colour)
@@ -86,7 +40,7 @@ void gui_t::file_logger(
     return { colour.r, colour.g, colour.b, 255 };
 }
 
-inline void gui_t::process_draw(prot::draw_t& draw)
+void gui_t::process_draw(prot::draw_t& draw)
 {
     if (std::holds_alternative<prot::line_draw_t>(draw)) {
         auto& line = std::get<prot::line_draw_t>(draw);
@@ -117,7 +71,7 @@ inline void gui_t::process_draw(prot::draw_t& draw)
     if (std::holds_alternative<prot::text_draw_t>(draw)) {
         auto& text = std::get<prot::text_draw_t>(draw);
         DrawText(text.string.c_str(), text.x, text.y,
-            16, // NOTE: maybe change this?
+            20, // NOTE: maybe change this?
             to_raylib_colour(text.colour));
         return;
     }
@@ -137,6 +91,8 @@ inline void gui_t::draw_scene()
         }
     } else {
         for (auto& tagged_draw : *share::current_list) {
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(10ms);
             process_draw(tagged_draw.draw);
         }
     }
@@ -197,9 +153,6 @@ void gui_t::draw()
 
 void gui_t::game_loop()
 {
-    // mark as in_game_loop
-    m_in_game_loop = true;
-
     // window configuration flags
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 
@@ -260,6 +213,50 @@ void gui_t::game_loop()
     }
 
     CloseWindow(); // Close window and OpenGL context
+}
+
+logging::log gui_t::log {};
+
+void gui_t::setup_logging()
+{
+    using namespace logging;
+
+    log.set_level(log::level::debug);
+
+    log.set_prefix("[raylib]");
+
+    log.set_file(share::e_log_file);
+
+    SetTraceLogCallback(logger_wrapper);
+}
+
+void gui_t::logger_wrapper(
+    int msg_type, const char* fmt, va_list args)
+{
+    using namespace logging;
+
+    log::level log_level { log::level::info };
+
+    switch (msg_type) {
+    case LOG_DEBUG:
+        log_level = log::level::debug;
+        break;
+    case LOG_INFO:
+        log_level = log::level::info;
+        break;
+    case LOG_WARNING:
+        log_level = log::level::warn;
+        break;
+    case LOG_ERROR:
+        log_level = log::level::error;
+        break;
+    default:
+        break;
+    }
+
+    log.c_write(log_level, fmt, args);
+
+    log.flush();
 }
 
 } // namespace client

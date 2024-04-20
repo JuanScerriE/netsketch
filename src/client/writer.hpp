@@ -17,12 +17,16 @@ public:
 
     void operator()();
 
-    util::byte_vector get_message(
-        prot::tagged_command_t& tagged_command);
+    void dtor();
 
 private:
     // connection
     const int m_conn_fd;
+
+    // logging
+    static logging::log log;
+
+    static void setup_logging();
 };
 
 } // namespace client

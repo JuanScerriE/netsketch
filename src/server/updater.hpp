@@ -1,5 +1,6 @@
 #pragma once
 
+#include "threading.hpp"
 #include <log.hpp>
 #include <poll.h>
 #include <share.hpp>
@@ -10,6 +11,8 @@ class updater_t {
 public:
     [[noreturn]] void operator()()
     {
+        setup_logging();
+
         for (;;) {
             // block until we get something
             auto tagged_command
@@ -39,40 +42,64 @@ public:
                 packet.push_back(byte);
             }
 
-            log::debug(
+            log.debug(
                 "payload size {}", payload_bytes.size());
 
-            log::debug("packet size {}", packet.size());
+            log.debug("packet size {}", packet.size());
 
-            // NOTE: that the size of e_connections might change under our feet
-            for (int conn_fd : share::e_connections) {
-                pollfd conn_poll { conn_fd, POLLOUT, 0 };
+            {
+                threading::lock_guard guard {
+                    share::e_connections_mutex
+                };
 
-                if (poll(&conn_poll, 1, -1) == -1) {
-                    log::error("poll of connection failed, reason: {}",
-                        strerror(errno));
+                // NOTE: that the size of e_connections
+                // might change under our feet
+                for (int conn_fd : share::e_connections) {
+                    pollfd conn_poll { conn_fd, POLLOUT,
+                        0 };
 
-                    continue;
-                }
+                    if (poll(&conn_poll, 1, -1) == -1) {
+                        log.error(
+                            "poll of connection failed, "
+                            "reason: {}",
+                            strerror(errno));
 
-                if (conn_poll.revents & POLLHUP) {
-                    log::error("connection hung up");
+                        continue;
+                    }
 
-                    continue;
-                }
+                    if (conn_poll.revents & POLLHUP) {
+                        log.error("connection hung up");
 
-                if (write(conn_fd, packet.data(),
-                        packet.size())
-                    == -1) {
-                    log::error(
-                        "writing to connection failed, "
-                        "reason: {}",
-                        strerror(errno));
+                        continue;
+                    }
 
-                    continue;
+                    if (write(conn_fd, packet.data(),
+                            packet.size())
+                        == -1) {
+                        log.error(
+                            "writing to connection failed, "
+                            "reason: {}",
+                            strerror(errno));
+
+                        continue;
+                    }
                 }
             }
         }
+    }
+
+    void dtor() { }
+
+private:
+    static inline logging::log log {};
+
+    static void setup_logging()
+    {
+        using namespace logging;
+
+        log.set_level(log::level::debug);
+
+        log.set_prefix("[updater]");
     }
 };
 

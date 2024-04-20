@@ -1,6 +1,7 @@
 // server
-#include "updater.hpp"
+#include "threading.hpp"
 #include <server.hpp>
+#include <updater.hpp>
 
 // common
 #include <log.hpp>
@@ -23,30 +24,17 @@
 
 void sigint_handler(int)
 {
-    pollfd poll_fd {
-        server::share::e_stop_event->write_fd(), POLLOUT, 0
+    threading::lock_guard guard {
+        server::share::e_threads_mutex
     };
 
-    if (poll(&poll_fd, 1, -1) == -1) {
-        AbortV(
-            "poll of event file descriptor failed, reason: "
-            "{}",
-            strerror(errno));
+    for (auto& thread : server::share::e_threads) {
+        thread.cancel();
     }
 
-    if (!(poll_fd.revents & POLLOUT)) {
-        Abort("cannot write to event file descriptor");
-    }
+    server::share::e_updater_thread.cancel();
 
-    uint64_t inc = 1;
-
-    if (write(server::share::e_stop_event->write_fd(), &inc,
-            sizeof(uint64_t))
-        == -1) {
-        AbortV("failed to write to event file descriptor, "
-               "reason: {}",
-            strerror(errno));
-    }
+    server::share::e_server_thread.cancel();
 }
 
 int main(int argc, char** argv)
@@ -59,10 +47,6 @@ int main(int argc, char** argv)
         ->capture_default_str();
 
     CLI11_PARSE(app, argc, argv);
-
-    common::event_t stop_event {};
-
-    server::share::e_stop_event = &stop_event;
 
     // NOTE: are using sigaction because the man page for
     // signal says so
@@ -78,13 +62,20 @@ int main(int argc, char** argv)
             strerror(errno));
     }
 
-    std::thread updater { server::updater_t {} };
+    server::share::e_updater_thread
+        = threading::pthread { server::updater_t {} };
 
-    server::server_t server { port };
+    // NOTE: we are indeed wasting a bit of
+    // resources associated with the main thread,
+    // however, the wrapping & isolation provided
+    // by threading::pthread is too convenient to
+    // pass up on.
+    server::share::e_server_thread
+        = threading::pthread { server::server_t { port } };
 
-    int status = server();
+    server::share::e_server_thread.join();
 
-    updater.join();
+    server::share::e_updater_thread.join();
 
-    return status;
+    return 0;
 }

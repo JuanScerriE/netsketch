@@ -1,21 +1,18 @@
 // client
-#include "protocol.hpp"
-#include <cstring>
 #include <input_handler.hpp>
 #include <input_parser.hpp>
 
 // std
 #include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
 
-// unix
-#include <poll.h>
-
 // common
+#include <protocol.hpp>
 #include <types.hpp>
 
 // fmt
@@ -26,9 +23,7 @@
 
 namespace client {
 
-void input_handler_t::operator()() { start(); }
-
-void input_handler_t::start()
+void input_handler_t::operator()()
 {
     do {
         std::string line {};
@@ -40,24 +35,73 @@ void input_handler_t::start()
         process_line(line);
     } while (!m_should_exit);
 
-    pollfd poll_fd { share::e_stop_event->write_fd(),
-        POLLOUT, 0 };
+    shutdown();
+}
 
-    if (poll(&poll_fd, 1, -1) == -1) {
-        AbortV(
-            "poll of event file descriptor failed, reason: "
-            "{}",
-            strerror(errno));
-    }
-
-    if ((poll_fd.revents & POLLOUT) == 0) {
-        Abort("cannot write to event file descriptor");
-    }
-
-    share::e_stop_event->notify();
+void input_handler_t::shutdown()
+{
+    if (share::writer_thread.is_initialized()
+        && share::writer_thread.is_alive())
+        share::writer_thread.cancel();
+    if (share::reader_thread.is_initialized()
+        && share::reader_thread.is_alive())
+        share::reader_thread.cancel();
 
     // make sure to stop the gui
     common::mutable_t<bool> { share::e_stop_gui }() = true;
+}
+
+void print_draw(size_t index, prot::draw_t draw)
+{
+    if (std::holds_alternative<prot::line_draw_t>(draw)) {
+        auto& line = std::get<prot::line_draw_t>(draw);
+
+        fmt::println(
+            "[{}] => [line] [{} {} {}] [{} {} {} {}]",
+            index, line.colour.r, line.colour.g,
+            line.colour.b, line.x0, line.y0, line.x1,
+            line.y1);
+
+        return;
+    }
+
+    if (std::holds_alternative<prot::rectangle_draw_t>(
+            draw)) {
+        auto& rectangle
+            = std::get<prot::rectangle_draw_t>(draw);
+
+        fmt::println(
+            "[{}] => [rectangle] [{} {} {}] [{} {} {} {}]",
+            index, rectangle.colour.r, rectangle.colour.g,
+            rectangle.colour.b, rectangle.x, rectangle.y,
+            rectangle.w, rectangle.h);
+
+        return;
+    }
+
+    if (std::holds_alternative<prot::circle_draw_t>(draw)) {
+        auto& circle = std::get<prot::circle_draw_t>(draw);
+
+        fmt::println(
+            "[{}] => [circle] [{} {} {}] [{} {} {}]", index,
+            circle.colour.r, circle.colour.g,
+            circle.colour.b, circle.x, circle.y, circle.r);
+
+        return;
+    }
+
+    if (std::holds_alternative<prot::text_draw_t>(draw)) {
+        auto& text = std::get<prot::text_draw_t>(draw);
+
+        fmt::println(
+            "[{}] => [text] [{} {} {}] [{} {} \"{}\"]",
+            index, text.colour.r, text.colour.g,
+            text.colour.b, text.x, text.y, text.string);
+
+        return;
+    }
+
+    Abort("unreachable");
 }
 
 void input_handler_t::process_line(
@@ -208,7 +252,7 @@ void input_handler_t::process_line(
             red_has_error = true;
         }
 
-        if (!(0 < red_value && red_value < 256)) {
+        if (!(0 <= red_value && red_value < 256)) {
             red_has_error = true;
         }
 
@@ -234,7 +278,7 @@ void input_handler_t::process_line(
             green_has_error = true;
         }
 
-        if (!(0 < green_value && green_value < 256)) {
+        if (!(0 <= green_value && green_value < 256)) {
             green_has_error = true;
         }
 
@@ -260,7 +304,7 @@ void input_handler_t::process_line(
             blue_has_error = true;
         }
 
-        if (!(0 < blue_value && blue_value < 256)) {
+        if (!(0 <= blue_value && blue_value < 256)) {
             blue_has_error = true;
         }
 
@@ -524,13 +568,22 @@ void input_handler_t::process_line(
                 r = std::stof(tokens[3]);
             } catch (std::invalid_argument&) {
                 fmt::println(stderr,
-                    "warn: expected integer (32-bit) "
+                    "warn: expected float (32-bit) "
                     "for r");
 
                 return;
             } catch (std::out_of_range&) {
                 fmt::println(stderr,
-                    "warn: expected integer (32-bit) "
+                    "warn: expected float (32-bit) "
+                    "for r");
+
+                return;
+            }
+
+            if (0 > r) {
+                fmt::println(stderr,
+                    "warn: expected positive float "
+                    "(32-bit) "
                     "for r");
 
                 return;
@@ -618,6 +671,8 @@ void input_handler_t::process_line(
     }
 
     if (first_token == "list") {
+        using namespace common;
+
         if (tokens.size() != 3) {
             fmt::println(stderr,
                 "warn: an unexpected number of tokens for "
@@ -630,23 +685,30 @@ void input_handler_t::process_line(
 
         bool second_match { false };
 
+        option_e tool_qual { option_e::ALL };
+
         if (second_token == "all") {
+            tool_qual = option_e::ALL;
             second_match = true;
         }
 
         if (second_token == "line") {
+            tool_qual = option_e::LINE;
             second_match = true;
         }
 
         if (second_token == "rectangle") {
+            tool_qual = option_e::RECTANGLE;
             second_match = true;
         }
 
         if (second_token == "circle") {
+            tool_qual = option_e::CIRCLE;
             second_match = true;
         }
 
         if (second_token == "text") {
+            tool_qual = option_e::TEXT;
             second_match = true;
         }
 
@@ -662,11 +724,15 @@ void input_handler_t::process_line(
 
         bool third_match { false };
 
+        option_e user_qual { option_e::ALL };
+
         if (third_token == "all") {
+            user_qual = option_e::ALL;
             third_match = true;
         }
 
         if (third_token == "mine") {
+            user_qual = option_e::MINE;
             third_match = true;
         }
 
@@ -677,7 +743,100 @@ void input_handler_t::process_line(
             return;
         }
 
-        // handle
+        prot::tagged_draw_list_t list
+            = *share::current_list;
+
+        size_t index { 0 };
+
+        for (auto& tagged_draw : list) {
+            switch (user_qual) {
+            case option_e::ALL:
+                switch (tool_qual) {
+                case option_e::ALL:
+                    print_draw(index, tagged_draw.draw);
+                    break;
+                case option_e::LINE:
+                    if (std::holds_alternative<
+                            prot::line_draw_t>(
+                            tagged_draw.draw)) {
+                        print_draw(index, tagged_draw.draw);
+                    }
+                    break;
+                case option_e::RECTANGLE:
+                    if (std::holds_alternative<
+                            prot::rectangle_draw_t>(
+                            tagged_draw.draw)) {
+                        print_draw(index, tagged_draw.draw);
+                    }
+                    break;
+                case option_e::CIRCLE:
+                    if (std::holds_alternative<
+                            prot::circle_draw_t>(
+                            tagged_draw.draw)) {
+                        print_draw(index, tagged_draw.draw);
+                    }
+                    break;
+                case option_e::TEXT:
+                    if (std::holds_alternative<
+                            prot::text_draw_t>(
+                            tagged_draw.draw)) {
+                        print_draw(index, tagged_draw.draw);
+                    }
+                    break;
+                default:
+                    Abort("unreachable");
+                }
+                break;
+            case option_e::MINE:
+                if (share::e_nickname
+                    == tagged_draw.username) {
+                    switch (tool_qual) {
+                    case option_e::ALL:
+                        print_draw(index, tagged_draw.draw);
+                        break;
+                    case option_e::LINE:
+                        if (std::holds_alternative<
+                                prot::line_draw_t>(
+                                tagged_draw.draw)) {
+                            print_draw(
+                                index, tagged_draw.draw);
+                        }
+                        break;
+                    case option_e::RECTANGLE:
+                        if (std::holds_alternative<
+                                prot::rectangle_draw_t>(
+                                tagged_draw.draw)) {
+                            print_draw(
+                                index, tagged_draw.draw);
+                        }
+                        break;
+                    case option_e::CIRCLE:
+                        if (std::holds_alternative<
+                                prot::circle_draw_t>(
+                                tagged_draw.draw)) {
+                            print_draw(
+                                index, tagged_draw.draw);
+                        }
+                        break;
+                    case option_e::TEXT:
+                        if (std::holds_alternative<
+                                prot::text_draw_t>(
+                                tagged_draw.draw)) {
+                            print_draw(
+                                index, tagged_draw.draw);
+                        }
+                        break;
+                    default:
+                        Abort("unreachable");
+                    }
+                }
+                break;
+            default:
+                Abort("unreachable");
+            }
+
+            index++;
+        }
 
         return;
     }
@@ -711,7 +870,7 @@ void input_handler_t::process_line(
             id_has_error = true;
         }
 
-        if (!id_has_error) {
+        if (id_has_error) {
             fmt::println(stderr,
                 "warn: expected an 'none' or an "
                 "integer greater than "
@@ -748,7 +907,7 @@ void input_handler_t::process_line(
             id_has_error = true;
         }
 
-        if (!id_has_error) {
+        if (id_has_error) {
             fmt::println(stderr,
                 "warn: expected an integer greater than or "
                 "equal to 0 for ID");
@@ -803,7 +962,7 @@ void input_handler_t::process_line(
             share::e_writer_queue.push_front(
                 { share::e_nickname,
                     prot::clear_t {
-                        prot::qualifier_e::ALL } });
+                        prot::qualifier_e::MINE } });
 
             return;
         }
@@ -862,5 +1021,7 @@ void input_handler_t::process_line(
     fmt::println(stderr, "warn: {} is not a known command",
         first_token);
 }
+
+void input_handler_t::dtor() { }
 
 } // namespace client

@@ -27,6 +27,7 @@ private:
     char peek_next();
     void identifier();
 
+    static bool is_space(char c);
     static bool is_digit(char c);
     static bool is_alpha(char c);
     static bool is_alpha_numeric(char c);

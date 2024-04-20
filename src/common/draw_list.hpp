@@ -136,7 +136,7 @@ private:
             filtered_commands.reserve(m_vector.size());
 
             for (auto& tagged_draw : m_vector) {
-                if (tagged_draw.username == username) {
+                if (tagged_draw.username != username) {
                     filtered_commands.push_back(
                         std::move(tagged_draw));
                 }
@@ -155,7 +155,8 @@ private:
 
 class draw_list_wrapper {
 public:
-    explicit draw_list_wrapper(prot::tagged_draw_list_t& list)
+    explicit draw_list_wrapper(
+        prot::tagged_draw_list_t& list)
         : m_list(list)
     {
     }
@@ -265,7 +266,7 @@ private:
             filtered_commands.reserve(m_list.size());
 
             for (auto& tagged_draw : m_list) {
-                if (tagged_draw.username == username) {
+                if (tagged_draw.username != username) {
                     filtered_commands.push_back(
                         std::move(tagged_draw));
                 }

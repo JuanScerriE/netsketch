@@ -23,16 +23,6 @@ writer_t::writer_t(int conn_fd)
 {
 }
 
-util::byte_vector writer_t::get_message(
-    prot::tagged_command_t& tagged_command)
-{
-    prot::serialize_t serializer { tagged_command };
-
-    util::byte_vector payload_bytes = serializer.bytes();
-
-    return payload_bytes;
-}
-
 void writer_t::operator()()
 {
     for (;;) {
@@ -41,7 +31,9 @@ void writer_t::operator()()
             = share::e_writer_queue.pop_back();
 
         // serialize the command
-        auto payload = get_message(tagged_command);
+        prot::serialize_t serializer { tagged_command };
+
+        util::byte_vector payload = serializer.bytes();
 
         // setup the header
         prot::header_t header { MAGIC_BYTES,
@@ -60,14 +52,14 @@ void writer_t::operator()()
             packet.push_back(byte);
         }
 
-        log::debug("payload size {}", payload.size());
+        log.debug("payload size {}", payload.size());
 
-        log::debug("packet size {}", packet.size());
+        log.debug("packet size {}", packet.size());
 
         pollfd conn_poll { m_conn_fd, POLLOUT, 0 };
 
         if (poll(&conn_poll, 1, -1) == -1) {
-            log::error(
+            log.error(
                 "poll of connection failed, reason: {}",
                 strerror(errno));
 
@@ -75,20 +67,35 @@ void writer_t::operator()()
         }
 
         if (conn_poll.revents & POLLHUP) {
-            log::error("connection hung up");
+            log.error("connection hung up");
 
             return;
         }
 
         if (write(m_conn_fd, packet.data(), packet.size())
             == -1) {
-            log::error(
+            log.error(
                 "writing to connection failed, reason: {}",
                 strerror(errno));
 
             return;
         }
     }
+}
+
+void writer_t::dtor() { }
+
+logging::log writer_t::log {};
+
+void writer_t::setup_logging()
+{
+    using namespace logging;
+
+    log.set_level(log::level::debug);
+
+    log.set_prefix("[writer]");
+
+    log.set_file(share::e_log_file);
 }
 
 } // namespace client

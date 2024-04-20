@@ -3,11 +3,21 @@
 
 namespace server::share {
 
-common::event_t* e_stop_event { nullptr };
+threading::mutex e_threads_mutex {};
 
-std::vector<int> e_connections {};
+std::list<threading::pthread> e_threads {};
 
-common::queue_st<prot::tagged_command_t> e_command_queue {};
+threading::pthread e_updater_thread {};
+
+threading::pthread e_server_thread {};
+
+threading::mutex e_connections_mutex {};
+
+std::unordered_set<int> e_connections {};
+
+bool e_stop_server { false };
+
+common::ts_queue<prot::tagged_command_t> e_command_queue {};
 
 common::ts_draw_list e_draw_list {};
 

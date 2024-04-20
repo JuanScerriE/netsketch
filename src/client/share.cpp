@@ -3,6 +3,11 @@
 
 namespace client::share {
 
+threading::pthread reader_thread {};
+threading::pthread writer_thread {};
+
+threading::pthread input_thread {};
+
 // NOTE: for these two variables below we
 // are not using atomics since
 // only one thread writes whilst the others
@@ -21,11 +26,11 @@ common::readonly_t<bool> e_show_mine { false };
 common::event_t* e_stop_event { nullptr };
 
 // log file
-common::log_file_t e_log_file {};
+logging::log_file e_log_file {};
 
 // queues
-common::queue_st<std::string> e_reader_queue {};
-common::queue_st<prot::tagged_command_t> e_writer_queue {};
+common::ts_queue<std::string> e_reader_queue {};
+common::ts_queue<prot::tagged_command_t> e_writer_queue {};
 
 // nickname
 std::string e_nickname {};

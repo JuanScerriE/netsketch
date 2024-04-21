@@ -15,6 +15,10 @@ threading::mutex e_connections_mutex {};
 
 std::unordered_set<int> e_connections {};
 
+threading::mutex e_timers_mutex {};
+
+std::array<timer_t, MAX_CONNS> e_timers {};
+
 bool e_stop_server { false };
 
 common::ts_queue<prot::tagged_command_t> e_command_queue {};

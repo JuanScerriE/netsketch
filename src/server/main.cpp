@@ -24,6 +24,11 @@
 
 void sigint_handler(int)
 {
+    // HACK or BAD: according to the standard
+    // mutexs which in out case make use of
+    // pthread_mutex_lock and _unlock are not
+    // signal safe. Woops (seems to working
+    // though)
     threading::mutex_guard guard {
         server::share::e_threads_mutex
     };

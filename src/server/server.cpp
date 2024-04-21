@@ -27,7 +27,7 @@
 // threading
 #include <threading.hpp>
 
-#define BACKLOG (16)
+#define BACKLOG (MAX_CONNS)
 
 namespace server {
 
@@ -138,6 +138,8 @@ void server_t::dtor()
 
 void server_t::requests_loop()
 {
+    size_t num_of_conns { 0 };
+
     for (;;) {
         sockaddr_in addr {};
 
@@ -171,6 +173,93 @@ void server_t::requests_loop()
             log.warn("accepting incoming connection "
                      "failed, reason: {}",
                 strerror(errno));
+
+            continue;
+        }
+
+        pollfd check_poll_fd
+            = { m_current_conn_fd, POLLOUT, 0 };
+
+        if (poll(&check_poll_fd, 1, 60000) == -1) {
+            log.error(
+                "poll of connection failed, reason: {}",
+                strerror(errno));
+
+            if (close(m_current_conn_fd) == -1) {
+                AbortV("closing connection failed, "
+                       "reason: {}",
+                    strerror(errno));
+            }
+
+            continue;
+        }
+
+        if (check_poll_fd.revents & POLLHUP) {
+            log.warn("connection hung up");
+
+            if (close(m_current_conn_fd) == -1) {
+                AbortV("closing connection failed, "
+                       "reason: {}",
+                    strerror(errno));
+            }
+
+            continue;
+        }
+
+        if (!(check_poll_fd.revents & POLLOUT)) {
+            log.warn("establishing connection timedout");
+
+            if (close(m_current_conn_fd) == -1) {
+                AbortV("closing connection failed, "
+                       "reason: {}",
+                    strerror(errno));
+            }
+
+            continue;
+        }
+
+        uint16_t check = htons(1);
+
+        if (num_of_conns >= MAX_CONNS) {
+            check = htons(2);
+        }
+
+        ssize_t check_size = write(
+            m_current_conn_fd, &check, sizeof(check));
+
+        if (check_size == -1) {
+            log.warn("reading from connection failed, "
+                     "reason: {}",
+                strerror(errno));
+
+            if (close(m_current_conn_fd) == -1) {
+                AbortV("closing connection failed, "
+                       "reason: {}",
+                    strerror(errno));
+            }
+
+            continue;
+        }
+
+        if (check_size != sizeof(check)) {
+            log.warn("unexpected message size ({} bytes)",
+                check_size);
+
+            if (close(m_current_conn_fd) == -1) {
+                AbortV("closing connection failed, "
+                       "reason: {}",
+                    strerror(errno));
+            }
+
+            continue;
+        }
+
+        if (num_of_conns >= MAX_CONNS) {
+            if (close(m_current_conn_fd) == -1) {
+                AbortV(
+                    "closing connection failed, reason: {}",
+                    strerror(errno));
+            }
 
             continue;
         }
@@ -272,6 +361,8 @@ void server_t::requests_loop()
                         return !thread.is_alive();
                     }),
                 share::e_threads.end());
+
+            num_of_conns = share::e_threads.size();
         }
 
         log.flush();

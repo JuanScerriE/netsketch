@@ -11,6 +11,7 @@
 
 // unix (hopefully)
 #include <netinet/in.h>
+#include <poll.h>
 #include <strings.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -78,7 +79,101 @@ bool network_manager_t::setup_connection()
         return false;
     }
 
-    return true;
+    pollfd poll_fd = { m_conn_fd, POLLIN, 0 };
+
+    if (poll(&poll_fd, 1, 60000) == -1) {
+        log.error("poll of connection failed, reason: {}",
+            strerror(errno));
+
+        if (::close(m_conn_fd) == -1) {
+            AbortV("closing connection failed, reason: {}",
+                strerror(errno));
+        }
+
+        return false;
+    }
+
+    if (poll_fd.revents & POLLHUP) {
+        log.warn("connection hung up");
+
+        if (::close(m_conn_fd) == -1) {
+            AbortV("closing connection failed, reason: {}",
+                strerror(errno));
+        }
+
+        return false;
+    }
+
+    if (!(poll_fd.revents & POLLIN)) {
+        log.warn("establishing connection timedout");
+
+        if (::close(m_conn_fd) == -1) {
+            AbortV("closing connection failed, reason: {}",
+                strerror(errno));
+        }
+
+        return false;
+    }
+
+    uint16_t check {};
+
+    ssize_t check_size
+        = read(m_conn_fd, &check, sizeof(check));
+
+    if (check_size == -1) {
+        log.warn("reading from connection failed, "
+                 "reason: {}",
+            strerror(errno));
+
+        if (::close(m_conn_fd) == -1) {
+            AbortV("closing connection failed, reason: {}",
+                strerror(errno));
+        }
+
+        return false;
+    }
+
+    if (check_size != sizeof(check)) {
+        log.warn("unexpected message size ({} bytes)",
+            check_size);
+
+        if (::close(m_conn_fd) == -1) {
+            AbortV("closing connection failed, reason: {}",
+                strerror(errno));
+        }
+
+        return false;
+    }
+
+    uint16_t host_check = ntohs(check);
+
+    // accepted
+    if (host_check == 1) {
+        log.info("connection established");
+
+        return true;
+    }
+
+    // declined
+    if (host_check == 2) {
+        log.info("connection refused");
+
+        if (::close(m_conn_fd) == -1) {
+            AbortV("closing connection failed, reason: {}",
+                strerror(errno));
+        }
+
+        return false;
+    }
+
+    log.error("unexpected result");
+
+    if (::close(m_conn_fd) == -1) {
+        AbortV("closing connection failed, reason: {}",
+            strerror(errno));
+    }
+
+    return false;
 }
 
 void network_manager_t::close_connection()

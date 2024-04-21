@@ -297,35 +297,36 @@ private:
         = PTHREAD_MUTEX_INITIALIZER;
 };
 
-class lock_guard {
+class mutex_guard {
 public:
-    explicit lock_guard(mutex& mutex_ref)
+    explicit mutex_guard(mutex& mutex_ref)
         : mutex_ref(mutex_ref)
     {
         mutex_ref.lock();
     }
 
-    lock_guard(const lock_guard&) = delete;
+    mutex_guard(const mutex_guard&) = delete;
 
-    lock_guard& operator=(const lock_guard&) = delete;
+    mutex_guard& operator=(const mutex_guard&) = delete;
 
-    ~lock_guard() { mutex_ref.unlock(); }
+    ~mutex_guard() { mutex_ref.unlock(); }
 
 private:
     mutex& mutex_ref;
 };
 
-class unique_lock {
+class unique_mutex_guard {
 public:
-    explicit unique_lock(mutex& mutex_ref)
+    explicit unique_mutex_guard(mutex& mutex_ref)
         : mutex_ref(mutex_ref)
     {
         lock();
     }
 
-    unique_lock(const unique_lock&) = delete;
+    unique_mutex_guard(const unique_mutex_guard&) = delete;
 
-    unique_lock& operator=(const unique_lock&) = delete;
+    unique_mutex_guard& operator=(const unique_mutex_guard&)
+        = delete;
 
     void lock()
     {
@@ -356,7 +357,9 @@ public:
         owning = false;
     }
 
-    ~unique_lock() { unlock(); }
+    [[nodiscard]] bool is_owning() const { return owning; }
+
+    ~unique_mutex_guard() { unlock(); }
 
     pthread_mutex_t* native_handle_ptr()
     {
@@ -425,7 +428,7 @@ public:
         }
     }
 
-    void wait(unique_lock& lock,
+    void wait(unique_mutex_guard& lock,
         const std::function<bool()>& pred)
     {
         while (!pred()) {
@@ -440,6 +443,268 @@ public:
 
 private:
     pthread_cond_t cond_handle = PTHREAD_COND_INITIALIZER;
+};
+
+class rwlock {
+public:
+    rwlock(const rwlock&) = delete;
+
+    rwlock& operator=(const rwlock&) = delete;
+
+    rwlock(rwlock&& other) noexcept
+        : rwlock_handle { std::exchange(other.rwlock_handle,
+              PTHREAD_RWLOCK_INITIALIZER) }
+    {
+    }
+
+    rwlock& operator=(rwlock&& other) noexcept
+    {
+        rwlock_handle = std::exchange(other.rwlock_handle,
+            PTHREAD_RWLOCK_INITIALIZER);
+
+        return *this;
+    }
+
+    rwlock()
+    {
+        auto ret
+            = pthread_rwlock_init(&rwlock_handle, nullptr);
+
+        if (ret != 0) {
+            throw std::runtime_error { strerror(ret) };
+        }
+    }
+
+    ~rwlock() noexcept(false)
+    {
+        auto ret = pthread_rwlock_destroy(&rwlock_handle);
+
+        if (ret != 0) {
+            throw std::runtime_error { strerror(ret) };
+        }
+    }
+
+    void rdlock()
+    {
+        auto ret = pthread_rwlock_rdlock(&rwlock_handle);
+
+        if (ret != 0) {
+            throw std::runtime_error { strerror(ret) };
+        }
+    }
+
+    bool try_rdlock()
+    {
+        auto ret = pthread_rwlock_tryrdlock(&rwlock_handle);
+
+        if (ret == EBUSY) {
+            return false;
+        }
+
+        if (ret != 0) {
+            throw std::runtime_error { strerror(ret) };
+        }
+
+        return true;
+    }
+
+    void wrlock()
+    {
+        auto ret = pthread_rwlock_wrlock(&rwlock_handle);
+
+        if (ret != 0) {
+            throw std::runtime_error { strerror(ret) };
+        }
+    }
+
+    bool try_wrlock()
+    {
+        auto ret = pthread_rwlock_trywrlock(&rwlock_handle);
+
+        if (ret == EBUSY) {
+            return false;
+        }
+
+        if (ret != 0) {
+            throw std::runtime_error { strerror(ret) };
+        }
+
+        return true;
+    }
+
+    void unlock()
+    {
+        auto ret = pthread_rwlock_unlock(&rwlock_handle);
+
+        if (ret != 0) {
+            throw std::runtime_error { strerror(ret) };
+        }
+    }
+
+    pthread_rwlock_t* native_handle_ptr()
+    {
+        return &rwlock_handle;
+    }
+
+private:
+    pthread_rwlock_t rwlock_handle
+        = PTHREAD_RWLOCK_INITIALIZER;
+};
+
+class rwlock_rdguard {
+public:
+    explicit rwlock_rdguard(rwlock& rwlock_ref)
+        : rwlock_ref(rwlock_ref)
+    {
+        rwlock_ref.rdlock();
+    }
+
+    rwlock_rdguard(const rwlock_rdguard&) = delete;
+
+    rwlock_rdguard& operator=(const rwlock_rdguard&)
+        = delete;
+
+    ~rwlock_rdguard() { rwlock_ref.unlock(); }
+
+private:
+    rwlock& rwlock_ref;
+};
+
+class unique_rwlock_rdguard {
+public:
+    explicit unique_rwlock_rdguard(rwlock& rwlock_ref)
+        : rwlock_ref(rwlock_ref)
+    {
+        lock();
+    }
+
+    unique_rwlock_rdguard(const unique_rwlock_rdguard&)
+        = delete;
+
+    unique_rwlock_rdguard& operator=(
+        const unique_rwlock_rdguard&)
+        = delete;
+
+    void lock()
+    {
+        if (owning == false) {
+            rwlock_ref.rdlock();
+
+            owning = true;
+        }
+    }
+
+    bool try_lock()
+    {
+        bool acquired = rwlock_ref.try_rdlock();
+
+        if (acquired) {
+            owning = true;
+        }
+
+        return acquired;
+    }
+
+    void unlock()
+    {
+        if (owning == true) {
+            rwlock_ref.unlock();
+        }
+
+        owning = false;
+    }
+
+    [[nodiscard]] bool is_owning() const { return owning; }
+
+    ~unique_rwlock_rdguard() { unlock(); }
+
+    pthread_rwlock_t* native_handle_ptr()
+    {
+        return rwlock_ref.native_handle_ptr();
+    }
+
+private:
+    bool owning { false };
+
+    rwlock& rwlock_ref;
+};
+
+class rwlock_wrguard {
+public:
+    explicit rwlock_wrguard(rwlock& rwlock_ref)
+        : rwlock_ref(rwlock_ref)
+    {
+        rwlock_ref.wrlock();
+    }
+
+    rwlock_wrguard(const rwlock_wrguard&) = delete;
+
+    rwlock_wrguard& operator=(const rwlock_wrguard&)
+        = delete;
+
+    ~rwlock_wrguard() { rwlock_ref.unlock(); }
+
+private:
+    rwlock& rwlock_ref;
+};
+
+class unique_rwlock_wrguard {
+public:
+    explicit unique_rwlock_wrguard(rwlock& rwlock_ref)
+        : rwlock_ref(rwlock_ref)
+    {
+        lock();
+    }
+
+    unique_rwlock_wrguard(const unique_rwlock_wrguard&)
+        = delete;
+
+    unique_rwlock_wrguard& operator=(
+        const unique_rwlock_wrguard&)
+        = delete;
+
+    void lock()
+    {
+        if (owning == false) {
+            rwlock_ref.wrlock();
+
+            owning = true;
+        }
+    }
+
+    bool try_lock()
+    {
+        bool acquired = rwlock_ref.try_wrlock();
+
+        if (acquired) {
+            owning = true;
+        }
+
+        return acquired;
+    }
+
+    void unlock()
+    {
+        if (owning == true) {
+            rwlock_ref.unlock();
+        }
+
+        owning = false;
+    }
+
+    [[nodiscard]] bool is_owning() const { return owning; }
+
+    ~unique_rwlock_wrguard() { unlock(); }
+
+    pthread_rwlock_t* native_handle_ptr()
+    {
+        return rwlock_ref.native_handle_ptr();
+    }
+
+private:
+    bool owning { false };
+
+    rwlock& rwlock_ref;
 };
 
 } // namespace threading

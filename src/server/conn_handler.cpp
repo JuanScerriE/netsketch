@@ -178,7 +178,7 @@ void conn_handler_t::dtor()
     // it still shouldn't fail it just gives us an error but
     // that's no good)
     {
-        threading::lock_guard guard {
+        threading::mutex_guard guard {
             share::e_connections_mutex
         };
 

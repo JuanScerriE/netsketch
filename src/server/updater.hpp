@@ -48,7 +48,7 @@ public:
             log.debug("packet size {}", packet.size());
 
             {
-                threading::lock_guard guard {
+                threading::mutex_guard guard {
                     share::e_connections_mutex
                 };
 

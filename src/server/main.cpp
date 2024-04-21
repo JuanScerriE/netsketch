@@ -24,7 +24,7 @@
 
 void sigint_handler(int)
 {
-    threading::lock_guard guard {
+    threading::mutex_guard guard {
         server::share::e_threads_mutex
     };
 

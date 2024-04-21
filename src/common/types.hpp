@@ -30,7 +30,7 @@ public:
     void push_back(const T& value)
     {
         {
-            threading::lock_guard lock { m_mutex };
+            threading::mutex_guard lock { m_mutex };
             m_deque.push_back(value);
         }
         m_cond_var.notify_one();
@@ -39,7 +39,7 @@ public:
     void push_back(T&& value)
     {
         {
-            threading::lock_guard lock { m_mutex };
+            threading::mutex_guard lock { m_mutex };
             m_deque.push_back(value);
         }
         m_cond_var.notify_one();
@@ -49,7 +49,7 @@ public:
     void emplace_back(Args&&... args)
     {
         {
-            threading::lock_guard lock { m_mutex };
+            threading::mutex_guard lock { m_mutex };
             m_deque.emplace_back(
                 std::forward<Args>(args)...);
         }
@@ -58,7 +58,7 @@ public:
 
     T pop_back()
     {
-        threading::unique_lock lock { m_mutex };
+        threading::unique_mutex_guard lock { m_mutex };
         m_cond_var.wait(lock,
             [this]() { return !this->m_deque.empty(); });
         T value = m_deque.back();
@@ -69,7 +69,7 @@ public:
     void push_front(const T& value)
     {
         {
-            threading::lock_guard lock { m_mutex };
+            threading::mutex_guard lock { m_mutex };
             m_deque.push_front(value);
         }
         m_cond_var.notify_one();
@@ -78,7 +78,7 @@ public:
     void push_front(T&& value)
     {
         {
-            threading::lock_guard lock { m_mutex };
+            threading::mutex_guard lock { m_mutex };
             m_deque.push_front(value);
         }
         m_cond_var.notify_one();
@@ -88,7 +88,7 @@ public:
     void emplace_front(Args&&... args)
     {
         {
-            threading::lock_guard lock { m_mutex };
+            threading::mutex_guard lock { m_mutex };
             m_deque.emplace_front(
                 std::forward<Args>(args)...);
         }
@@ -97,7 +97,7 @@ public:
 
     T pop_front()
     {
-        threading::unique_lock lock { m_mutex };
+        threading::unique_mutex_guard lock { m_mutex };
         m_cond_var.wait(lock,
             [this]() { return !this->m_deque.empty(); });
         T value = m_deque.front();
@@ -156,18 +156,21 @@ private:
 //    }
 //
 //    void swap() noexcept {
-//       // Lock both mutexes safely using a deadlock avoidance algorithm
-//       std::lock(mutWrite, mutRead);
-//       std::lock_guard<std::mutex> lkWrite(mutWrite, std::adopt_lock);
-//       std::lock_guard<std::mutex> lkRead(mutRead, std::adopt_lock);
+//       // Lock both mutexes safely using a deadlock
+//       avoidance algorithm std::lock(mutWrite, mutRead);
+//       std::lock_guard<std::mutex> lkWrite(mutWrite,
+//       std::adopt_lock); std::lock_guard<std::mutex>
+//       lkRead(mutRead, std::adopt_lock);
 //
-//       // In C++17, you can replace the 3 lines above with just the following:
+//       // In C++17, you can replace the 3 lines above with
+//       just the following:
 //       // std::scoped_lock lk( mutWrite, mutRead );
 //
 //       std::swap(current, next); // swap pointers
 //    }
 //
-//    Buffer() : buf0(32), buf1(32), current(&buf0), next(&buf1) { }
+//    Buffer() : buf0(32), buf1(32), current(&buf0),
+//    next(&buf1) { }
 // private:
 //    std::vector<float> buf0, buf1; // two buffers
 //    std::vector<float> *current, *next;

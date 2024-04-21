@@ -102,7 +102,7 @@ void server_t::operator()()
 void server_t::dtor()
 {
     if (m_current_conn_fd != -1) {
-        threading::lock_guard guard {
+        threading::mutex_guard guard {
             share::e_connections_mutex
         };
 
@@ -208,7 +208,7 @@ void server_t::requests_loop()
         // of being read from by the updater thread. So we
         // should lock
         {
-            threading::lock_guard guard {
+            threading::mutex_guard guard {
                 share::e_connections_mutex
             };
 
@@ -225,7 +225,7 @@ void server_t::requests_loop()
         // cancel which good.
 
         {
-            threading::lock_guard guard {
+            threading::mutex_guard guard {
                 share::e_threads_mutex
             };
 

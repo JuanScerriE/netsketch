@@ -20,28 +20,31 @@ extern threading::pthread writer_thread;
 extern threading::pthread input_thread;
 
 // used to stop the gui
-extern common::readonly_t<bool> e_stop_gui;
+extern common::readonly_t<bool> stop_gui;
 
 // used in the gui to decided which draws
 // to show
-extern common::readonly_t<bool> e_show_mine;
+extern common::readonly_t<bool> show_mine;
 
 // log file
-extern logging::log_file e_log_file;
+extern logging::log_file log_file;
 
 // writer queue
 extern common::ts_queue<prot::tagged_command_t>
-    e_writer_queue;
+    writer_queue;
 
 // nickname
-extern std::string e_nickname;
+extern std::string nickname;
 
-// TODO: figure out a better data structure which
-// allows for reading with out locking or acquiring a
-// mutex
-extern common::ts_queue<std::string> e_reader_queue;
+// double instance locking state
+// (http://concurrencyfreaks.blogspot.com/2013/11/double-instance-locking.html)
 
-extern prot::tagged_draw_list_t* current_list;
-extern prot::tagged_draw_list_t lists[2];
+extern threading::mutex writer_mutex;
+
+extern threading::rwlock rwlock1;
+extern threading::rwlock rwlock2;
+
+extern prot::tagged_draw_list_t list1;
+extern prot::tagged_draw_list_t list2;
 
 } // namespace client::share

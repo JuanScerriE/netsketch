@@ -75,7 +75,7 @@ int main(int argc, char** argv)
     CLI11_PARSE(app, argc, argv);
 
     // set the nickname of the user
-    client::share::e_nickname = nickname;
+    client::share::nickname = nickname;
 
     in_addr addr {};
 
@@ -95,18 +95,18 @@ int main(int argc, char** argv)
 
     auto now = system_clock::now();
 
-    client::share::e_log_file.open(fmt::format(
+    client::share::log_file.open(fmt::format(
         "netsketch-client-log {:%Y-%m-%d %H:%M:%S}", now));
 
-    AbortIfV(client::share::e_log_file.error(),
+    AbortIfV(client::share::log_file.error(),
         "opening a log file failed, reason: {}",
-        client::share::e_log_file.reason());
+        client::share::log_file.reason());
 
     client::network_manager_t manager { ipv4_addr, port };
 
     if (!manager.setup()) {
-        if (client::share::e_log_file.is_open()) {
-            client::share::e_log_file.close();
+        if (client::share::log_file.is_open()) {
+            client::share::log_file.close();
         }
 
         fmt::println("error: failed to connect to server");
@@ -129,8 +129,8 @@ int main(int argc, char** argv)
 
     manager.close();
 
-    if (client::share::e_log_file.is_open()) {
-        client::share::e_log_file.close();
+    if (client::share::log_file.is_open()) {
+        client::share::log_file.close();
     }
 
     return 0;

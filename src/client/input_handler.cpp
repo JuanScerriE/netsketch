@@ -1,4 +1,5 @@
 // client
+#include "draw_list.hpp"
 #include <input_handler.hpp>
 #include <input_parser.hpp>
 
@@ -48,10 +49,10 @@ void input_handler_t::shutdown()
         share::reader_thread.cancel();
 
     // make sure to stop the gui
-    common::mutable_t<bool> { share::e_stop_gui }() = true;
+    common::mutable_t<bool> { share::stop_gui }() = true;
 }
 
-void print_draw(size_t index, prot::draw_t draw)
+static void print_draw(size_t index, prot::draw_t draw)
 {
     if (std::holds_alternative<prot::line_draw_t>(draw)) {
         auto& line = std::get<prot::line_draw_t>(draw);
@@ -102,6 +103,100 @@ void print_draw(size_t index, prot::draw_t draw)
     }
 
     Abort("unreachable");
+}
+
+static void list_draws(common::option_e tool_qual,
+    common::option_e user_qual,
+    prot::tagged_draw_list_t& draw_list)
+{
+    using namespace common;
+
+    size_t index = 0;
+
+    for (auto& tagged_draw : draw_list) {
+        switch (user_qual) {
+        case option_e::ALL:
+            switch (tool_qual) {
+            case option_e::ALL:
+                print_draw(index, tagged_draw.draw);
+                break;
+            case option_e::LINE:
+                if (std::holds_alternative<
+                        prot::line_draw_t>(
+                        tagged_draw.draw)) {
+                    print_draw(index, tagged_draw.draw);
+                }
+                break;
+            case option_e::RECTANGLE:
+                if (std::holds_alternative<
+                        prot::rectangle_draw_t>(
+                        tagged_draw.draw)) {
+                    print_draw(index, tagged_draw.draw);
+                }
+                break;
+            case option_e::CIRCLE:
+                if (std::holds_alternative<
+                        prot::circle_draw_t>(
+                        tagged_draw.draw)) {
+                    print_draw(index, tagged_draw.draw);
+                }
+                break;
+            case option_e::TEXT:
+                if (std::holds_alternative<
+                        prot::text_draw_t>(
+                        tagged_draw.draw)) {
+                    print_draw(index, tagged_draw.draw);
+                }
+                break;
+            default:
+                Abort("unreachable");
+            }
+            break;
+        case option_e::MINE:
+            if (share::nickname == tagged_draw.username) {
+                switch (tool_qual) {
+                case option_e::ALL:
+                    print_draw(index, tagged_draw.draw);
+                    break;
+                case option_e::LINE:
+                    if (std::holds_alternative<
+                            prot::line_draw_t>(
+                            tagged_draw.draw)) {
+                        print_draw(index, tagged_draw.draw);
+                    }
+                    break;
+                case option_e::RECTANGLE:
+                    if (std::holds_alternative<
+                            prot::rectangle_draw_t>(
+                            tagged_draw.draw)) {
+                        print_draw(index, tagged_draw.draw);
+                    }
+                    break;
+                case option_e::CIRCLE:
+                    if (std::holds_alternative<
+                            prot::circle_draw_t>(
+                            tagged_draw.draw)) {
+                        print_draw(index, tagged_draw.draw);
+                    }
+                    break;
+                case option_e::TEXT:
+                    if (std::holds_alternative<
+                            prot::text_draw_t>(
+                            tagged_draw.draw)) {
+                        print_draw(index, tagged_draw.draw);
+                    }
+                    break;
+                default:
+                    Abort("unreachable");
+                }
+            }
+            break;
+        default:
+            Abort("unreachable");
+        }
+
+        index++;
+    }
 }
 
 void input_handler_t::process_line(
@@ -411,13 +506,13 @@ void input_handler_t::process_line(
                       y1 };
 
             if (m_selected_id.has_value()) {
-                share::e_writer_queue.push_front(
-                    { share::e_nickname,
+                share::writer_queue.push_front(
+                    { share::nickname,
                         prot::select_t { *m_selected_id,
                             draw_command } });
             } else {
-                share::e_writer_queue.push_front(
-                    { share::e_nickname, draw_command });
+                share::writer_queue.push_front(
+                    { share::nickname, draw_command });
             }
         } break;
         case common::option_e::RECTANGLE: {
@@ -507,13 +602,13 @@ void input_handler_t::process_line(
                       w, h };
 
             if (m_selected_id.has_value()) {
-                share::e_writer_queue.push_front(
-                    { share::e_nickname,
+                share::writer_queue.push_front(
+                    { share::nickname,
                         prot::select_t { *m_selected_id,
                             draw_command } });
             } else {
-                share::e_writer_queue.push_front(
-                    { share::e_nickname, draw_command });
+                share::writer_queue.push_front(
+                    { share::nickname, draw_command });
             }
         } break;
         case common::option_e::CIRCLE: {
@@ -593,13 +688,13 @@ void input_handler_t::process_line(
                 = prot::circle_draw_t { m_colour, x, y, r };
 
             if (m_selected_id.has_value()) {
-                share::e_writer_queue.push_front(
-                    { share::e_nickname,
+                share::writer_queue.push_front(
+                    { share::nickname,
                         prot::select_t { *m_selected_id,
                             draw_command } });
             } else {
-                share::e_writer_queue.push_front(
-                    { share::e_nickname, draw_command });
+                share::writer_queue.push_front(
+                    { share::nickname, draw_command });
             }
         } break;
         case common::option_e::TEXT: {
@@ -654,13 +749,13 @@ void input_handler_t::process_line(
                       text };
 
             if (m_selected_id.has_value()) {
-                share::e_writer_queue.push_front(
-                    { share::e_nickname,
+                share::writer_queue.push_front(
+                    { share::nickname,
                         prot::select_t { *m_selected_id,
                             draw_command } });
             } else {
-                share::e_writer_queue.push_front(
-                    { share::e_nickname, draw_command });
+                share::writer_queue.push_front(
+                    { share::nickname, draw_command });
             }
         } break;
         default:
@@ -743,99 +838,36 @@ void input_handler_t::process_line(
             return;
         }
 
-        prot::tagged_draw_list_t list
-            = *share::current_list;
+        for (;;) {
+            {
+                threading::unique_rwlock_rdguard guard {
+                    share::rwlock1,
+                    threading::unique_guard_policy::
+                        try_to_lock
+                };
 
-        size_t index { 0 };
+                if (guard.is_owning()) {
+                    list_draws(
+                        tool_qual, user_qual, share::list1);
 
-        for (auto& tagged_draw : list) {
-            switch (user_qual) {
-            case option_e::ALL:
-                switch (tool_qual) {
-                case option_e::ALL:
-                    print_draw(index, tagged_draw.draw);
-                    break;
-                case option_e::LINE:
-                    if (std::holds_alternative<
-                            prot::line_draw_t>(
-                            tagged_draw.draw)) {
-                        print_draw(index, tagged_draw.draw);
-                    }
-                    break;
-                case option_e::RECTANGLE:
-                    if (std::holds_alternative<
-                            prot::rectangle_draw_t>(
-                            tagged_draw.draw)) {
-                        print_draw(index, tagged_draw.draw);
-                    }
-                    break;
-                case option_e::CIRCLE:
-                    if (std::holds_alternative<
-                            prot::circle_draw_t>(
-                            tagged_draw.draw)) {
-                        print_draw(index, tagged_draw.draw);
-                    }
-                    break;
-                case option_e::TEXT:
-                    if (std::holds_alternative<
-                            prot::text_draw_t>(
-                            tagged_draw.draw)) {
-                        print_draw(index, tagged_draw.draw);
-                    }
-                    break;
-                default:
-                    Abort("unreachable");
+                    return;
                 }
-                break;
-            case option_e::MINE:
-                if (share::e_nickname
-                    == tagged_draw.username) {
-                    switch (tool_qual) {
-                    case option_e::ALL:
-                        print_draw(index, tagged_draw.draw);
-                        break;
-                    case option_e::LINE:
-                        if (std::holds_alternative<
-                                prot::line_draw_t>(
-                                tagged_draw.draw)) {
-                            print_draw(
-                                index, tagged_draw.draw);
-                        }
-                        break;
-                    case option_e::RECTANGLE:
-                        if (std::holds_alternative<
-                                prot::rectangle_draw_t>(
-                                tagged_draw.draw)) {
-                            print_draw(
-                                index, tagged_draw.draw);
-                        }
-                        break;
-                    case option_e::CIRCLE:
-                        if (std::holds_alternative<
-                                prot::circle_draw_t>(
-                                tagged_draw.draw)) {
-                            print_draw(
-                                index, tagged_draw.draw);
-                        }
-                        break;
-                    case option_e::TEXT:
-                        if (std::holds_alternative<
-                                prot::text_draw_t>(
-                                tagged_draw.draw)) {
-                            print_draw(
-                                index, tagged_draw.draw);
-                        }
-                        break;
-                    default:
-                        Abort("unreachable");
-                    }
-                }
-                break;
-            default:
-                Abort("unreachable");
             }
 
-            index++;
+            {
+                threading::unique_rwlock_rdguard guard {
+                    share::rwlock2,
+                    threading::unique_guard_policy::
+                        try_to_lock
+                };
+
+                if (guard.is_owning()) {
+                    list_draws(
+                        tool_qual, user_qual, share::list2);
+
+                    return;
+                }
+            }
         }
 
         return;
@@ -917,8 +949,8 @@ void input_handler_t::process_line(
 
         prot::delete_t delete_command { id };
 
-        share::e_writer_queue.push_front(
-            { share::e_nickname, delete_command });
+        share::writer_queue.push_front(
+            { share::nickname, delete_command });
 
         return;
     }
@@ -932,8 +964,8 @@ void input_handler_t::process_line(
             return;
         }
 
-        share::e_writer_queue.push_front(
-            { share::e_nickname, prot::undo_t {} });
+        share::writer_queue.push_front(
+            { share::nickname, prot::undo_t {} });
 
         return;
     }
@@ -950,8 +982,8 @@ void input_handler_t::process_line(
         std::string_view second_token = tokens[1];
 
         if (second_token == "all") {
-            share::e_writer_queue.push_front(
-                { share::e_nickname,
+            share::writer_queue.push_front(
+                { share::nickname,
                     prot::clear_t {
                         prot::qualifier_e::ALL } });
 
@@ -959,8 +991,8 @@ void input_handler_t::process_line(
         }
 
         if (second_token == "mine") {
-            share::e_writer_queue.push_front(
-                { share::e_nickname,
+            share::writer_queue.push_front(
+                { share::nickname,
                     prot::clear_t {
                         prot::qualifier_e::MINE } });
 
@@ -985,14 +1017,14 @@ void input_handler_t::process_line(
         std::string_view second_token = tokens[1];
 
         if (second_token == "all") {
-            common::mutable_t<bool> { share::e_show_mine }()
+            common::mutable_t<bool> { share::show_mine }()
                 = false;
 
             return;
         }
 
         if (second_token == "mine") {
-            common::mutable_t<bool> { share::e_show_mine }()
+            common::mutable_t<bool> { share::show_mine }()
                 = true;
 
             return;

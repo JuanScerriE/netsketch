@@ -123,7 +123,7 @@ void network_manager_t::setup_logging()
 
     log.set_prefix("[network_manager]");
 
-    log.set_file(share::e_log_file);
+    log.set_file(share::log_file);
 }
 
 } // namespace client

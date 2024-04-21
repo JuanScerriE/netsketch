@@ -28,7 +28,7 @@ void writer_t::operator()()
     for (;;) {
         // wait for tagged_command
         prot::tagged_command_t tagged_command
-            = share::e_writer_queue.pop_back();
+            = share::writer_queue.pop_back();
 
         // serialize the command
         prot::serialize_t serializer { tagged_command };
@@ -95,7 +95,7 @@ void writer_t::setup_logging()
 
     log.set_prefix("[writer]");
 
-    log.set_file(share::e_log_file);
+    log.set_file(share::log_file);
 }
 
 } // namespace client

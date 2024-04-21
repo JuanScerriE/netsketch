@@ -315,12 +315,28 @@ private:
     mutex& mutex_ref;
 };
 
+enum class unique_guard_policy {
+    try_to_lock,
+};
+
 class unique_mutex_guard {
 public:
     explicit unique_mutex_guard(mutex& mutex_ref)
         : mutex_ref(mutex_ref)
     {
         lock();
+    }
+
+    explicit unique_mutex_guard(
+        mutex& mutex_ref, unique_guard_policy policy)
+        : mutex_ref(mutex_ref)
+    {
+        switch (policy) {
+        case threading::unique_guard_policy::try_to_lock:
+            try_lock();
+
+            break;
+        };
     }
 
     unique_mutex_guard(const unique_mutex_guard&) = delete;
@@ -578,6 +594,18 @@ public:
         lock();
     }
 
+    explicit unique_rwlock_rdguard(
+        rwlock& rwlock_ref, unique_guard_policy policy)
+        : rwlock_ref(rwlock_ref)
+    {
+        switch (policy) {
+        case threading::unique_guard_policy::try_to_lock:
+            try_lock();
+
+            break;
+        };
+    }
+
     unique_rwlock_rdguard(const unique_rwlock_rdguard&)
         = delete;
 
@@ -654,6 +682,18 @@ public:
         : rwlock_ref(rwlock_ref)
     {
         lock();
+    }
+
+    explicit unique_rwlock_wrguard(
+        rwlock& rwlock_ref, unique_guard_policy policy)
+        : rwlock_ref(rwlock_ref)
+    {
+        switch (policy) {
+        case threading::unique_guard_policy::try_to_lock:
+            try_lock();
+
+            break;
+        };
     }
 
     unique_rwlock_wrguard(const unique_rwlock_wrguard&)

@@ -1,10 +1,11 @@
 // client
+#include "threading.hpp"
 #include <gui.hpp>
 
 // std
+#include <chrono>
 #include <cmath>
 #include <thread>
-#include <chrono>
 #include <typeinfo>
 #include <variant>
 
@@ -83,17 +84,51 @@ void gui_t::process_draw(prot::draw_t& draw)
 
 inline void gui_t::draw_scene()
 {
-    if (share::e_show_mine()) {
-        for (auto& tagged_draw : *share::current_list) {
-            if (tagged_draw.username == share::e_nickname) {
-                process_draw(tagged_draw.draw);
+    for (;;) {
+        {
+            threading::unique_rwlock_rdguard guard {
+                share::rwlock1,
+                threading::unique_guard_policy::try_to_lock
+            };
+
+            if (guard.is_owning()) {
+                if (share::show_mine()) {
+                    for (auto& tagged_draw : share::list1) {
+                        if (tagged_draw.username
+                            == share::nickname)
+                            process_draw(tagged_draw.draw);
+                    }
+                } else {
+                    for (auto& tagged_draw : share::list1) {
+                        process_draw(tagged_draw.draw);
+                    }
+                }
+
+                return;
             }
         }
-    } else {
-        for (auto& tagged_draw : *share::current_list) {
-            using namespace std::chrono_literals;
-            std::this_thread::sleep_for(10ms);
-            process_draw(tagged_draw.draw);
+
+        {
+            threading::unique_rwlock_rdguard guard {
+                share::rwlock2,
+                threading::unique_guard_policy::try_to_lock
+            };
+
+            if (guard.is_owning()) {
+                if (share::show_mine()) {
+                    for (auto& tagged_draw : share::list1) {
+                        if (tagged_draw.username
+                            == share::nickname)
+                            process_draw(tagged_draw.draw);
+                    }
+                } else {
+                    for (auto& tagged_draw : share::list1) {
+                        process_draw(tagged_draw.draw);
+                    }
+                }
+
+                return;
+            }
         }
     }
 }
@@ -163,7 +198,7 @@ void gui_t::game_loop()
 
     // detect window close button or ESC key
     // or when the main tells us so
-    while (!share::e_stop_gui()) {
+    while (!share::stop_gui()) {
         if (IsKeyPressed(KEY_H)) {
             m_camera = { { 0, 0 }, { 0, 0 }, 0, 1.0 };
         }
@@ -182,17 +217,18 @@ void gui_t::game_loop()
         float wheel = GetMouseWheelMove();
 
         if (wheel != 0) {
-            // get the world point that is under the mouse
+            // get the world point that is under the
+            // mouse
             Vector2 mouseWorldPos = GetScreenToWorld2D(
                 GetMousePosition(), m_camera);
 
             // get the offset to where the mouse is
             m_camera.offset = GetMousePosition();
 
-            // set the target to match, so that the m_camera
-            // maps the world space point under the cursor
-            // to the screen space point under the cursor at
-            // any zoom
+            // set the target to match, so that the
+            // m_camera maps the world space point under
+            // the cursor to the screen space point
+            // under the cursor at any zoom
             m_camera.target = mouseWorldPos;
 
             // Zoom increment
@@ -225,7 +261,7 @@ void gui_t::setup_logging()
 
     log.set_prefix("[raylib]");
 
-    log.set_file(share::e_log_file);
+    log.set_file(share::log_file);
 
     SetTraceLogCallback(logger_wrapper);
 }

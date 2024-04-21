@@ -16,26 +16,34 @@ threading::pthread input_thread {};
 // in operations (might change these)
 
 // used to stop the gui upon user exit
-common::readonly_t<bool> e_stop_gui { false };
+common::readonly_t<bool> stop_gui { false };
 
 // used in the gui to decided which file
 // to show
-common::readonly_t<bool> e_show_mine { false };
-
-// used to stop the network thread upon user exit
-common::event_t* e_stop_event { nullptr };
+common::readonly_t<bool> show_mine { false };
 
 // log file
-logging::log_file e_log_file {};
+logging::log_file log_file {};
 
 // queues
-common::ts_queue<std::string> e_reader_queue {};
-common::ts_queue<prot::tagged_command_t> e_writer_queue {};
+common::ts_queue<prot::tagged_command_t> writer_queue {};
 
 // nickname
-std::string e_nickname {};
+std::string nickname {};
 
-prot::tagged_draw_list_t lists[2] { {}, {} };
-prot::tagged_draw_list_t* current_list { &lists[0] };
+// double instance locking state
+
+// NOTE: I am not sure if rwlocks in POSIX
+// favour the writer as identified by the writer
+// but I don't think that should be an issue in our
+// implementation
+
+threading::mutex writer_mutex {};
+
+threading::rwlock rwlock1 {};
+threading::rwlock rwlock2 {};
+
+prot::tagged_draw_list_t list1 {};
+prot::tagged_draw_list_t list2 {};
 
 } // namespace client::share

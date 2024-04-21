@@ -1,6 +1,7 @@
 // client
 #include "draw_list.hpp"
 #include "protocol.hpp"
+#include "threading.hpp"
 #include "utils.hpp"
 #include <reader.hpp>
 
@@ -210,36 +211,45 @@ void reader_t::handle_payload(util::byte_vector& payload)
 void reader_t::update_whole_list(
     prot::tagged_draw_list_t& list)
 {
-    // so we check if the current list is the first
-    // in the case that it is we set the index
-    // to the second.
-    int index = 0;
+    threading::mutex_guard guard { share::writer_mutex };
+    {
+        threading::rwlock_wrguard wrguard {
+            share::rwlock1
+        };
 
-    if (share::current_list == &share::lists[index]) {
-        index = 1;
+        share::list1 = list;
     }
 
-    share::lists[index] = list;
-    share::current_list = &share::lists[index];
-    share::lists[1 - index] = share::lists[index];
+    {
+        threading::rwlock_wrguard wrguard {
+            share::rwlock2
+        };
+
+        share::list2 = list;
+    }
 }
 
 void reader_t::update_list(
     prot::tagged_command_t& tagged_command)
 {
-    // so we check if the current list is the first
-    // in the case that it is we set the index
-    // to the second.
-    int index = 0;
+    threading::mutex_guard guard { share::writer_mutex };
+    {
+        threading::rwlock_wrguard wrguard {
+            share::rwlock1
+        };
 
-    if (share::current_list == &share::lists[index]) {
-        index = 1;
+        common::draw_list_wrapper { share::list1 }.update(
+            tagged_command);
     }
 
-    common::draw_list_wrapper { share::lists[index] }
-        .update(tagged_command);
-    share::current_list = &share::lists[index];
-    share::lists[1 - index] = share::lists[index];
+    {
+        threading::rwlock_wrguard wrguard {
+            share::rwlock2
+        };
+
+        common::draw_list_wrapper { share::list2 }.update(
+            tagged_command);
+    }
 }
 
 // end section
@@ -254,7 +264,7 @@ void reader_t::setup_logging()
 
     log.set_prefix("[reader]");
 
-    log.set_file(share::e_log_file);
+    log.set_file(share::log_file);
 }
 
 } // namespace client

@@ -76,7 +76,7 @@ void server_t::operator()()
         log.error("could not bind socket, reason: {}",
             strerror(errno));
 
-        close(m_socket_fd);
+        // closing is handled in dtor();
 
         return;
     }
@@ -89,7 +89,7 @@ void server_t::operator()()
         log.error("could not listen on socket, reason: {}",
             strerror(errno));
 
-        close(m_socket_fd);
+        // closing is handled in dtor();
 
         return;
     }
@@ -113,7 +113,8 @@ void server_t::dtor()
         }
 
         if (close(m_current_conn_fd) == -1) {
-            AbortV("closing connection failed, reason: {}",
+            log.error(
+                "closing connection failed, reason: {}",
                 strerror(errno));
         }
 
@@ -121,17 +122,19 @@ void server_t::dtor()
     }
 
     for (auto& thread : share::e_threads) {
+        thread.cancel();
+
         thread.join();
     }
+
+    share::e_updater_thread.cancel();
 
     if (close(m_socket_fd) == -1) {
         log.error("closing socket failed, reason: {}",
             strerror(errno));
-
-        return;
     }
 
-    log.info("socket closed");
+    log.info("stopping server");
 
     log.flush();
 }
@@ -191,6 +194,8 @@ void server_t::requests_loop()
                     strerror(errno));
             }
 
+            m_current_conn_fd = -1;
+
             continue;
         }
 
@@ -203,6 +208,8 @@ void server_t::requests_loop()
                     strerror(errno));
             }
 
+            m_current_conn_fd = -1;
+
             continue;
         }
 
@@ -214,6 +221,8 @@ void server_t::requests_loop()
                        "reason: {}",
                     strerror(errno));
             }
+
+            m_current_conn_fd = -1;
 
             continue;
         }
@@ -238,6 +247,8 @@ void server_t::requests_loop()
                     strerror(errno));
             }
 
+            m_current_conn_fd = -1;
+
             continue;
         }
 
@@ -251,6 +262,8 @@ void server_t::requests_loop()
                     strerror(errno));
             }
 
+            m_current_conn_fd = -1;
+
             continue;
         }
 
@@ -260,6 +273,8 @@ void server_t::requests_loop()
                     "closing connection failed, reason: {}",
                     strerror(errno));
             }
+
+            m_current_conn_fd = -1;
 
             continue;
         }

@@ -54,6 +54,12 @@ int main(int argc, char** argv)
 {
     CLI::App app;
 
+    bool use_gui { true };
+    app.add_flag("--gui, !--no-gui", use_gui,
+           "Use a GUI")
+        ->capture_default_str()
+        ;
+
     std::string ipv4_addr_str { "127.0.0.1" };
     app.add_option("--server", ipv4_addr_str,
            "The IPv4 address of a machine hosting a "
@@ -123,7 +129,9 @@ int main(int argc, char** argv)
     // thread because of macOS, that is macOS
     // does not like GLFW which raylib uses
     // running in a separate thread
-    gui();
+    if (use_gui) {
+        gui();
+    }
 
     client::share::input_thread.join();
 

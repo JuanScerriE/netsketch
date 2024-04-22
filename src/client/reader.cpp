@@ -80,13 +80,12 @@ void reader_t::handle_loop()
             log.warn("input of length 0 bytes (server "
                      "closed write)");
 
-            if (shutdown(m_conn_fd, SHUT_WR) == -1) {
+            if (::shutdown(m_conn_fd, SHUT_WR) == -1) {
                 log.error("connection shutdown failed, "
                           "reason: {}",
                     strerror(errno));
             }
 
-            // for now break
             break;
         }
 
@@ -144,13 +143,27 @@ void reader_t::handle_loop()
 
         log.flush();
     }
+    shutdown();
+}
+
+void reader_t::shutdown()
+{
+    if (share::writer_thread.is_initialized()
+        && share::writer_thread.is_alive())
+        share::writer_thread.cancel();
+    if (share::input_thread.is_initialized()
+        && share::input_thread.is_alive())
+        share::input_thread.cancel();
+
+    // make sure to stop the gui
+    common::mutable_t<bool> { share::stop_gui }() = true;
 }
 
 void reader_t::dtor()
 {
     log.info("initiated closing");
 
-    if (shutdown(m_conn_fd, SHUT_WR) == -1) {
+    if (::shutdown(m_conn_fd, SHUT_WR) == -1) {
         if (errno == ENOTCONN) {
             log.warn(
                 "connection shutdown failed, reason: {}",

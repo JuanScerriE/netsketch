@@ -1,16 +1,14 @@
 #pragma once
 
 // std
-#include <list>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace client {
 
 class input_parser_t {
 public:
-    explicit input_parser_t(std::string_view line);
+    explicit input_parser_t(std::string_view source);
 
     void scan_tokens();
 

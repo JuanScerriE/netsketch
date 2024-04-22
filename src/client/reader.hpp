@@ -14,6 +14,8 @@ public:
 
     void operator()();
 
+    void shutdown();
+
     void dtor();
 
 private:

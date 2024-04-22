@@ -17,7 +17,7 @@ std::unordered_set<int> e_connections {};
 
 threading::mutex e_timers_mutex {};
 
-std::array<timer_t, MAX_CONNS> e_timers {};
+std::list<std::unique_ptr<timer_data>> e_timers;
 
 bool e_stop_server { false };
 

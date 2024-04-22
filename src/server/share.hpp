@@ -2,6 +2,7 @@
 
 // std
 #include <list>
+#include <memory>
 #include <unordered_set>
 
 // common
@@ -16,6 +17,9 @@
 
 // threading
 #include <threading.hpp>
+
+// timing
+#include <timer_data.hpp>
 
 // I think 64 connections is a reasonable number of
 // connections for a whiteboard (for know).
@@ -37,7 +41,8 @@ extern std::unordered_set<int> e_connections;
 
 extern threading::mutex e_timers_mutex;
 
-extern std::array<timer_t, MAX_CONNS> e_timers;
+extern std::list<std::unique_ptr<timing::timer_data>>
+    e_timers;
 
 extern common::ts_queue<prot::tagged_command_t>
     e_command_queue;

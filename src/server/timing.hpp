@@ -1,10 +1,77 @@
 // std
+#include <cerrno>
 #include <csignal>
+
+// unix
+#include <ctime>
 
 // share
 #include <share.hpp>
+#include <sys/time.h>
 
-void create_client_timer() { }
+namespace server::timing {
+
+void handle_timer(union sigval val)
+{
+    auto* timer = static_cast<timer_data*>(val.sival_ptr);
+
+    {
+        std::string username = timer->user;
+
+    }
+
+    {
+        threading::mutex_guard guard {
+            share::e_timers_mutex
+        };
+
+        for (auto iter = share::e_timers.rbegin();
+             iter != share::e_timers.rend(); iter++) {
+            if ((*iter).get() == timer) {
+                share::e_timers.erase(iter.base());
+
+                break;
+            }
+        }
+    }
+}
+
+void create_client_timer(const std::string& user)
+{
+    std::unique_ptr<timer_data> data
+        = std::make_unique<timer_data>();
+
+    data->user = user;
+
+    sigevent ev {};
+    bzero(&ev, sizeof(struct sigevent));
+
+    sigval value {};
+    value.sival_ptr = data.get();
+
+    ev.sigev_notify = SIGEV_THREAD;
+    ev.sigev_value = value;
+    ev.sigev_notify_function = handle_timer;
+
+    data->timer.create(CLOCK_REALTIME, &ev);
+
+    timer_data* data_raw = data.get();
+
+    {
+        threading::mutex_guard guard {
+            share::e_timers_mutex
+        };
+
+        share::e_timers.push_back(std::move(data));
+    }
+
+    itimerspec its {};
+    bzero(&its, sizeof(itimerspec));
+    its.it_value.tv_sec = 60 * 5; // 5 minutes;
+    its.it_value.tv_nsec = 0;
+
+    data_raw->timer.set(0, &its, nullptr);
+}
 
 // so, at first I thought I'd want
 // to go with an unordered_map to actually
@@ -40,9 +107,4 @@ void create_client_timer() { }
 // maximum number attainable by an integer but to
 // be precise we will set an upper bound.
 
-void handle_timer(union sigval val)
-{
-    int(void) val;
-    {
-    }
-}
+} // namespace server::timing

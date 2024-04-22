@@ -103,14 +103,19 @@ struct tagged_command_t {
 
 using tagged_draw_list_t = std::vector<tagged_draw_t>;
 
+struct adopt_t {
+    std::string username;
+};
+
 enum class payload_type_e : uint16_t {
     TAGGED_COMMAND,
     TAGGED_DRAW,
-    TAGGED_DRAW_LIST
+    TAGGED_DRAW_LIST,
+    ADOPT
 };
 
 using payload_t = std::variant<tagged_command_t,
-    tagged_draw_t, tagged_draw_list_t>;
+    tagged_draw_t, tagged_draw_list_t, adopt_t>;
 
 struct header_t {
     uint16_t magic_bytes;
@@ -167,6 +172,20 @@ public:
 
             for (auto& tagged_draw : tagged_draw_list) {
                 ser_tagged_draw(tagged_draw);
+            }
+
+            return;
+        }
+
+        if (std::holds_alternative<adopt_t>(payload)) {
+            m_fserial.write(payload_type_e::ADOPT);
+
+            auto& adopt = std::get<adopt_t>(payload);
+
+            m_fserial.write(adopt.username.size());
+
+            for (char character : adopt.username) {
+                m_fserial.write(character);
             }
 
             return;
@@ -343,9 +362,24 @@ public:
             return deser_tagged_draw();
         case payload_type_e::TAGGED_DRAW_LIST:
             return deser_tagged_draw_list();
+        case payload_type_e::ADOPT:
+            return deser_tagged_draw_list();
         default:
             throw util::serial_error_t("unexpected type");
         }
+    }
+
+    adopt_t deser_adopt()
+    {
+        auto username_size = m_bserial.read<size_t>();
+
+        std::string username {};
+
+        for (size_t i = 0; i < username_size; i++) {
+            username.push_back(m_bserial.read<char>());
+        }
+
+        return { username };
     }
 
     tagged_draw_list_t deser_tagged_draw_list()

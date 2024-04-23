@@ -14,6 +14,7 @@ target_include_directories(netsketch_server PRIVATE
         log
         common
         threading
+        network
 )
 target_compile_options(netsketch_server PRIVATE -Werror -Wall -Wextra -Wpedantic -Weffc++ -Wconversion)
 

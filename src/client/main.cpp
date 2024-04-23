@@ -87,10 +87,10 @@ int main(int argc, char** argv)
 
     if (inet_pton(AF_INET, ipv4_addr_str.c_str(), &addr)
         <= 0) {
-        // NOTE: not using AbortIf since the above is
+        // NOTE: not using ABORTIF since the above is
         // actually causing a mutation, so I just
         // want that to be clear
-        Abort("invalid IPv4 address");
+        ABORT("invalid IPv4 address");
     }
 
     // NOTE: this is in host-readable form
@@ -104,7 +104,7 @@ int main(int argc, char** argv)
     client::share::log_file.open(fmt::format(
         "netsketch-client-log {:%Y-%m-%d %H:%M:%S}", now));
 
-    AbortIfV(client::share::log_file.error(),
+    ABORTIFV(client::share::log_file.error(),
         "opening a log file failed, reason: {}",
         client::share::log_file.reason());
 

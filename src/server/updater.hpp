@@ -1,9 +1,11 @@
 #pragma once
 
+#include "protocol.hpp"
 #include "threading.hpp"
 #include <log.hpp>
 #include <poll.h>
 #include <share.hpp>
+#include <variant>
 
 namespace server {
 
@@ -15,11 +17,11 @@ public:
 
         for (;;) {
             // block until we get something
-            auto tagged_command
+            auto command
                 = share::e_command_queue.pop_front();
 
             // serialize the command
-            prot::serialize_t serializer { tagged_command };
+            prot::serialize_t serializer { command };
 
             util::byte_vector payload_bytes
                 = serializer.bytes();

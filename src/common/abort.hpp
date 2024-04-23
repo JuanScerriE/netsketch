@@ -3,9 +3,6 @@
 // fmt
 #include <fmt/core.h>
 
-// std
-#include <utility>
-
 #define STRINGIFY_(x) #x
 
 #define STRINGIFY(x) STRINGIFY_(x)
@@ -14,7 +11,7 @@
 
 #ifndef NDEBUG
 
-#define AbortIf(cond, msg)                                 \
+#define ABORTIF(cond, msg)                                 \
     do {                                                   \
         if (cond) {                                        \
             fmt::println(stderr,                           \
@@ -23,7 +20,7 @@
         }                                                  \
     } while (0)
 
-#define AbortIfV(cond, msg, ...)                           \
+#define ABORTIFV(cond, msg, ...)                           \
     do {                                                   \
         if (cond) {                                        \
             fmt::println(stderr,                           \
@@ -33,14 +30,14 @@
         }                                                  \
     } while (0)
 
-#define Abort(msg)                                         \
+#define ABORT(msg)                                         \
     do {                                                   \
         fmt::println(                                      \
             stderr, __FILE__ ":" LINE_STRING ":: " msg);   \
         std::abort();                                      \
     } while (0)
 
-#define AbortV(msg, ...)                                   \
+#define ABORTV(msg, ...)                                   \
     do {                                                   \
         fmt::println(stderr,                               \
             __FILE__ ":" LINE_STRING ":: " msg,            \
@@ -50,19 +47,19 @@
 
 #else
 
-#define AbortIf(cond, msg)                                 \
+#define ABORTIF(cond, msg)                                 \
     do {                                                   \
     } while (0)
 
-#define AbortIfV(cond, msg, ...)                           \
+#define ABORTIFV(cond, msg, ...)                           \
     do {                                                   \
     } while (0)
 
-#define Abort(msg)                                         \
+#define ABORT(msg)                                         \
     do {                                                   \
     } while (0)
 
-#define AbortV(msg, ...)                                   \
+#define ABORTV(msg, ...)                                   \
     do {                                                   \
     } while (0)
 

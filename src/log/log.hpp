@@ -43,7 +43,7 @@ public:
     void flush()
     {
         if (fflush(m_file) == EOF) {
-            AbortV("flushing log file failed, reason: {}",
+            ABORTV("flushing log file failed, reason: {}",
                 strerror(errno));
         }
     }

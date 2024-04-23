@@ -64,6 +64,7 @@ using draw_t = std::variant<line_draw_t, rectangle_draw_t,
     circle_draw_t, text_draw_t>;
 
 struct tagged_draw_t {
+    bool adopted;
     std::string username;
     draw_t draw;
 };
@@ -104,7 +105,7 @@ struct tagged_command_t {
 using tagged_draw_list_t = std::vector<tagged_draw_t>;
 
 struct adopt_t {
-    std::string username;
+    std::string username {};
 };
 
 enum class payload_type_e : uint16_t {
@@ -191,11 +192,13 @@ public:
             return;
         }
 
-        Abort("unreachable");
+        ABORT("unreachable");
     }
 
     void ser_tagged_draw(tagged_draw_t& tagged_draw)
     {
+        m_fserial.write(tagged_draw.adopted);
+
         m_fserial.write(tagged_draw.username.size());
 
         for (char character : tagged_draw.username) {
@@ -271,7 +274,7 @@ public:
             return;
         }
 
-        Abort("unreachable");
+        ABORT("unreachable");
     }
 
     void ser_draw(draw_t& draw)
@@ -325,7 +328,7 @@ public:
             return;
         }
 
-        Abort("unreachable");
+        ABORT("unreachable");
     }
 
     [[nodiscard]] util::byte_vector bytes() const
@@ -363,7 +366,7 @@ public:
         case payload_type_e::TAGGED_DRAW_LIST:
             return deser_tagged_draw_list();
         case payload_type_e::ADOPT:
-            return deser_tagged_draw_list();
+            return deser_adopt();
         default:
             throw util::serial_error_t("unexpected type");
         }
@@ -397,6 +400,8 @@ public:
 
     tagged_draw_t deser_tagged_draw()
     {
+        auto adopted = m_bserial.read<bool>();
+
         auto username_size = m_bserial.read<size_t>();
 
         std::string username {};
@@ -405,7 +410,7 @@ public:
             username.push_back(m_bserial.read<char>());
         }
 
-        return { username, deser_draw() };
+        return { adopted, username, deser_draw() };
     }
 
     tagged_command_t deser_tagged_command()

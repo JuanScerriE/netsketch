@@ -62,7 +62,7 @@ int main(int argc, char** argv)
     act.sa_handler = sigint_handler;
 
     if (sigaction(SIGINT, &act, nullptr) == -1) {
-        AbortV("failed to create sigint handler, "
+        ABORTV("failed to create sigint handler, "
                "reason: {}",
             strerror(errno));
     }
@@ -81,6 +81,14 @@ int main(int argc, char** argv)
     server::share::e_server_thread.join();
 
     server::share::e_updater_thread.join();
+
+    {
+        threading::mutex_guard guard {
+            server::share::e_timers_mutex
+        };
+
+        server::share::e_timers.clear();
+    }
 
     return 0;
 }

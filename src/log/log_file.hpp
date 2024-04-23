@@ -39,7 +39,7 @@ public:
 
     [[nodiscard]] char* reason() const noexcept
     {
-        AbortIf(!m_has_error,
+        ABORTIF(!m_has_error,
             "trying to get an error reason when there is "
             "no error");
 
@@ -48,7 +48,7 @@ public:
 
     void close()
     {
-        AbortIf(
+        ABORTIF(
             !m_file, "trying to close a nullptr FILE *");
 
         // NOTE: cppreference.com on std::fclose => Whether
@@ -70,7 +70,7 @@ public:
 
     bool write(std::basic_string_view<char> message)
     {
-        AbortIf(
+        ABORTIF(
             !m_file, "trying to write to a nullptr FILE *");
 
         // NOTE: each of the individual elements
@@ -91,7 +91,7 @@ public:
 
     bool eof() noexcept
     {
-        AbortIf(!m_file,
+        ABORTIF(!m_file,
             "trying to test the eof indicator with a "
             "nullptr "
             "FILE *");
@@ -106,7 +106,7 @@ public:
 
     [[nodiscard]] FILE* native_handle() noexcept
     {
-        AbortIf(!m_file,
+        ABORTIF(!m_file,
             "trying to get a native handle to a "
             "nullptr FILE *");
 

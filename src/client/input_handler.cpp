@@ -102,7 +102,7 @@ static void print_draw(size_t index, prot::draw_t draw)
         return;
     }
 
-    Abort("unreachable");
+    ABORT("unreachable");
 }
 
 static void list_draws(common::option_e tool_qual,
@@ -149,7 +149,7 @@ static void list_draws(common::option_e tool_qual,
                 }
                 break;
             default:
-                Abort("unreachable");
+                ABORT("unreachable");
             }
             break;
         case option_e::MINE:
@@ -187,12 +187,12 @@ static void list_draws(common::option_e tool_qual,
                     }
                     break;
                 default:
-                    Abort("unreachable");
+                    ABORT("unreachable");
                 }
             }
             break;
         default:
-            Abort("unreachable");
+            ABORT("unreachable");
         }
 
         index++;
@@ -759,7 +759,7 @@ void input_handler_t::process_line(
             }
         } break;
         default:
-            Abort("unreachable");
+            ABORT("unreachable");
         }
 
         return;

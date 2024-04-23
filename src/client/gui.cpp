@@ -79,7 +79,7 @@ void gui_t::process_draw(prot::draw_t& draw)
 
     using Type = std::decay_t<decltype(draw)>;
 
-    AbortV("unknown draw type {}", typeid(Type).name());
+    ABORTV("unknown draw type {}", typeid(Type).name());
 }
 
 inline void gui_t::draw_scene()

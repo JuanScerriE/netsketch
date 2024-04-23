@@ -25,7 +25,11 @@
 // connections for a whiteboard (for know).
 #define MAX_CONNS (3)
 
+#include <network.hpp>
+
 namespace server::share {
+
+extern Socket socket{};
 
 extern threading::mutex e_threads_mutex;
 
@@ -44,8 +48,7 @@ extern threading::mutex e_timers_mutex;
 extern std::list<std::unique_ptr<timing::timer_data>>
     e_timers;
 
-extern common::ts_queue<prot::tagged_command_t>
-    e_command_queue;
+extern common::ts_queue<prot::payload_t> e_command_queue;
 
 extern common::ts_draw_list e_draw_list;
 

@@ -18,6 +18,20 @@ public:
 
     ts_draw_list& operator=(const ts_draw_list&) = delete;
 
+    void update(const prot::adopt_t& adopt)
+    {
+        {
+            std::scoped_lock<std::mutex> lock { m_mutex };
+
+            for (auto& tagged_draw : m_vector) {
+                if (tagged_draw.username
+                    == adopt.username) {
+                    tagged_draw.adopted = true;
+                }
+            }
+        }
+    }
+
     void update(
         const prot::tagged_command_t& tagged_command)
     {
@@ -74,7 +88,7 @@ public:
                 return;
             }
 
-            Abort("unreachable");
+            ABORT("unreachable");
         }
         m_cond_var.notify_one();
     }
@@ -96,15 +110,14 @@ private:
     void handle_draw(
         std::string username, prot::draw_t draw)
     {
-        m_vector.push_back(
-            { std::move(username), std::move(draw) });
+        m_vector.push_back({ false, std::move(username),
+            std::move(draw) });
     }
     void handle_select(
         std::string username, prot::select_t select)
     {
-        m_vector[static_cast<size_t>(select.id)]
-            = { std::move(username),
-                  std::move(select.draw) };
+        m_vector[static_cast<size_t>(select.id)] = { false,
+            std::move(username), std::move(select.draw) };
     }
     void handle_delete(prot::delete_t delete_)
     {
@@ -219,7 +232,7 @@ public:
             return;
         }
 
-        Abort("unreachable");
+        ABORT("unreachable");
     }
 
 private:

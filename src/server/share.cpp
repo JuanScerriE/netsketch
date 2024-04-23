@@ -1,7 +1,12 @@
 // share
 #include <share.hpp>
 
+// network
+#include <network.hpp>
+
 namespace server::share {
+
+Socket socket{};
 
 threading::mutex e_threads_mutex {};
 
@@ -21,7 +26,9 @@ std::list<std::unique_ptr<timer_data>> e_timers;
 
 bool e_stop_server { false };
 
-common::ts_queue<prot::tagged_command_t> e_command_queue {};
+common::ts_queue<
+    std::variant<prot::tagged_command_t, prot::adopt_t>>
+    e_command_queue {};
 
 common::ts_draw_list e_draw_list {};
 

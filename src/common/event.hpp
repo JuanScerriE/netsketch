@@ -34,7 +34,7 @@ public:
     {
 #ifdef __APPLE__
         if (pipe(m_stop_event_pipe) == -1) {
-            AbortV("failed to create pipe file descriptor, "
+            ABORTV("failed to create pipe file descriptor, "
                    "reason: {}",
                 strerror(errno));
         }
@@ -42,7 +42,7 @@ public:
         m_stop_event_fd = eventfd(0, 0);
 
         if (m_stop_event_fd == -1) {
-            AbortV(
+            ABORTV(
                 "failed to create event file descriptor, "
                 "reason: {}",
                 strerror(errno));
@@ -54,19 +54,19 @@ public:
     {
 #ifdef __APPLE__
         if (close(m_stop_event_pipe[READ]) == -1) {
-            AbortV("failed to close read end of a pipe, "
+            ABORTV("failed to close read end of a pipe, "
                    "reason: {}",
                 strerror(errno));
         }
 
         if (close(m_stop_event_pipe[WRITE]) == -1) {
-            AbortV("failed to close write end of a pipe, "
+            ABORTV("failed to close write end of a pipe, "
                    "reason: {}",
                 strerror(errno));
         }
 #else
         if (close(m_stop_event_fd) == -1) {
-            AbortV("failed to close event file descriptor, "
+            ABORTV("failed to close event file descriptor, "
                    "reason: {}",
                 strerror(errno));
         }
@@ -81,13 +81,13 @@ public:
         if (write(m_stop_event_pipe[WRITE], &notify,
                 sizeof(notify))
             == -1) {
-            AbortV("failed to write to pipe, reason: {}",
+            ABORTV("failed to write to pipe, reason: {}",
                 strerror(errno));
         }
 #else
         if (write(m_stop_event_fd, &notify, sizeof(notify))
             == -1) {
-            AbortV(
+            ABORTV(
                 "failed to write to event file descriptor, "
                 "reason: {}",
                 strerror(errno));
@@ -103,14 +103,14 @@ public:
         if (read(m_stop_event_pipe[READ], &throw_away,
                 sizeof(throw_away))
             == -1) {
-            AbortV("failed to read from pipe, reason: {}",
+            ABORTV("failed to read from pipe, reason: {}",
                 strerror(errno));
         }
 #else
         if (read(m_stop_event_fd, &throw_away,
                 sizeof(throw_away))
             == -1) {
-            AbortV("failed to read from event file "
+            ABORTV("failed to read from event file "
                    "descriptor, "
                    "reason: {}",
                 strerror(errno));

@@ -38,58 +38,21 @@ server_t::server_t(uint16_t port)
 
 void server_t::operator()()
 {
-#ifdef __APPLE__
-    m_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+    try {
+        m_socket.open(AF_INET, SOCK_STREAM, 0);
 
-    int saved_flags = fcntl(m_socket_fd, F_GETFL);
-    AbortIfV(saved_flags == -1,
-        "updating the socket file descriptor "
-        "failed, reason {}",
-        strerror(errno));
-    int is_non_blocking = fcntl(
-        m_socket_fd, F_SETFL, saved_flags & O_NONBLOCK);
-    AbortIfV(is_non_blocking == -1,
-        "attempt to modify the connection file "
-        "descriptor "
-        "failed, reason {}",
-        strerror(errno));
-#else
-    m_socket_fd
-        = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
-#endif
+        sockaddr_in server_addr {};
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+        server_addr.sin_port = htons(m_port);
 
-    if (m_socket_fd == -1) {
-        log.error("could not create socket, reason: {}",
-            strerror(errno));
+        m_socket.bind(
+            (sockaddr*)&server_addr, sizeof(server_addr));
 
-        return;
-    }
-
-    sockaddr_in server_addr {};
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_addr.sin_port = htons(m_port);
-
-    if (bind(m_socket_fd, (sockaddr*)&server_addr,
-            sizeof(server_addr))
-        == -1) {
-        log.error("could not bind socket, reason: {}",
-            strerror(errno));
-
-        // closing is handled in dtor();
-
-        return;
-    }
-
-    // NOTE: the backlog parameter limits the number
-    // of outstanding connections on the socket's listen
-    // queue.
-    // TODO: check if the backlog can fail us
-    if (listen(m_socket_fd, BACKLOG) == -1) {
-        log.error("could not listen on socket, reason: {}",
-            strerror(errno));
-
-        // closing is handled in dtor();
+        // TODO: check if the backlog can fail us
+        m_socket.listen(BACKLOG);
+    } catch (std::runtime_error& error) {
+        log.error(error.what());
 
         return;
     }
@@ -158,7 +121,7 @@ void server_t::requests_loop()
                 continue;
             }
 
-            AbortV("poll of socket failed, reason: {}",
+            ABORTV("poll of socket failed, reason: {}",
                 strerror(errno));
         }
 
@@ -189,7 +152,7 @@ void server_t::requests_loop()
                 strerror(errno));
 
             if (close(m_current_conn_fd) == -1) {
-                AbortV("closing connection failed, "
+                ABORTV("closing connection failed, "
                        "reason: {}",
                     strerror(errno));
             }
@@ -203,7 +166,7 @@ void server_t::requests_loop()
             log.warn("connection hung up");
 
             if (close(m_current_conn_fd) == -1) {
-                AbortV("closing connection failed, "
+                ABORTV("closing connection failed, "
                        "reason: {}",
                     strerror(errno));
             }
@@ -217,7 +180,7 @@ void server_t::requests_loop()
             log.warn("establishing connection timedout");
 
             if (close(m_current_conn_fd) == -1) {
-                AbortV("closing connection failed, "
+                ABORTV("closing connection failed, "
                        "reason: {}",
                     strerror(errno));
             }
@@ -242,7 +205,7 @@ void server_t::requests_loop()
                 strerror(errno));
 
             if (close(m_current_conn_fd) == -1) {
-                AbortV("closing connection failed, "
+                ABORTV("closing connection failed, "
                        "reason: {}",
                     strerror(errno));
             }
@@ -257,7 +220,7 @@ void server_t::requests_loop()
                 check_size);
 
             if (close(m_current_conn_fd) == -1) {
-                AbortV("closing connection failed, "
+                ABORTV("closing connection failed, "
                        "reason: {}",
                     strerror(errno));
             }
@@ -269,7 +232,7 @@ void server_t::requests_loop()
 
         if (num_of_conns >= MAX_CONNS) {
             if (close(m_current_conn_fd) == -1) {
-                AbortV(
+                ABORTV(
                     "closing connection failed, reason: {}",
                     strerror(errno));
             }
@@ -296,13 +259,13 @@ void server_t::requests_loop()
         //    explicitly set all required flags on the
         //    socket returned from accept().
         int saved_flags = fcntl(m_current_conn_fd, F_GETFL);
-        AbortIfV(saved_flags == -1,
+        ABORTIFV(saved_flags == -1,
             "updating the connection file descriptor "
             "failed, reason {}",
             strerror(errno));
         int is_non_blocking = fcntl(m_current_conn_fd,
             F_SETFL, saved_flags & ~O_NONBLOCK);
-        AbortIfV(is_non_blocking == -1,
+        ABORTIFV(is_non_blocking == -1,
             "attempt to modify the connection file "
             "descriptor "
             "failed, reason {}",

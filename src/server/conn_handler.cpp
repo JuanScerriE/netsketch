@@ -39,7 +39,7 @@ void conn_handler_t::setup_readable_net_info()
     if (inet_ntop(AF_INET, &m_addr.sin_addr, ipv4,
             INET_ADDRSTRLEN)
         == nullptr) {
-        AbortV("inet_ntop(...) failed, reason: {}",
+        ABORTV("inet_ntop(...) failed, reason: {}",
             strerror(errno));
     }
 
@@ -189,7 +189,7 @@ void conn_handler_t::dtor()
         }
 
         if (close(m_conn_fd) == -1) {
-            AbortV("closing connection failed, reason: {}",
+            ABORTV("closing connection failed, reason: {}",
                 strerror(errno));
         }
 

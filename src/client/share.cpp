@@ -26,7 +26,7 @@ common::readonly_t<bool> show_mine { false };
 logging::log_file log_file {};
 
 // queues
-common::ts_queue<prot::tagged_command_t> writer_queue {};
+common::ts_queue<prot::TaggedCommand> writer_queue {};
 
 // nickname
 std::string nickname {};
@@ -43,7 +43,7 @@ threading::mutex writer_mutex {};
 threading::rwlock rwlock1 {};
 threading::rwlock rwlock2 {};
 
-prot::tagged_draw_list_t list1 {};
-prot::tagged_draw_list_t list2 {};
+prot::TaggedDrawList list1 {};
+prot::TaggedDrawList list2 {};
 
 } // namespace client::share

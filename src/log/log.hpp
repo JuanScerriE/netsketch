@@ -13,10 +13,18 @@
 namespace logging {
 
 class log {
-public:
-    enum class level : int { debug, info, warn, error };
+   public:
+    enum class level : int {
+        debug,
+        info,
+        warn,
+        error
+    };
 
-    void set_file(FILE* file) { m_file = file; }
+    void set_file(FILE* file)
+    {
+        m_file = file;
+    }
 
     // NOTE: this is not ideal we are specifying the
     // log_file_t because we have some semblance of security
@@ -38,19 +46,27 @@ public:
         m_log_level = log_level;
     }
 
-    void toggle() { m_disabled = !m_disabled; }
+    void toggle()
+    {
+        m_disabled = !m_disabled;
+    }
 
     void flush()
     {
         if (fflush(m_file) == EOF) {
-            ABORTV("flushing log file failed, reason: {}",
-                strerror(errno));
+            ABORTV(
+                "flushing log file failed, reason: {}",
+                strerror(errno)
+            );
         }
     }
 
     template <typename... T>
-    void write(level log_level,
-        fmt::format_string<T...> fmt, T&&... args)
+    void write(
+        level log_level,
+        fmt::format_string<T...> fmt,
+        T&&... args
+    )
     {
         if (m_disabled)
             return;
@@ -65,8 +81,8 @@ public:
         fmt::println(m_file, fmt, args...);
     }
 
-    void c_write(
-        level log_level, const char* fmt, va_list args)
+    void
+    c_write(level log_level, const char* fmt, va_list args)
     {
         if (m_disabled)
             return;
@@ -124,7 +140,7 @@ public:
         write(level::error, fmt, args...);
     }
 
-private:
+   private:
     static level clamp_level(level log_level)
     {
         if (log_level < level::debug) {

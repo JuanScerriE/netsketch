@@ -44,15 +44,18 @@ void reader_t::handle_loop()
         if (poll(&poll_fd, 1, -1) == -1) {
             log.error(
                 "poll of connection failed, reason: {}",
-                strerror(errno));
+                strerror(errno)
+            );
 
             break;
         }
 
-        log.debug("wake up reasons ({}, {}, {})",
+        log.debug(
+            "wake up reasons ({}, {}, {})",
             (poll_fd.revents & POLLIN) ? "POLLIN" : "",
             (poll_fd.revents & POLLHUP) ? "POLLHUP" : "",
-            (poll_fd.revents & POLLERR) ? "POLLERR" : "");
+            (poll_fd.revents & POLLERR) ? "POLLERR" : ""
+        );
 
         if (poll_fd.revents & POLLHUP) {
             log.info("closing tcp connection");
@@ -60,15 +63,20 @@ void reader_t::handle_loop()
             break;
         }
 
-        prot::header_t header {};
+        prot::PayloadHeader header {};
 
         ssize_t header_size = read(
-            m_conn_fd, &header, sizeof(prot::header_t));
+            m_conn_fd,
+            &header,
+            sizeof(prot::PayloadHeader)
+        );
 
         if (header_size == -1) {
-            log.warn("reading from connection failed, "
-                     "reason: {}",
-                strerror(errno));
+            log.warn(
+                "reading from connection failed, "
+                "reason: {}",
+                strerror(errno)
+            );
 
             continue;
         }
@@ -77,23 +85,30 @@ void reader_t::handle_loop()
             // we will assume that if header_size == 0 and
             // the poll returns POLLIN that the write end of
             // the connection was close
-            log.warn("input of length 0 bytes (server "
-                     "closed write)");
+            log.warn(
+                "input of length 0 bytes (server "
+                "closed write)"
+            );
 
             if (::shutdown(m_conn_fd, SHUT_WR) == -1) {
-                log.error("connection shutdown failed, "
-                          "reason: {}",
-                    strerror(errno));
+                log.error(
+                    "connection shutdown failed, "
+                    "reason: {}",
+                    strerror(errno)
+                );
             }
 
             break;
         }
 
         if (static_cast<size_t>(header_size)
-            < sizeof(prot::header_t)) {
-            log.warn("smallest possible read is {} bytes "
-                     "instead got {} bytes",
-                sizeof(prot::header_t), header_size);
+            < sizeof(prot::PayloadHeader)) {
+            log.warn(
+                "smallest possible read is {} bytes "
+                "instead got {} bytes",
+                sizeof(prot::PayloadHeader),
+                header_size
+            );
 
             continue;
         }
@@ -101,44 +116,60 @@ void reader_t::handle_loop()
         if (header.is_malformed()) {
             log.warn(
                 "expected header start {} instead got {}",
-                MAGIC_BYTES, header.magic_bytes);
+                MAGIC_BYTES,
+                header.magic_bytes
+            );
 
             continue;
         }
 
-        log.debug("payload size is {} bytes",
-            header.payload_size);
+        log.debug(
+            "payload size is {} bytes",
+            header.payload_size
+        );
 
-        util::byte_vector payload { header.payload_size };
+        util::ByteVector payload { header.payload_size };
 
         ssize_t actual_size = read(
-            m_conn_fd, payload.data(), header.payload_size);
+            m_conn_fd,
+            payload.data(),
+            header.payload_size
+        );
 
         if (actual_size == -1) {
-            log.warn("continued reading from connection "
-                     "failed, reason: {}",
-                strerror(errno));
+            log.warn(
+                "continued reading from connection "
+                "failed, reason: {}",
+                strerror(errno)
+            );
 
             continue;
         }
 
         if (static_cast<size_t>(actual_size)
             < header.payload_size) {
-            log.warn("header_size of payload ({} bytes) is "
-                     "smaller than expected ({} bytes)",
-                actual_size, header.payload_size);
+            log.warn(
+                "header_size of payload ({} bytes) is "
+                "smaller than expected ({} bytes)",
+                actual_size,
+                header.payload_size
+            );
 
             continue;
         }
 
         try {
             handle_payload(payload);
-        } catch (util::serial_error_t& err) {
-            log.warn("handling payload failed, reason: {}",
-                err.what());
+        } catch (util::SerialError& err) {
+            log.warn(
+                "handling payload failed, reason: {}",
+                err.what()
+            );
         } catch (std::runtime_error& err) {
-            log.warn("handling payload failed, reason: {}",
-                err.what());
+            log.warn(
+                "handling payload failed, reason: {}",
+                err.what()
+            );
         }
 
         log.flush();
@@ -167,11 +198,13 @@ void reader_t::dtor()
         if (errno == ENOTCONN) {
             log.warn(
                 "connection shutdown failed, reason: {}",
-                strerror(errno));
+                strerror(errno)
+            );
         } else {
             log.error(
                 "connection shutdown failed, reason: {}",
-                strerror(errno));
+                strerror(errno)
+            );
         }
     }
 }
@@ -182,36 +215,38 @@ void reader_t::dtor()
 // it is not thread-safe and with enough context
 // switching it will fail)
 
-void reader_t::handle_payload(util::byte_vector& payload)
+void reader_t::handle_payload(util::ByteVector& payload)
 {
     prot::deserialize_t deserializer { payload };
 
-    prot::payload_t payload_object = deserializer.payload();
+    prot::Payload payload_object = deserializer.payload();
 
-    if (std::holds_alternative<prot::tagged_command_t>(
-            payload_object)) {
+    if (std::holds_alternative<prot::TaggedCommand>(
+            payload_object
+        )) {
         auto& tagged_command
-            = std::get<prot::tagged_command_t>(
-                payload_object);
+            = std::get<prot::TaggedCommand>(payload_object);
         update_list(tagged_command);
 
         return;
     }
 
-    if (std::holds_alternative<prot::tagged_draw_t>(
-            payload_object)) {
+    if (std::holds_alternative<prot::TaggedDraw>(
+            payload_object
+        )) {
         auto& tagged_draw
-            = std::get<prot::tagged_draw_t>(payload_object);
+            = std::get<prot::TaggedDraw>(payload_object);
         (void)tagged_draw;
 
         return;
     }
 
-    if (std::holds_alternative<prot::tagged_draw_list_t>(
-            payload_object)) {
+    if (std::holds_alternative<prot::TaggedDrawList>(
+            payload_object
+        )) {
         auto& tagged_draw_list
-            = std::get<prot::tagged_draw_list_t>(
-                payload_object);
+            = std::get<prot::TaggedDrawList>(payload_object
+            );
 
         update_whole_list(tagged_draw_list);
 
@@ -221,8 +256,7 @@ void reader_t::handle_payload(util::byte_vector& payload)
     throw std::runtime_error("does not contain known type");
 }
 
-void reader_t::update_whole_list(
-    prot::tagged_draw_list_t& list)
+void reader_t::update_whole_list(prot::TaggedDrawList& list)
 {
     threading::mutex_guard guard { share::writer_mutex };
     {
@@ -243,7 +277,8 @@ void reader_t::update_whole_list(
 }
 
 void reader_t::update_list(
-    prot::tagged_command_t& tagged_command)
+    prot::TaggedCommand& tagged_command
+)
 {
     threading::mutex_guard guard { share::writer_mutex };
     {
@@ -252,7 +287,8 @@ void reader_t::update_list(
         };
 
         common::draw_list_wrapper { share::list1 }.update(
-            tagged_command);
+            tagged_command
+        );
     }
 
     {
@@ -261,7 +297,8 @@ void reader_t::update_list(
         };
 
         common::draw_list_wrapper { share::list2 }.update(
-            tagged_command);
+            tagged_command
+        );
     }
 }
 

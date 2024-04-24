@@ -22,15 +22,16 @@
 // fmt
 #include <fmt/core.h>
 
-// abort
+// netsketch
 #include <abort.hpp>
+#include <utils.hpp>
 
 class PollResult {
-public:
+   public:
+    PollResult() = default;
+
     PollResult(int error_no, bool timed_out, int events)
-        : m_error_no(error_no)
-        , m_timed_out(timed_out)
-        , m_events(events)
+        : m_error_no(error_no), m_timed_out(timed_out), m_events(events)
     {
     }
 
@@ -104,7 +105,7 @@ public:
         return m_events & POLLPRI;
     }
 
-private:
+   private:
     bool m_checked { false };
 
     int m_error_no {};
@@ -112,11 +113,42 @@ private:
     int m_events {};
 };
 
-class Socket {
-public:
-    Socket() = default;
+class ReadResult {
+   public:
+    ReadResult() = default;
 
-    Socket(Socket&& other) noexcept
+    ReadResult(bool eof, ByteVector bytes)
+        : m_eof(eof), m_bytes(std::move(bytes))
+    {
+    }
+
+    [[nodiscard]] bool is_eof()
+    {
+        m_checked = true;
+
+        return m_eof;
+    }
+
+    [[nodiscard]] ByteVector get_bytes() const
+    {
+        ABORTIF(!m_checked, "poll result not checked");
+
+        return m_bytes;
+    }
+
+   private:
+    bool m_checked { false };
+
+    bool m_eof {};
+
+    ByteVector m_bytes {};
+};
+
+class IPv4Socket {
+   public:
+    IPv4Socket() = default;
+
+    IPv4Socket(IPv4Socket&& other) noexcept
         : m_domain(std::exchange(other.m_domain, 0))
         , m_type(std::exchange(other.m_type, 0))
         , m_protocol(std::exchange(other.m_protocol, 0))
@@ -126,7 +158,7 @@ public:
     {
     }
 
-    Socket& operator=(Socket&& other) noexcept
+    IPv4Socket& operator=(IPv4Socket&& other) noexcept
     {
         m_domain = std::exchange(other.m_domain, 0);
         m_type = std::exchange(other.m_type, 0);
@@ -137,21 +169,27 @@ public:
         return *this;
     }
 
-    void open(int domain, int type, int protocol)
+    [[nodiscard]] const struct sockaddr_in& get_sockaddr_in() const
     {
-        ABORTIF(domain != AF_INET, "only supports AF_INET");
+        return m_sock_addr;
+    }
 
-        m_domain = domain;
+    void open(int type, int protocol)
+    {
+        ABORTIF(m_sock_fd != -1, "initialized socket");
+
+        m_domain = AF_INET;
         m_type = type;
         m_protocol = protocol;
 
-        std::memset(&m_sock_addr, 0, sizeof(m_sock_addr));
+        bzero(&m_sock_addr, sizeof(m_sock_addr));
 
-        m_sock_fd = socket(domain, type, protocol);
+        m_sock_fd = socket(m_domain, m_type, m_protocol);
 
         if (m_sock_fd == -1) {
-            throw std::runtime_error { fmt::format(
-                "socket(): {}", strerror(errno)) };
+            throw std::runtime_error {
+                fmt::format("socket(): {}", strerror(errno))
+            };
         }
     }
 
@@ -160,10 +198,8 @@ public:
         ABORTIF(m_sock_fd == -1, "uninitialized socket");
 
         int flags = fcntl(m_sock_fd, F_GETFL);
-        ABORTIFV(
-            flags == -1, "fcntl(): {}", strerror(errno));
-        int ret = fcntl(
-            m_sock_fd, F_SETFL, flags & ~O_NONBLOCK);
+        ABORTIFV(flags == -1, "fcntl(): {}", strerror(errno));
+        int ret = fcntl(m_sock_fd, F_SETFL, flags & ~O_NONBLOCK);
         ABORTIFV(ret == -1, "fcntl(): {}", strerror(errno));
     }
 
@@ -172,28 +208,28 @@ public:
         ABORTIF(m_sock_fd == -1, "uninitialized socket");
 
         int flags = fcntl(m_sock_fd, F_GETFL);
-        ABORTIFV(
-            flags == -1, "fcntl(): {}", strerror(errno));
-        int ret
-            = fcntl(m_sock_fd, F_SETFL, flags & O_NONBLOCK);
+        ABORTIFV(flags == -1, "fcntl(): {}", strerror(errno));
+        int ret = fcntl(m_sock_fd, F_SETFL, flags & O_NONBLOCK);
         ABORTIFV(ret == -1, "fcntl(): {}", strerror(errno));
     }
 
-    void bind(const struct sockaddr* sock_addr,
-        socklen_t addr_size)
+    void bind(const struct sockaddr_in* sock_addr)
     {
         ABORTIF(m_sock_fd == -1, "uninitialized socket");
 
-        std::memcpy(&m_sock_addr, sock_addr, addr_size);
+        ABORTIF(sock_addr->sin_family != AF_INET, "expected AF_INET");
 
-        m_addr_size = addr_size;
+        std::memcpy(&m_sock_addr, sock_addr, sizeof(struct sockaddr_in));
+
+        m_addr_size = sizeof(struct sockaddr_in);
 
         int ret
-            = ::bind(m_sock_fd, &m_sock_addr, m_addr_size);
+            = ::bind(m_sock_fd, (struct sockaddr*)&m_sock_addr, m_addr_size);
 
         if (ret == -1) {
-            throw std::runtime_error { fmt::format(
-                "bind(): {}", strerror(errno)) };
+            throw std::runtime_error {
+                fmt::format("bind(): {}", strerror(errno))
+            };
         }
     }
 
@@ -204,16 +240,52 @@ public:
         int ret = ::listen(m_sock_fd, backlog);
 
         if (ret == -1) {
-            throw std::runtime_error { fmt::format(
-                "listen(): {}", strerror(errno)) };
+            throw std::runtime_error {
+                fmt::format("listen(): {}", strerror(errno))
+            };
         }
     }
 
-    template <typename... Events>
-    PollResult poll(Events... events, int timeout = 128)
+    [[nodiscard]] IPv4Socket accept() const
     {
-        struct pollfd query
-            = { m_sock_fd, (events | ...), 0 };
+        ABORTIF(m_sock_fd == -1, "uninitialized socket");
+
+        IPv4Socket conn_sock {};
+
+        int conn_sock_fd = ::accept(
+            m_sock_fd,
+            (struct sockaddr*)&conn_sock.m_sock_addr,
+            &conn_sock.m_addr_size
+        );
+
+        if (conn_sock_fd == -1) {
+            throw std::runtime_error {
+                fmt::format("accept(): {}", strerror(errno))
+            };
+        }
+
+        ABORTIF(
+            conn_sock.m_addr_size != sizeof(struct sockaddr_in),
+            "expected an IPv4 connection"
+        );
+
+        conn_sock.m_domain = m_domain;
+        conn_sock.m_type = m_type;
+        conn_sock.m_protocol = m_protocol;
+        conn_sock.m_sock_fd = conn_sock_fd;
+
+        return conn_sock;
+    }
+
+    PollResult poll(std::initializer_list<short> events, int timeout = 128)
+    {
+        short request = 0;
+
+        for (auto& event : events) {
+            request |= event;
+        }
+
+        struct pollfd query = { m_sock_fd, request, 0 };
 
         int ret = ::poll(&query, 1, timeout);
 
@@ -228,36 +300,49 @@ public:
         return { 0, false, query.revents };
     }
 
-    [[nodiscard]] Socket accept() const
+    [[nodiscard]] ReadResult read(size_t size) const
     {
-        ABORTIF(m_sock_fd == -1, "uninitialized socket");
+        ByteVector bytes { size };
 
-        Socket conn_sock {};
+        ssize_t read_size = ::read(m_sock_fd, bytes.data(), size);
 
-        int conn_sock_fd = ::accept(m_sock_fd,
-            &conn_sock.m_sock_addr, &conn_sock.m_addr_size);
-
-        if (conn_sock_fd == -1) {
-            throw std::runtime_error { fmt::format(
-                "accept(): {}", strerror(errno)) };
+        if (read_size < 0) {
+            throw std::runtime_error {
+                fmt::format("read(): {}", strerror(errno))
+            };
         }
 
-        conn_sock.m_domain = m_domain;
-        conn_sock.m_type = m_type;
-        conn_sock.m_protocol = m_protocol;
-        // conn_sock.m_sock_addr;
-        // conn_sock.m_addr_size;
-        conn_sock.m_sock_fd = conn_sock_fd;
+        if (read_size == 0) {
+            return { true, {} };
+        }
 
-        return conn_sock;
+        if (static_cast<size_t>(read_size) < size) {
+            throw std::runtime_error { "read(): fewer bytes than expected" };
+        }
+
+        return { false, bytes };
+    }
+
+    void write(ByteVector bytes) const
+    {
+        ssize_t write_size = ::write(m_sock_fd, bytes.data(), bytes.size());
+
+        if (write_size < 0) {
+            throw std::runtime_error {
+                fmt::format("write(): {}", strerror(errno))
+            };
+        }
+
+        if (static_cast<size_t>(write_size) < bytes.size()) {
+            throw std::runtime_error { "write(): fewer bytes than expected" };
+        }
     }
 
     void close()
     {
         ABORTIF(m_sock_fd == -1, "uninitialized socket");
 
-        ABORTIFV(::close(m_sock_fd) == -1, "close(): {}",
-            strerror(errno));
+        ABORTIFV(::close(m_sock_fd) == -1, "close(): {}", strerror(errno));
 
         m_domain = 0;
         m_type = 0;
@@ -267,18 +352,18 @@ public:
         m_sock_fd = -1;
     }
 
-    ~Socket()
+    ~IPv4Socket()
     {
         if (m_sock_fd != -1) {
             close();
         }
     }
 
-private:
+   private:
     int m_domain { 0 };
     int m_type { 0 };
     int m_protocol { 0 };
-    struct sockaddr m_sock_addr { };
+    struct sockaddr_in m_sock_addr { };
     socklen_t m_addr_size {};
     int m_sock_fd { -1 };
 };

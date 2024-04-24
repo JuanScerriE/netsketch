@@ -4,11 +4,14 @@
 // network
 #include <network.hpp>
 
+// atomic
+#include <atomic>
+
 namespace server::share {
 
-bool stop{false};
+std::atomic_bool run { true };
 
-Socket socket{};
+IPv4Socket socket {};
 
 threading::mutex e_threads_mutex {};
 
@@ -29,7 +32,7 @@ std::list<std::unique_ptr<timer_data>> e_timers;
 bool e_stop_server { false };
 
 common::ts_queue<
-    std::variant<prot::tagged_command_t, prot::adopt_t>>
+    std::variant<prot::TaggedCommand, prot::adopt_t>>
     e_command_queue {};
 
 common::ts_draw_list e_draw_list {};

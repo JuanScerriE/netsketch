@@ -19,13 +19,12 @@ void handle_timer(union sigval val)
     {
         std::string username = timer->user;
 
-        prot::adopt_t adopt{username};
+        prot::adopt_t adopt { username };
 
         // these should really be atomic operations
         share::e_draw_list.update(adopt);
 
         share::e_command_queue.push_back(adopt);
-
     }
 
     {
@@ -34,7 +33,8 @@ void handle_timer(union sigval val)
         };
 
         for (auto iter = share::e_timers.rbegin();
-             iter != share::e_timers.rend(); iter++) {
+             iter != share::e_timers.rend();
+             iter++) {
             if ((*iter).get() == timer) {
                 share::e_timers.erase(iter.base());
 

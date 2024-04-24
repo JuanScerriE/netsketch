@@ -12,14 +12,14 @@
 namespace client {
 
 class writer_t {
-public:
+   public:
     explicit writer_t(int m_conn_fd);
 
     void operator()();
 
     void dtor();
 
-private:
+   private:
     // connection
     const int m_conn_fd;
 

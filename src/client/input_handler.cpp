@@ -59,23 +59,35 @@ static void print_draw(size_t index, prot::draw_t draw)
 
         fmt::println(
             "[{}] => [line] [{} {} {}] [{} {} {} {}]",
-            index, line.colour.r, line.colour.g,
-            line.colour.b, line.x0, line.y0, line.x1,
-            line.y1);
+            index,
+            line.colour.r,
+            line.colour.g,
+            line.colour.b,
+            line.x0,
+            line.y0,
+            line.x1,
+            line.y1
+        );
 
         return;
     }
 
-    if (std::holds_alternative<prot::rectangle_draw_t>(
-            draw)) {
+    if (std::holds_alternative<prot::rectangle_draw_t>(draw
+        )) {
         auto& rectangle
             = std::get<prot::rectangle_draw_t>(draw);
 
         fmt::println(
             "[{}] => [rectangle] [{} {} {}] [{} {} {} {}]",
-            index, rectangle.colour.r, rectangle.colour.g,
-            rectangle.colour.b, rectangle.x, rectangle.y,
-            rectangle.w, rectangle.h);
+            index,
+            rectangle.colour.r,
+            rectangle.colour.g,
+            rectangle.colour.b,
+            rectangle.x,
+            rectangle.y,
+            rectangle.w,
+            rectangle.h
+        );
 
         return;
     }
@@ -84,9 +96,15 @@ static void print_draw(size_t index, prot::draw_t draw)
         auto& circle = std::get<prot::circle_draw_t>(draw);
 
         fmt::println(
-            "[{}] => [circle] [{} {} {}] [{} {} {}]", index,
-            circle.colour.r, circle.colour.g,
-            circle.colour.b, circle.x, circle.y, circle.r);
+            "[{}] => [circle] [{} {} {}] [{} {} {}]",
+            index,
+            circle.colour.r,
+            circle.colour.g,
+            circle.colour.b,
+            circle.x,
+            circle.y,
+            circle.r
+        );
 
         return;
     }
@@ -96,8 +114,14 @@ static void print_draw(size_t index, prot::draw_t draw)
 
         fmt::println(
             "[{}] => [text] [{} {} {}] [{} {} \"{}\"]",
-            index, text.colour.r, text.colour.g,
-            text.colour.b, text.x, text.y, text.string);
+            index,
+            text.colour.r,
+            text.colour.g,
+            text.colour.b,
+            text.x,
+            text.y,
+            text.string
+        );
 
         return;
     }
@@ -105,9 +129,11 @@ static void print_draw(size_t index, prot::draw_t draw)
     ABORT("unreachable");
 }
 
-static void list_draws(common::option_e tool_qual,
+static void list_draws(
+    common::option_e tool_qual,
     common::option_e user_qual,
-    prot::tagged_draw_list_t& draw_list)
+    prot::TaggedDrawList& draw_list
+)
 {
     using namespace common;
 
@@ -122,29 +148,31 @@ static void list_draws(common::option_e tool_qual,
                 break;
             case option_e::LINE:
                 if (std::holds_alternative<
-                        prot::line_draw_t>(
-                        tagged_draw.draw)) {
+                        prot::line_draw_t>(tagged_draw.draw
+                    )) {
                     print_draw(index, tagged_draw.draw);
                 }
                 break;
             case option_e::RECTANGLE:
                 if (std::holds_alternative<
                         prot::rectangle_draw_t>(
-                        tagged_draw.draw)) {
+                        tagged_draw.draw
+                    )) {
                     print_draw(index, tagged_draw.draw);
                 }
                 break;
             case option_e::CIRCLE:
                 if (std::holds_alternative<
                         prot::circle_draw_t>(
-                        tagged_draw.draw)) {
+                        tagged_draw.draw
+                    )) {
                     print_draw(index, tagged_draw.draw);
                 }
                 break;
             case option_e::TEXT:
                 if (std::holds_alternative<
-                        prot::text_draw_t>(
-                        tagged_draw.draw)) {
+                        prot::text_draw_t>(tagged_draw.draw
+                    )) {
                     print_draw(index, tagged_draw.draw);
                 }
                 break;
@@ -161,28 +189,32 @@ static void list_draws(common::option_e tool_qual,
                 case option_e::LINE:
                     if (std::holds_alternative<
                             prot::line_draw_t>(
-                            tagged_draw.draw)) {
+                            tagged_draw.draw
+                        )) {
                         print_draw(index, tagged_draw.draw);
                     }
                     break;
                 case option_e::RECTANGLE:
                     if (std::holds_alternative<
                             prot::rectangle_draw_t>(
-                            tagged_draw.draw)) {
+                            tagged_draw.draw
+                        )) {
                         print_draw(index, tagged_draw.draw);
                     }
                     break;
                 case option_e::CIRCLE:
                     if (std::holds_alternative<
                             prot::circle_draw_t>(
-                            tagged_draw.draw)) {
+                            tagged_draw.draw
+                        )) {
                         print_draw(index, tagged_draw.draw);
                     }
                     break;
                 case option_e::TEXT:
                     if (std::holds_alternative<
                             prot::text_draw_t>(
-                            tagged_draw.draw)) {
+                            tagged_draw.draw
+                        )) {
                         print_draw(index, tagged_draw.draw);
                     }
                     break;
@@ -200,7 +232,8 @@ static void list_draws(common::option_e tool_qual,
 }
 
 void input_handler_t::process_line(
-    std::string_view line_view)
+    std::string_view line_view
+)
 {
     input_parser_t parser { line_view };
 
@@ -222,9 +255,11 @@ void input_handler_t::process_line(
 
     if (first_token == "help") {
         if (tokens.size() != 1) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: an unexpected number of token for "
-                "tool");
+                "tool"
+            );
 
             return;
         }
@@ -281,16 +316,19 @@ void input_handler_t::process_line(
             "issued by the running client"
             "\n11. exit - (if the client is running in "
             "--server mode disconnect from the "
-            "server and) exit the application");
+            "server and) exit the application"
+        );
 
         return;
     }
 
     if (first_token == "tool") {
         if (tokens.size() != 2) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: an unexpected number of token for "
-                "tool");
+                "tool"
+            );
 
             return;
         }
@@ -317,18 +355,22 @@ void input_handler_t::process_line(
             return;
         }
 
-        fmt::println(stderr,
+        fmt::println(
+            stderr,
             "warn: expected one of {{'line' | 'rectangle' "
-            "| 'circle' | 'text'}}");
+            "| 'circle' | 'text'}}"
+        );
 
         return;
     }
 
     if (first_token == "colour") {
         if (tokens.size() != 4) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: an unexpected number of tokens for "
-                "colour");
+                "colour"
+            );
 
             return;
         }
@@ -352,9 +394,11 @@ void input_handler_t::process_line(
         }
 
         if (red_has_error) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: expected an integer in the range "
-                "0-255 (inclusive) for RED");
+                "0-255 (inclusive) for RED"
+            );
 
             return;
         }
@@ -378,9 +422,11 @@ void input_handler_t::process_line(
         }
 
         if (green_has_error) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: expected an integer in the range "
-                "0-255 (inclusive) for GREEN");
+                "0-255 (inclusive) for GREEN"
+            );
 
             return;
         }
@@ -404,16 +450,18 @@ void input_handler_t::process_line(
         }
 
         if (blue_has_error) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: expected an integer in the range "
-                "0-255 (inclusive) for BLUE");
+                "0-255 (inclusive) for BLUE"
+            );
 
             return;
         }
 
         m_colour = { static_cast<uint8_t>(red_value),
-            static_cast<uint8_t>(green_value),
-            static_cast<uint8_t>(blue_value) };
+                     static_cast<uint8_t>(green_value),
+                     static_cast<uint8_t>(blue_value) };
 
         return;
     }
@@ -422,9 +470,11 @@ void input_handler_t::process_line(
         switch (m_tool) {
         case common::option_e::LINE: {
             if (tokens.size() != 5) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: an unexpected number of "
-                    "tokens for draw with line selected");
+                    "tokens for draw with line selected"
+                );
 
                 return;
             }
@@ -434,15 +484,19 @@ void input_handler_t::process_line(
             try {
                 x0 = std::stoi(tokens[1]);
             } catch (std::invalid_argument&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for x0");
+                    "for x0"
+                );
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for x0");
+                    "for x0"
+                );
 
                 return;
             }
@@ -452,15 +506,19 @@ void input_handler_t::process_line(
             try {
                 y0 = std::stoi(tokens[2]);
             } catch (std::invalid_argument&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for y0");
+                    "for y0"
+                );
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for y0");
+                    "for y0"
+                );
 
                 return;
             }
@@ -470,15 +528,19 @@ void input_handler_t::process_line(
             try {
                 x1 = std::stoi(tokens[3]);
             } catch (std::invalid_argument&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for x1");
+                    "for x1"
+                );
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for x1");
+                    "for x1"
+                );
 
                 return;
             }
@@ -488,39 +550,50 @@ void input_handler_t::process_line(
             try {
                 y1 = std::stoi(tokens[4]);
             } catch (std::invalid_argument&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for y1");
+                    "for y1"
+                );
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for y1");
+                    "for y1"
+                );
 
                 return;
             }
 
             prot::draw_t draw_command
-                = prot::line_draw_t { m_colour, x0, y0, x1,
-                      y1 };
+                = prot::line_draw_t { m_colour,
+                                      x0,
+                                      y0,
+                                      x1,
+                                      y1 };
 
             if (m_selected_id.has_value()) {
                 share::writer_queue.push_front(
                     { share::nickname,
-                        prot::select_t { *m_selected_id,
-                            draw_command } });
+                      prot::select_t { *m_selected_id,
+                                       draw_command } }
+                );
             } else {
                 share::writer_queue.push_front(
-                    { share::nickname, draw_command });
+                    { share::nickname, draw_command }
+                );
             }
         } break;
         case common::option_e::RECTANGLE: {
             if (tokens.size() != 5) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: an unexpected number of "
                     "tokens for draw with rectangle "
-                    "selected");
+                    "selected"
+                );
 
                 return;
             }
@@ -530,15 +603,19 @@ void input_handler_t::process_line(
             try {
                 x = std::stoi(tokens[1]);
             } catch (std::invalid_argument&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for x");
+                    "for x"
+                );
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for x");
+                    "for x"
+                );
 
                 return;
             }
@@ -548,15 +625,19 @@ void input_handler_t::process_line(
             try {
                 y = std::stoi(tokens[2]);
             } catch (std::invalid_argument&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for y");
+                    "for y"
+                );
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for y");
+                    "for y"
+                );
 
                 return;
             }
@@ -566,15 +647,19 @@ void input_handler_t::process_line(
             try {
                 w = std::stoi(tokens[3]);
             } catch (std::invalid_argument&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for w");
+                    "for w"
+                );
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for w");
+                    "for w"
+                );
 
                 return;
             }
@@ -584,39 +669,50 @@ void input_handler_t::process_line(
             try {
                 h = std::stoi(tokens[4]);
             } catch (std::invalid_argument&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for h");
+                    "for h"
+                );
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for h");
+                    "for h"
+                );
 
                 return;
             }
 
             prot::draw_t draw_command
-                = prot::rectangle_draw_t { m_colour, x, y,
-                      w, h };
+                = prot::rectangle_draw_t { m_colour,
+                                           x,
+                                           y,
+                                           w,
+                                           h };
 
             if (m_selected_id.has_value()) {
                 share::writer_queue.push_front(
                     { share::nickname,
-                        prot::select_t { *m_selected_id,
-                            draw_command } });
+                      prot::select_t { *m_selected_id,
+                                       draw_command } }
+                );
             } else {
                 share::writer_queue.push_front(
-                    { share::nickname, draw_command });
+                    { share::nickname, draw_command }
+                );
             }
         } break;
         case common::option_e::CIRCLE: {
             if (tokens.size() != 4) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: an unexpected number of "
                     "tokens for draw with circle "
-                    "selected");
+                    "selected"
+                );
 
                 return;
             }
@@ -626,15 +722,19 @@ void input_handler_t::process_line(
             try {
                 x = std::stoi(tokens[1]);
             } catch (std::invalid_argument&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for x");
+                    "for x"
+                );
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for x");
+                    "for x"
+                );
 
                 return;
             }
@@ -644,15 +744,19 @@ void input_handler_t::process_line(
             try {
                 y = std::stoi(tokens[2]);
             } catch (std::invalid_argument&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for y");
+                    "for y"
+                );
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for y");
+                    "for y"
+                );
 
                 return;
             }
@@ -662,24 +766,30 @@ void input_handler_t::process_line(
             try {
                 r = std::stof(tokens[3]);
             } catch (std::invalid_argument&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected float (32-bit) "
-                    "for r");
+                    "for r"
+                );
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected float (32-bit) "
-                    "for r");
+                    "for r"
+                );
 
                 return;
             }
 
             if (0 > r) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected positive float "
                     "(32-bit) "
-                    "for r");
+                    "for r"
+                );
 
                 return;
             }
@@ -690,18 +800,22 @@ void input_handler_t::process_line(
             if (m_selected_id.has_value()) {
                 share::writer_queue.push_front(
                     { share::nickname,
-                        prot::select_t { *m_selected_id,
-                            draw_command } });
+                      prot::select_t { *m_selected_id,
+                                       draw_command } }
+                );
             } else {
                 share::writer_queue.push_front(
-                    { share::nickname, draw_command });
+                    { share::nickname, draw_command }
+                );
             }
         } break;
         case common::option_e::TEXT: {
             if (tokens.size() != 4) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: an unexpected number of "
-                    "tokens for draw with text selected");
+                    "tokens for draw with text selected"
+                );
 
                 return;
             }
@@ -711,15 +825,19 @@ void input_handler_t::process_line(
             try {
                 x = std::stoi(tokens[1]);
             } catch (std::invalid_argument&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for x");
+                    "for x"
+                );
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for x");
+                    "for x"
+                );
 
                 return;
             }
@@ -729,15 +847,19 @@ void input_handler_t::process_line(
             try {
                 y = std::stoi(tokens[2]);
             } catch (std::invalid_argument&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for y");
+                    "for y"
+                );
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(stderr,
+                fmt::println(
+                    stderr,
                     "warn: expected integer (32-bit) "
-                    "for y");
+                    "for y"
+                );
 
                 return;
             }
@@ -745,17 +867,21 @@ void input_handler_t::process_line(
             std::string text { tokens[3] };
 
             prot::draw_t draw_command
-                = prot::text_draw_t { m_colour, x, y,
-                      text };
+                = prot::text_draw_t { m_colour,
+                                      x,
+                                      y,
+                                      text };
 
             if (m_selected_id.has_value()) {
                 share::writer_queue.push_front(
                     { share::nickname,
-                        prot::select_t { *m_selected_id,
-                            draw_command } });
+                      prot::select_t { *m_selected_id,
+                                       draw_command } }
+                );
             } else {
                 share::writer_queue.push_front(
-                    { share::nickname, draw_command });
+                    { share::nickname, draw_command }
+                );
             }
         } break;
         default:
@@ -769,9 +895,11 @@ void input_handler_t::process_line(
         using namespace common;
 
         if (tokens.size() != 3) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: an unexpected number of tokens for "
-                "list");
+                "list"
+            );
 
             return;
         }
@@ -808,9 +936,11 @@ void input_handler_t::process_line(
         }
 
         if (!second_match) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: expected one of {{'all' | 'line' | "
-                "'rectangle' | 'circle' | 'text'}}");
+                "'rectangle' | 'circle' | 'text'}}"
+            );
 
             return;
         }
@@ -832,8 +962,10 @@ void input_handler_t::process_line(
         }
 
         if (!third_match) {
-            fmt::println(stderr,
-                "warn: expected one of {{'all' | 'mine'}}");
+            fmt::println(
+                stderr,
+                "warn: expected one of {{'all' | 'mine'}}"
+            );
 
             return;
         }
@@ -848,7 +980,10 @@ void input_handler_t::process_line(
 
                 if (guard.is_owning()) {
                     list_draws(
-                        tool_qual, user_qual, share::list1);
+                        tool_qual,
+                        user_qual,
+                        share::list1
+                    );
 
                     return;
                 }
@@ -863,7 +998,10 @@ void input_handler_t::process_line(
 
                 if (guard.is_owning()) {
                     list_draws(
-                        tool_qual, user_qual, share::list2);
+                        tool_qual,
+                        user_qual,
+                        share::list2
+                    );
 
                     return;
                 }
@@ -875,9 +1013,11 @@ void input_handler_t::process_line(
 
     if (first_token == "select") {
         if (tokens.size() != 2) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: an unexpected number of tokens for "
-                "select");
+                "select"
+            );
 
             return;
         }
@@ -903,10 +1043,12 @@ void input_handler_t::process_line(
         }
 
         if (id_has_error) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: expected an 'none' or an "
                 "integer greater than "
-                "or equal to 0 for ID");
+                "or equal to 0 for ID"
+            );
 
             return;
         }
@@ -918,9 +1060,11 @@ void input_handler_t::process_line(
 
     if (first_token == "delete") {
         if (tokens.size() != 2) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: an unexpected number of tokens for "
-                "delete");
+                "delete"
+            );
 
             return;
         }
@@ -940,41 +1084,47 @@ void input_handler_t::process_line(
         }
 
         if (id_has_error) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: expected an integer greater than or "
-                "equal to 0 for ID");
+                "equal to 0 for ID"
+            );
 
             return;
         }
 
         prot::delete_t delete_command { id };
 
-        share::writer_queue.push_front(
-            { share::nickname, delete_command });
+        share::writer_queue.push_front({ share::nickname,
+                                         delete_command });
 
         return;
     }
 
     if (first_token == "undo") {
         if (tokens.size() != 1) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: an unexpected number of tokens for "
-                "undo");
+                "undo"
+            );
 
             return;
         }
 
-        share::writer_queue.push_front(
-            { share::nickname, prot::undo_t {} });
+        share::writer_queue.push_front({ share::nickname,
+                                         prot::undo_t {} });
 
         return;
     }
 
     if (first_token == "clear") {
         if (tokens.size() != 2) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: an unexpected number of tokens for "
-                "clear");
+                "clear"
+            );
 
             return;
         }
@@ -984,8 +1134,8 @@ void input_handler_t::process_line(
         if (second_token == "all") {
             share::writer_queue.push_front(
                 { share::nickname,
-                    prot::clear_t {
-                        prot::qualifier_e::ALL } });
+                  prot::clear_t { prot::qualifier_e::ALL } }
+            );
 
             return;
         }
@@ -993,23 +1143,28 @@ void input_handler_t::process_line(
         if (second_token == "mine") {
             share::writer_queue.push_front(
                 { share::nickname,
-                    prot::clear_t {
-                        prot::qualifier_e::MINE } });
+                  prot::clear_t {
+                      prot::qualifier_e::MINE } }
+            );
 
             return;
         }
 
-        fmt::println(stderr,
-            "warn: expected one of {{'all' | 'mine'}}");
+        fmt::println(
+            stderr,
+            "warn: expected one of {{'all' | 'mine'}}"
+        );
 
         return;
     }
 
     if (first_token == "show") {
         if (tokens.size() != 2) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: an unexpected number of tokens for "
-                "show");
+                "show"
+            );
 
             return;
         }
@@ -1030,17 +1185,21 @@ void input_handler_t::process_line(
             return;
         }
 
-        fmt::println(stderr,
-            "warn: expected one of {{'all' | 'mine'}}");
+        fmt::println(
+            stderr,
+            "warn: expected one of {{'all' | 'mine'}}"
+        );
 
         return;
     }
 
     if (first_token == "exit") {
         if (tokens.size() != 1) {
-            fmt::println(stderr,
+            fmt::println(
+                stderr,
                 "warn: an unexpected number of tokens for "
-                "exit");
+                "exit"
+            );
 
             return;
         }
@@ -1050,10 +1209,15 @@ void input_handler_t::process_line(
         return;
     }
 
-    fmt::println(stderr, "warn: {} is not a known command",
-        first_token);
+    fmt::println(
+        stderr,
+        "warn: {} is not a known command",
+        first_token
+    );
 }
 
-void input_handler_t::dtor() { }
+void input_handler_t::dtor()
+{
+}
 
 } // namespace client

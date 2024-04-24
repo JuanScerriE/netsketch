@@ -11,7 +11,7 @@
 
 namespace server::timing {
 class timer {
-public:
+   public:
     timer() = default;
 
     timer(clockid_t clockid, sigevent* evp)
@@ -26,7 +26,9 @@ public:
         }
     }
 
-    void set(int flags, const struct itimerspec* newval,
+    void
+    set(int flags,
+        const struct itimerspec* newval,
         struct itimerspec* oldval)
     {
         if (timer_settime(m_timer, flags, newval, oldval)
@@ -42,7 +44,7 @@ public:
         }
     }
 
-private:
+   private:
     timer_t m_timer {};
 };
 

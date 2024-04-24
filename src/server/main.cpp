@@ -47,8 +47,11 @@ int main(int argc, char** argv)
     CLI::App app;
 
     uint16_t port { SERVER_PORT };
-    app.add_option("--port", port,
-           "The port number of the NetSketch server")
+    app.add_option(
+           "--port",
+           port,
+           "The port number of the NetSketch server"
+    )
         ->capture_default_str();
 
     CLI11_PARSE(app, argc, argv);
@@ -62,9 +65,11 @@ int main(int argc, char** argv)
     act.sa_handler = sigint_handler;
 
     if (sigaction(SIGINT, &act, nullptr) == -1) {
-        ABORTV("failed to create sigint handler, "
-               "reason: {}",
-            strerror(errno));
+        ABORTV(
+            "failed to create sigint handler, "
+            "reason: {}",
+            strerror(errno)
+        );
     }
 
     server::share::e_updater_thread

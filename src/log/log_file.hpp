@@ -14,7 +14,7 @@
 namespace logging {
 
 class log_file {
-public:
+   public:
     log_file() = default;
 
     log_file(const log_file&) = delete;
@@ -39,9 +39,11 @@ public:
 
     [[nodiscard]] char* reason() const noexcept
     {
-        ABORTIF(!m_has_error,
+        ABORTIF(
+            !m_has_error,
             "trying to get an error reason when there is "
-            "no error");
+            "no error"
+        );
 
         return strerror(errno);
     }
@@ -49,7 +51,9 @@ public:
     void close()
     {
         ABORTIF(
-            !m_file, "trying to close a nullptr FILE *");
+            !m_file,
+            "trying to close a nullptr FILE *"
+        );
 
         // NOTE: cppreference.com on std::fclose => Whether
         // or not the operation succeeds, the stream is no
@@ -61,8 +65,11 @@ public:
         // the only reasonable thing to do is to warn the
         // user
         if (std::fclose(m_file) == EOF) {
-            fmt::println(stderr,
-                "warn: closing file {} failed", m_name);
+            fmt::println(
+                stderr,
+                "warn: closing file {} failed",
+                m_name
+            );
         }
 
         m_file = nullptr;
@@ -71,7 +78,9 @@ public:
     bool write(std::basic_string_view<char> message)
     {
         ABORTIF(
-            !m_file, "trying to write to a nullptr FILE *");
+            !m_file,
+            "trying to write to a nullptr FILE *"
+        );
 
         // NOTE: each of the individual elements
         // of a string view must be chars, for
@@ -79,8 +88,12 @@ public:
         // 3 chars. there using fwrite in
         // this manner should be correct
 
-        std::fwrite(message.data(), sizeof(char),
-            message.length(), m_file);
+        std::fwrite(
+            message.data(),
+            sizeof(char),
+            message.length(),
+            m_file
+        );
 
         if (std::ferror(m_file)) {
             m_has_error = true;
@@ -91,10 +104,12 @@ public:
 
     bool eof() noexcept
     {
-        ABORTIF(!m_file,
+        ABORTIF(
+            !m_file,
             "trying to test the eof indicator with a "
             "nullptr "
-            "FILE *");
+            "FILE *"
+        );
 
         return std::feof(m_file);
     }
@@ -106,14 +121,16 @@ public:
 
     [[nodiscard]] FILE* native_handle() noexcept
     {
-        ABORTIF(!m_file,
+        ABORTIF(
+            !m_file,
             "trying to get a native handle to a "
-            "nullptr FILE *");
+            "nullptr FILE *"
+        );
 
         return m_file;
     }
 
-private:
+   private:
     std::string m_name {};
 
     bool m_has_error { false };

@@ -27,20 +27,20 @@ void writer_t::operator()()
 {
     for (;;) {
         // wait for tagged_command
-        prot::tagged_command_t tagged_command
+        prot::TaggedCommand tagged_command
             = share::writer_queue.pop_back();
 
         // serialize the command
         prot::serialize_t serializer { tagged_command };
 
-        util::byte_vector payload = serializer.bytes();
+        util::ByteVector payload = serializer.bytes();
 
         // setup the header
-        prot::header_t header { MAGIC_BYTES,
-            payload.size() };
+        prot::PayloadHeader header { MAGIC_BYTES,
+                                     payload.size() };
 
         // build the full packet
-        util::byte_vector packet {};
+        util::ByteVector packet {};
 
         packet.reserve(sizeof(header) + payload.size());
 
@@ -61,7 +61,8 @@ void writer_t::operator()()
         if (poll(&conn_poll, 1, -1) == -1) {
             log.error(
                 "poll of connection failed, reason: {}",
-                strerror(errno));
+                strerror(errno)
+            );
 
             return;
         }
@@ -76,14 +77,17 @@ void writer_t::operator()()
             == -1) {
             log.error(
                 "writing to connection failed, reason: {}",
-                strerror(errno));
+                strerror(errno)
+            );
 
             return;
         }
     }
 }
 
-void writer_t::dtor() { }
+void writer_t::dtor()
+{
+}
 
 logging::log writer_t::log {};
 

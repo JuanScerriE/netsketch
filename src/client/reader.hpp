@@ -9,7 +9,7 @@
 namespace client {
 
 class reader_t {
-public:
+   public:
     explicit reader_t(int conn_fd);
 
     void operator()();
@@ -18,14 +18,13 @@ public:
 
     void dtor();
 
-private:
+   private:
     void handle_loop();
 
-    void handle_payload(util::byte_vector& payload);
+    void handle_payload(util::ByteVector& payload);
 
-    void update_list(
-        prot::tagged_command_t& tagged_command);
-    void update_whole_list(prot::tagged_draw_list_t& list);
+    void update_list(prot::TaggedCommand& tagged_command);
+    void update_whole_list(prot::TaggedDrawList& list);
 
     const int m_conn_fd;
 

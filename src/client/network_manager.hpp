@@ -6,14 +6,16 @@
 namespace client {
 
 class network_manager_t {
-public:
+   public:
     explicit network_manager_t(
-        uint32_t ipv4_addr, uint16_t port);
+        uint32_t ipv4_addr,
+        uint16_t port
+    );
 
     bool setup();
     void close();
 
-private:
+   private:
     bool setup_connection();
     void close_connection();
 

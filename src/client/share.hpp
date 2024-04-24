@@ -30,8 +30,7 @@ extern common::readonly_t<bool> show_mine;
 extern logging::log_file log_file;
 
 // writer queue
-extern common::ts_queue<prot::tagged_command_t>
-    writer_queue;
+extern common::ts_queue<prot::TaggedCommand> writer_queue;
 
 // nickname
 extern std::string nickname;
@@ -44,7 +43,7 @@ extern threading::mutex writer_mutex;
 extern threading::rwlock rwlock1;
 extern threading::rwlock rwlock2;
 
-extern prot::tagged_draw_list_t list1;
-extern prot::tagged_draw_list_t list2;
+extern prot::TaggedDrawList list1;
+extern prot::TaggedDrawList list2;
 
 } // namespace client::share

@@ -1,21 +1,21 @@
 #pragma once
 
+// cstd
+#include <cstring>
+
 // std
 #include <array>
-#include <cstring>
 #include <vector>
 
-namespace util {
-
 template <std::size_t N>
-using byte_array = std::array<std::byte, N>;
+using ByteArray = std::array<std::byte, N>;
 
-using byte_vector = std::vector<std::byte>;
+using ByteVector = std::vector<std::byte>;
 
 template <typename T>
-byte_array<sizeof(T)> to_bytes(T value)
+ByteArray<sizeof(T)> to_bytes(T value)
 {
-    byte_array<sizeof(T)> bytes {};
+    ByteArray<sizeof(T)> bytes {};
 
     std::memcpy(&bytes, &value, sizeof(T));
 
@@ -23,7 +23,7 @@ byte_array<sizeof(T)> to_bytes(T value)
 }
 
 template <typename T>
-T from_bytes(byte_array<sizeof(T)> bytes)
+T from_bytes(ByteArray<sizeof(T)> bytes)
 {
     T value {};
 
@@ -31,5 +31,3 @@ T from_bytes(byte_array<sizeof(T)> bytes)
 
     return value;
 }
-
-} // namespace util

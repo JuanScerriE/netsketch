@@ -29,9 +29,9 @@
 
 namespace server::share {
 
-extern bool stop;
+extern std::atomic_bool run;
 
-extern Socket socket;
+extern IPv4Socket socket;
 
 extern threading::mutex e_threads_mutex;
 
@@ -50,7 +50,7 @@ extern threading::mutex e_timers_mutex;
 extern std::list<std::unique_ptr<timing::timer_data>>
     e_timers;
 
-extern common::ts_queue<prot::payload_t> e_command_queue;
+extern common::ts_queue<prot::Payload> e_command_queue;
 
 extern common::ts_draw_list e_draw_list;
 

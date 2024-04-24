@@ -41,20 +41,19 @@ server_t::server_t(uint16_t port)
 void server_t::operator()()
 {
     try {
-        m_socket.open(AF_INET, SOCK_STREAM, 0);
+        m_sock.open(SOCK_STREAM, 0);
 
-        m_socket.make_non_blocking();
+        m_sock.make_non_blocking();
 
         sockaddr_in server_addr {};
         server_addr.sin_family = AF_INET;
         server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
         server_addr.sin_port = htons(m_port);
 
-        m_socket.bind(
-            (sockaddr*)&server_addr, sizeof(server_addr));
+        m_sock.bind(&server_addr);
 
         // TODO: check if the backlog can fail us
-        m_socket.listen(BACKLOG);
+        m_sock.listen(BACKLOG);
     } catch (std::runtime_error& error) {
         log.error(error.what());
 
@@ -70,8 +69,8 @@ void server_t::request_loop()
 {
     size_t num_of_conns { 0 };
 
-    for (;;) {
-        auto result = m_socket.poll(POLLIN);
+    while (share::run) {
+        auto result = m_sock.poll(POLLIN);
 
         if (result.has_error()) {
             // do not handle CTRL-C
@@ -81,22 +80,20 @@ void server_t::request_loop()
             //     continue;
             // }
 
-            ABORTV("poll of socket failed, reason: {}",
-                strerror(errno));
+            ABORTV(
+                "poll of socket failed, reason: {}",
+                result.get_error()
+            );
         }
 
         if (result.has_timed_out()) {
-            if (share::stop) {
-                break;
-            }
-
             continue;
         }
 
-        Socket conn_sock {};
+        IPv4Socket conn_sock {};
 
         try {
-            conn_sock = m_socket.accept();
+            conn_sock = m_sock.accept();
         } catch (std::runtime_error& error) {
             log.warn(error.what());
 
@@ -181,18 +178,22 @@ void server_t::request_loop()
             // properly done.
 
             share::e_threads.emplace_back(
-                conn_handler_t { m_current_conn_fd, addr });
+                conn_handler_t { m_current_conn_fd, addr }
+            );
 
             m_current_conn_fd = -1;
 
             // trim any finished threads
             share::e_threads.erase(
-                std::remove_if(share::e_threads.begin(),
+                std::remove_if(
+                    share::e_threads.begin(),
                     share::e_threads.end(),
                     [](auto& thread) {
                         return !thread.is_alive();
-                    }),
-                share::e_threads.end());
+                    }
+                ),
+                share::e_threads.end()
+            );
 
             num_of_conns = share::e_threads.size();
         }
@@ -209,15 +210,18 @@ void server_t::dtor()
         };
 
         if (shutdown(m_current_conn_fd, SHUT_WR) == -1) {
-            log.error("connection shutdown failed, "
-                      "reason: {}",
-                strerror(errno));
+            log.error(
+                "connection shutdown failed, "
+                "reason: {}",
+                strerror(errno)
+            );
         }
 
         if (close(m_current_conn_fd) == -1) {
             log.error(
                 "closing connection failed, reason: {}",
-                strerror(errno));
+                strerror(errno)
+            );
         }
 
         share::e_connections.erase(m_current_conn_fd);
@@ -232,8 +236,10 @@ void server_t::dtor()
     share::e_updater_thread.cancel();
 
     if (close(m_socket_fd) == -1) {
-        log.error("closing socket failed, reason: {}",
-            strerror(errno));
+        log.error(
+            "closing socket failed, reason: {}",
+            strerror(errno)
+        );
     }
 
     log.info("stopping server");

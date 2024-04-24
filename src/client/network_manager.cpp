@@ -19,9 +19,10 @@
 namespace client {
 
 network_manager_t::network_manager_t(
-    uint32_t ipv4_addr, uint16_t port)
-    : m_ipv4_addr(ipv4_addr)
-    , m_port(port)
+    uint32_t ipv4_addr,
+    uint16_t port
+)
+    : m_ipv4_addr(ipv4_addr), m_port(port)
 {
     setup_logging();
 }
@@ -50,8 +51,10 @@ bool network_manager_t::setup_connection()
     m_conn_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (m_conn_fd == -1) {
-        log.error("could not create socket, reason: {}",
-            strerror(errno));
+        log.error(
+            "could not create socket, reason: {}",
+            strerror(errno)
+        );
 
         log.flush();
 
@@ -63,17 +66,24 @@ bool network_manager_t::setup_connection()
     server_addr.sin_addr.s_addr = htonl(m_ipv4_addr);
     server_addr.sin_port = htons(m_port);
 
-    if (connect(m_conn_fd, (sockaddr*)&server_addr,
-            sizeof(server_addr))
+    if (connect(
+            m_conn_fd,
+            (sockaddr*)&server_addr,
+            sizeof(server_addr)
+        )
         == -1) {
-        log.error("could not connect, reason: {}",
-            strerror(errno));
+        log.error(
+            "could not connect, reason: {}",
+            strerror(errno)
+        );
 
         log.flush();
 
         if (::close(m_conn_fd) == -1) {
-            ABORTV("closing connection failed, reason: {}",
-                strerror(errno));
+            ABORTV(
+                "closing connection failed, reason: {}",
+                strerror(errno)
+            );
         }
 
         return false;
@@ -82,12 +92,16 @@ bool network_manager_t::setup_connection()
     pollfd poll_fd = { m_conn_fd, POLLIN, 0 };
 
     if (poll(&poll_fd, 1, 60000) == -1) {
-        log.error("poll of connection failed, reason: {}",
-            strerror(errno));
+        log.error(
+            "poll of connection failed, reason: {}",
+            strerror(errno)
+        );
 
         if (::close(m_conn_fd) == -1) {
-            ABORTV("closing connection failed, reason: {}",
-                strerror(errno));
+            ABORTV(
+                "closing connection failed, reason: {}",
+                strerror(errno)
+            );
         }
 
         return false;
@@ -97,8 +111,10 @@ bool network_manager_t::setup_connection()
         log.warn("connection hung up");
 
         if (::close(m_conn_fd) == -1) {
-            ABORTV("closing connection failed, reason: {}",
-                strerror(errno));
+            ABORTV(
+                "closing connection failed, reason: {}",
+                strerror(errno)
+            );
         }
 
         return false;
@@ -108,8 +124,10 @@ bool network_manager_t::setup_connection()
         log.warn("establishing connection timedout");
 
         if (::close(m_conn_fd) == -1) {
-            ABORTV("closing connection failed, reason: {}",
-                strerror(errno));
+            ABORTV(
+                "closing connection failed, reason: {}",
+                strerror(errno)
+            );
         }
 
         return false;
@@ -121,25 +139,33 @@ bool network_manager_t::setup_connection()
         = read(m_conn_fd, &check, sizeof(check));
 
     if (check_size == -1) {
-        log.warn("reading from connection failed, "
-                 "reason: {}",
-            strerror(errno));
+        log.warn(
+            "reading from connection failed, "
+            "reason: {}",
+            strerror(errno)
+        );
 
         if (::close(m_conn_fd) == -1) {
-            ABORTV("closing connection failed, reason: {}",
-                strerror(errno));
+            ABORTV(
+                "closing connection failed, reason: {}",
+                strerror(errno)
+            );
         }
 
         return false;
     }
 
     if (check_size != sizeof(check)) {
-        log.warn("unexpected message size ({} bytes)",
-            check_size);
+        log.warn(
+            "unexpected message size ({} bytes)",
+            check_size
+        );
 
         if (::close(m_conn_fd) == -1) {
-            ABORTV("closing connection failed, reason: {}",
-                strerror(errno));
+            ABORTV(
+                "closing connection failed, reason: {}",
+                strerror(errno)
+            );
         }
 
         return false;
@@ -159,8 +185,10 @@ bool network_manager_t::setup_connection()
         log.info("connection refused");
 
         if (::close(m_conn_fd) == -1) {
-            ABORTV("closing connection failed, reason: {}",
-                strerror(errno));
+            ABORTV(
+                "closing connection failed, reason: {}",
+                strerror(errno)
+            );
         }
 
         return false;
@@ -169,8 +197,10 @@ bool network_manager_t::setup_connection()
     log.error("unexpected result");
 
     if (::close(m_conn_fd) == -1) {
-        ABORTV("closing connection failed, reason: {}",
-            strerror(errno));
+        ABORTV(
+            "closing connection failed, reason: {}",
+            strerror(errno)
+        );
     }
 
     return false;
@@ -179,8 +209,10 @@ bool network_manager_t::setup_connection()
 void network_manager_t::close_connection()
 {
     if (::close(m_conn_fd) == -1) {
-        ABORTV("closing connection failed, reason: {}",
-            strerror(errno));
+        ABORTV(
+            "closing connection failed, reason: {}",
+            strerror(errno)
+        );
     }
 }
 

@@ -23,7 +23,7 @@
 namespace common {
 
 class event_t {
-public:
+   public:
     event_t(const event_t&) = delete;
     event_t& operator=(const event_t&) = delete;
 
@@ -34,9 +34,11 @@ public:
     {
 #ifdef __APPLE__
         if (pipe(m_stop_event_pipe) == -1) {
-            ABORTV("failed to create pipe file descriptor, "
-                   "reason: {}",
-                strerror(errno));
+            ABORTV(
+                "failed to create pipe file descriptor, "
+                "reason: {}",
+                strerror(errno)
+            );
         }
 #else
         m_stop_event_fd = eventfd(0, 0);
@@ -45,7 +47,8 @@ public:
             ABORTV(
                 "failed to create event file descriptor, "
                 "reason: {}",
-                strerror(errno));
+                strerror(errno)
+            );
         }
 #endif
     }
@@ -54,21 +57,27 @@ public:
     {
 #ifdef __APPLE__
         if (close(m_stop_event_pipe[READ]) == -1) {
-            ABORTV("failed to close read end of a pipe, "
-                   "reason: {}",
-                strerror(errno));
+            ABORTV(
+                "failed to close read end of a pipe, "
+                "reason: {}",
+                strerror(errno)
+            );
         }
 
         if (close(m_stop_event_pipe[WRITE]) == -1) {
-            ABORTV("failed to close write end of a pipe, "
-                   "reason: {}",
-                strerror(errno));
+            ABORTV(
+                "failed to close write end of a pipe, "
+                "reason: {}",
+                strerror(errno)
+            );
         }
 #else
         if (close(m_stop_event_fd) == -1) {
-            ABORTV("failed to close event file descriptor, "
-                   "reason: {}",
-                strerror(errno));
+            ABORTV(
+                "failed to close event file descriptor, "
+                "reason: {}",
+                strerror(errno)
+            );
         }
 #endif
     }
@@ -78,11 +87,16 @@ public:
         uint64_t notify { NOTIFY };
 
 #ifdef __APPLE__
-        if (write(m_stop_event_pipe[WRITE], &notify,
-                sizeof(notify))
+        if (write(
+                m_stop_event_pipe[WRITE],
+                &notify,
+                sizeof(notify)
+            )
             == -1) {
-            ABORTV("failed to write to pipe, reason: {}",
-                strerror(errno));
+            ABORTV(
+                "failed to write to pipe, reason: {}",
+                strerror(errno)
+            );
         }
 #else
         if (write(m_stop_event_fd, &notify, sizeof(notify))
@@ -90,7 +104,8 @@ public:
             ABORTV(
                 "failed to write to event file descriptor, "
                 "reason: {}",
-                strerror(errno));
+                strerror(errno)
+            );
         }
 #endif
     }
@@ -100,20 +115,30 @@ public:
         uint64_t throw_away {};
 
 #ifdef __APPLE__
-        if (read(m_stop_event_pipe[READ], &throw_away,
-                sizeof(throw_away))
+        if (read(
+                m_stop_event_pipe[READ],
+                &throw_away,
+                sizeof(throw_away)
+            )
             == -1) {
-            ABORTV("failed to read from pipe, reason: {}",
-                strerror(errno));
+            ABORTV(
+                "failed to read from pipe, reason: {}",
+                strerror(errno)
+            );
         }
 #else
-        if (read(m_stop_event_fd, &throw_away,
-                sizeof(throw_away))
+        if (read(
+                m_stop_event_fd,
+                &throw_away,
+                sizeof(throw_away)
+            )
             == -1) {
-            ABORTV("failed to read from event file "
-                   "descriptor, "
-                   "reason: {}",
-                strerror(errno));
+            ABORTV(
+                "failed to read from event file "
+                "descriptor, "
+                "reason: {}",
+                strerror(errno)
+            );
         }
 #endif
     }
@@ -136,7 +161,7 @@ public:
 #endif
     }
 
-private:
+   private:
 #ifdef __APPLE__
     int m_stop_event_pipe[PIPE_SIZE] { 0, 0 };
 #else

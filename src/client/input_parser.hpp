@@ -7,14 +7,14 @@
 namespace client {
 
 class input_parser_t {
-public:
+   public:
     explicit input_parser_t(std::string_view source);
 
     void scan_tokens();
 
     std::vector<std::string> get_tokens();
 
-private:
+   private:
     bool is_at_end();
     void scan_token();
     char advance();

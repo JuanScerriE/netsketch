@@ -10,7 +10,7 @@
 namespace server {
 
 class updater_t {
-public:
+   public:
     [[noreturn]] void operator()()
     {
         setup_logging();
@@ -27,14 +27,16 @@ public:
                 = serializer.bytes();
 
             // setup the header
-            prot::header_t header { MAGIC_BYTES,
-                payload_bytes.size() };
+            prot::PayloadHeader header { MAGIC_BYTES,
+                                         payload_bytes.size(
+                                         ) };
 
             // build the full packet
             util::byte_vector packet {};
 
             packet.reserve(
-                sizeof(header) + payload_bytes.size());
+                sizeof(header) + payload_bytes.size()
+            );
 
             for (auto& byte : util::to_bytes(header)) {
                 packet.push_back(byte);
@@ -45,7 +47,9 @@ public:
             }
 
             log.debug(
-                "payload size {}", payload_bytes.size());
+                "payload size {}",
+                payload_bytes.size()
+            );
 
             log.debug("packet size {}", packet.size());
 
@@ -57,14 +61,16 @@ public:
                 // NOTE: that the size of e_connections
                 // might change under our feet
                 for (int conn_fd : share::e_connections) {
-                    pollfd conn_poll { conn_fd, POLLOUT,
-                        0 };
+                    pollfd conn_poll { conn_fd,
+                                       POLLOUT,
+                                       0 };
 
                     if (poll(&conn_poll, 1, -1) == -1) {
                         log.error(
                             "poll of connection failed, "
                             "reason: {}",
-                            strerror(errno));
+                            strerror(errno)
+                        );
 
                         continue;
                     }
@@ -75,13 +81,17 @@ public:
                         continue;
                     }
 
-                    if (write(conn_fd, packet.data(),
-                            packet.size())
+                    if (write(
+                            conn_fd,
+                            packet.data(),
+                            packet.size()
+                        )
                         == -1) {
                         log.error(
                             "writing to connection failed, "
                             "reason: {}",
-                            strerror(errno));
+                            strerror(errno)
+                        );
 
                         continue;
                     }
@@ -90,9 +100,11 @@ public:
         }
     }
 
-    void dtor() { }
+    void dtor()
+    {
+    }
 
-private:
+   private:
     static inline logging::log log {};
 
     static void setup_logging()

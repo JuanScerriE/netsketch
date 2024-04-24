@@ -55,27 +55,34 @@ int main(int argc, char** argv)
     CLI::App app;
 
     bool use_gui { true };
-    app.add_flag("--gui, !--no-gui", use_gui,
-           "Use a GUI")
-        ->capture_default_str()
-        ;
+    app.add_flag("--gui, !--no-gui", use_gui, "Use a GUI")
+        ->capture_default_str();
 
     std::string ipv4_addr_str { "127.0.0.1" };
-    app.add_option("--server", ipv4_addr_str,
+    app.add_option(
+           "--server",
+           ipv4_addr_str,
            "The IPv4 address of a machine hosting a "
-           "NetSketch server")
+           "NetSketch server"
+    )
         ->capture_default_str()
         ->check(IPv4);
 
     uint16_t port { 6666 };
-    app.add_option("--port", port,
-           "The port number of a NetSketch server")
+    app.add_option(
+           "--port",
+           port,
+           "The port number of a NetSketch server"
+    )
         ->capture_default_str();
 
     std::string nickname {};
-    app.add_option("--nickname", nickname,
+    app.add_option(
+           "--nickname",
+           nickname,
            "The nickname of the user (used for "
-           "identification on a NetSketch server)")
+           "identification on a NetSketch server)"
+    )
         ->required();
 
     CLI11_PARSE(app, argc, argv);
@@ -102,11 +109,15 @@ int main(int argc, char** argv)
     auto now = system_clock::now();
 
     client::share::log_file.open(fmt::format(
-        "netsketch-client-log {:%Y-%m-%d %H:%M:%S}", now));
+        "netsketch-client-log {:%Y-%m-%d %H:%M:%S}",
+        now
+    ));
 
-    ABORTIFV(client::share::log_file.error(),
+    ABORTIFV(
+        client::share::log_file.error(),
         "opening a log file failed, reason: {}",
-        client::share::log_file.reason());
+        client::share::log_file.reason()
+    );
 
     client::network_manager_t manager { ipv4_addr, port };
 

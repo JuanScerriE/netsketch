@@ -46,34 +46,48 @@ void gui_t::process_draw(prot::draw_t& draw)
     if (std::holds_alternative<prot::line_draw_t>(draw)) {
         auto& line = std::get<prot::line_draw_t>(draw);
 
-        DrawLineEx({ static_cast<float>(line.x0),
-                       static_cast<float>(line.y0) },
+        DrawLineEx(
+            { static_cast<float>(line.x0),
+              static_cast<float>(line.y0) },
             { static_cast<float>(line.x1),
-                static_cast<float>(line.y1) },
+              static_cast<float>(line.y1) },
             1.1f, // NOTE: maybe change this?
-            to_raylib_colour(line.colour));
+            to_raylib_colour(line.colour)
+        );
         return;
     }
-    if (std::holds_alternative<prot::rectangle_draw_t>(
-            draw)) {
+    if (std::holds_alternative<prot::rectangle_draw_t>(draw
+        )) {
         auto& rectangle
             = std::get<prot::rectangle_draw_t>(draw);
-        DrawRectangle(rectangle.x, rectangle.y, rectangle.w,
+        DrawRectangle(
+            rectangle.x,
+            rectangle.y,
+            rectangle.w,
             rectangle.h,
-            to_raylib_colour(rectangle.colour));
+            to_raylib_colour(rectangle.colour)
+        );
         return;
     }
     if (std::holds_alternative<prot::circle_draw_t>(draw)) {
         auto& circle = std::get<prot::circle_draw_t>(draw);
-        DrawCircle(circle.x, circle.y, circle.r,
-            to_raylib_colour(circle.colour));
+        DrawCircle(
+            circle.x,
+            circle.y,
+            circle.r,
+            to_raylib_colour(circle.colour)
+        );
         return;
     }
     if (std::holds_alternative<prot::text_draw_t>(draw)) {
         auto& text = std::get<prot::text_draw_t>(draw);
-        DrawText(text.string.c_str(), text.x, text.y,
+        DrawText(
+            text.string.c_str(),
+            text.x,
+            text.y,
             20, // NOTE: maybe change this?
-            to_raylib_colour(text.colour));
+            to_raylib_colour(text.colour)
+        );
         return;
     }
 
@@ -141,7 +155,9 @@ void gui_t::draw()
             = GetScreenToWorld2D({ 0, 0 }, m_camera);
 
         Vector2 mouse_world_pos = GetScreenToWorld2D(
-            GetMousePosition(), m_camera);
+            GetMousePosition(),
+            m_camera
+        );
 
         ClearBackground(WHITE);
 
@@ -157,12 +173,18 @@ void gui_t::draw()
         // round to the nearest 100
         left = 100 * roundf(left / 100);
         int screenLeft = static_cast<int>(
-            GetWorldToScreen2D({ left, 0 }, m_camera).x);
+            GetWorldToScreen2D({ left, 0 }, m_camera).x
+        );
         int widthSteps = width / gap;
 
         for (int x = 0; x <= widthSteps; x++) {
-            DrawLine(screenLeft + (x * gap), 0,
-                screenLeft + x * gap, 20, GRAY);
+            DrawLine(
+                screenLeft + (x * gap),
+                0,
+                screenLeft + x * gap,
+                20,
+                GRAY
+            );
         }
 
         int height = GetScreenHeight();
@@ -170,18 +192,32 @@ void gui_t::draw()
         // round to the nearest 100
         top = 100 * roundf(top / 100);
         int screenTop = static_cast<int>(
-            GetWorldToScreen2D({ 0, top }, m_camera).y);
+            GetWorldToScreen2D({ 0, top }, m_camera).y
+        );
         int heightSteps = height / gap;
 
         for (int y = 0; y <= heightSteps; y++) {
-            DrawLine(0, screenTop + y * gap, 20,
-                screenTop + y * gap, GRAY);
+            DrawLine(
+                0,
+                screenTop + y * gap,
+                20,
+                screenTop + y * gap,
+                GRAY
+            );
         }
 
-        DrawText(TextFormat("X:%f, Y:%f, ZOOM:%f",
-                     mouse_world_pos.x, mouse_world_pos.y,
-                     m_camera.zoom),
-            30, height - 25, 20, BLACK);
+        DrawText(
+            TextFormat(
+                "X:%f, Y:%f, ZOOM:%f",
+                mouse_world_pos.x,
+                mouse_world_pos.y,
+                m_camera.zoom
+            ),
+            30,
+            height - 25,
+            20,
+            BLACK
+        );
     }
     EndDrawing();
 }
@@ -191,8 +227,11 @@ void gui_t::game_loop()
     // window configuration flags
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 
-    InitWindow(m_screen_width, m_screen_height,
-        m_window_name.c_str());
+    InitWindow(
+        m_screen_width,
+        m_screen_height,
+        m_window_name.c_str()
+    );
 
     SetTargetFPS(m_target_fps);
 
@@ -207,7 +246,9 @@ void gui_t::game_loop()
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
             Vector2 delta = GetMouseDelta();
             delta = Vector2Scale(
-                delta, -1.0f / m_camera.zoom);
+                delta,
+                -1.0f / m_camera.zoom
+            );
 
             m_camera.target
                 = Vector2Add(m_camera.target, delta);
@@ -220,7 +261,9 @@ void gui_t::game_loop()
             // get the world point that is under the
             // mouse
             Vector2 mouseWorldPos = GetScreenToWorld2D(
-                GetMousePosition(), m_camera);
+                GetMousePosition(),
+                m_camera
+            );
 
             // get the offset to where the mouse is
             m_camera.offset = GetMousePosition();
@@ -241,8 +284,12 @@ void gui_t::game_loop()
         }
 
         if (IsWindowResized()) {
-            TraceLog(LOG_INFO, "Width: %d, Height: %d",
-                GetScreenWidth(), GetScreenHeight());
+            TraceLog(
+                LOG_INFO,
+                "Width: %d, Height: %d",
+                GetScreenWidth(),
+                GetScreenHeight()
+            );
         }
 
         draw();
@@ -267,7 +314,10 @@ void gui_t::setup_logging()
 }
 
 void gui_t::logger_wrapper(
-    int msg_type, const char* fmt, va_list args)
+    int msg_type,
+    const char* fmt,
+    va_list args
+)
 {
     using namespace logging;
 

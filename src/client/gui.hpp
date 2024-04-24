@@ -18,10 +18,10 @@
 namespace client {
 
 class gui_t {
-public:
+   public:
     void operator()();
 
-private:
+   private:
     void process_draw(prot::draw_t& draw);
 
     void draw_scene();
@@ -46,7 +46,10 @@ private:
     static void setup_logging();
 
     static void logger_wrapper(
-        int msg_type, const char* fmt, va_list args);
+        int msg_type,
+        const char* fmt,
+        va_list args
+    );
 };
 
 } // namespace client

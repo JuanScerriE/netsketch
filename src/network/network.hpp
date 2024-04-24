@@ -2,6 +2,7 @@
 
 // unix
 #include <fcntl.h>
+#include <poll.h>
 #include <unistd.h>
 
 // sys
@@ -12,6 +13,7 @@
 
 // std
 #include <stdexcept>
+#include <utility>
 
 // cstd
 #include <cerrno>
@@ -23,13 +25,121 @@
 // abort
 #include <abort.hpp>
 
+class PollResult {
+public:
+    PollResult(int error_no, bool timed_out, int events)
+        : m_error_no(error_no)
+        , m_timed_out(timed_out)
+        , m_events(events)
+    {
+    }
+
+    [[nodiscard]] bool has_error()
+    {
+        m_checked = true;
+
+        return m_error_no != 0;
+    }
+
+    [[nodiscard]] int get_error() const
+    {
+        ABORTIF(!m_checked, "poll result not checked");
+
+        return m_error_no;
+    }
+
+    [[nodiscard]] bool has_timed_out() const
+    {
+        ABORTIF(!m_checked, "poll result not checked");
+
+        return m_timed_out;
+    }
+
+    [[nodiscard]] int get_events() const
+    {
+        ABORTIF(!m_checked, "poll result not checked");
+
+        return m_events;
+    }
+
+    [[nodiscard]] bool is_in() const
+    {
+        ABORTIF(!m_checked, "poll result not checked");
+
+        return m_events & POLLIN;
+    }
+
+    [[nodiscard]] bool is_out() const
+    {
+        ABORTIF(!m_checked, "poll result not checked");
+
+        return m_events & POLLOUT;
+    }
+
+    [[nodiscard]] bool is_err() const
+    {
+        ABORTIF(!m_checked, "poll result not checked");
+
+        return m_events & POLLERR;
+    }
+
+    [[nodiscard]] bool is_hup() const
+    {
+        ABORTIF(!m_checked, "poll result not checked");
+
+        return m_events & POLLHUP;
+    }
+
+    [[nodiscard]] bool is_nval() const
+    {
+        ABORTIF(!m_checked, "poll result not checked");
+
+        return m_events & POLLNVAL;
+    }
+
+    [[nodiscard]] bool is_pri() const
+    {
+        ABORTIF(!m_checked, "poll result not checked");
+
+        return m_events & POLLPRI;
+    }
+
+private:
+    bool m_checked { false };
+
+    int m_error_no {};
+    bool m_timed_out {};
+    int m_events {};
+};
+
 class Socket {
 public:
     Socket() = default;
 
+    Socket(Socket&& other) noexcept
+        : m_domain(std::exchange(other.m_domain, 0))
+        , m_type(std::exchange(other.m_type, 0))
+        , m_protocol(std::exchange(other.m_protocol, 0))
+        , m_sock_addr(std::exchange(other.m_sock_addr, {}))
+        , m_addr_size(std::exchange(other.m_addr_size, {}))
+        , m_sock_fd(std::exchange(other.m_sock_fd, -1))
+    {
+    }
+
+    Socket& operator=(Socket&& other) noexcept
+    {
+        m_domain = std::exchange(other.m_domain, 0);
+        m_type = std::exchange(other.m_type, 0);
+        m_protocol = std::exchange(other.m_protocol, 0);
+        m_sock_addr = std::exchange(other.m_sock_addr, {});
+        m_addr_size = std::exchange(other.m_addr_size, {});
+
+        return *this;
+    }
+
     void open(int domain, int type, int protocol)
     {
-        AbortIf(domain != AF_INET, "only supports AF_INET");
+        ABORTIF(domain != AF_INET, "only supports AF_INET");
 
         m_domain = domain;
         m_type = type;
@@ -47,32 +157,32 @@ public:
 
     void make_blocking() const
     {
-        AbortIf(m_sock_fd == -1, "uninitialized socket");
+        ABORTIF(m_sock_fd == -1, "uninitialized socket");
 
         int flags = fcntl(m_sock_fd, F_GETFL);
-        AbortIfV(
+        ABORTIFV(
             flags == -1, "fcntl(): {}", strerror(errno));
         int ret = fcntl(
             m_sock_fd, F_SETFL, flags & ~O_NONBLOCK);
-        AbortIfV(ret == -1, "fcntl(): {}", strerror(errno));
+        ABORTIFV(ret == -1, "fcntl(): {}", strerror(errno));
     }
 
     void make_non_blocking() const
     {
-        AbortIf(m_sock_fd == -1, "uninitialized socket");
+        ABORTIF(m_sock_fd == -1, "uninitialized socket");
 
         int flags = fcntl(m_sock_fd, F_GETFL);
-        AbortIfV(
+        ABORTIFV(
             flags == -1, "fcntl(): {}", strerror(errno));
         int ret
             = fcntl(m_sock_fd, F_SETFL, flags & O_NONBLOCK);
-        AbortIfV(ret == -1, "fcntl(): {}", strerror(errno));
+        ABORTIFV(ret == -1, "fcntl(): {}", strerror(errno));
     }
 
     void bind(const struct sockaddr* sock_addr,
         socklen_t addr_size)
     {
-        AbortIf(m_sock_fd == -1, "uninitialized socket");
+        ABORTIF(m_sock_fd == -1, "uninitialized socket");
 
         std::memcpy(&m_sock_addr, sock_addr, addr_size);
 
@@ -89,7 +199,7 @@ public:
 
     void listen(int backlog) const
     {
-        AbortIf(m_sock_fd == -1, "uninitialized socket");
+        ABORTIF(m_sock_fd == -1, "uninitialized socket");
 
         int ret = ::listen(m_sock_fd, backlog);
 
@@ -99,26 +209,44 @@ public:
         }
     }
 
-    Socket accept(struct sockaddr* sock_addr,
-        socklen_t* addr_size) const
+    template <typename... Events>
+    PollResult poll(Events... events, int timeout = 128)
     {
-        AbortIf(m_sock_fd == -1, "uninitialized socket");
+        struct pollfd query
+            = { m_sock_fd, (events | ...), 0 };
 
-        int conn_sock_fd
-            = ::accept(m_sock_fd, sock_addr, addr_size);
+        int ret = ::poll(&query, 1, timeout);
+
+        if (ret == -1) {
+            return { errno, false, 0 };
+        }
+
+        if (ret == 0) {
+            return { 0, true, 0 };
+        }
+
+        return { 0, false, query.revents };
+    }
+
+    [[nodiscard]] Socket accept() const
+    {
+        ABORTIF(m_sock_fd == -1, "uninitialized socket");
+
+        Socket conn_sock {};
+
+        int conn_sock_fd = ::accept(m_sock_fd,
+            &conn_sock.m_sock_addr, &conn_sock.m_addr_size);
 
         if (conn_sock_fd == -1) {
             throw std::runtime_error { fmt::format(
                 "accept(): {}", strerror(errno)) };
         }
 
-        Socket conn_sock {};
-
         conn_sock.m_domain = m_domain;
         conn_sock.m_type = m_type;
         conn_sock.m_protocol = m_protocol;
-        conn_sock.m_sock_addr = *sock_addr;
-        conn_sock.m_addr_size = *addr_size;
+        // conn_sock.m_sock_addr;
+        // conn_sock.m_addr_size;
         conn_sock.m_sock_fd = conn_sock_fd;
 
         return conn_sock;
@@ -126,9 +254,9 @@ public:
 
     void close()
     {
-        AbortIf(m_sock_fd == -1, "uninitialized socket");
+        ABORTIF(m_sock_fd == -1, "uninitialized socket");
 
-        AbortIfV(::close(m_sock_fd) == -1, "close(): {}",
+        ABORTIFV(::close(m_sock_fd) == -1, "close(): {}",
             strerror(errno));
 
         m_domain = 0;

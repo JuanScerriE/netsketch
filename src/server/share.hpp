@@ -29,7 +29,9 @@
 
 namespace server::share {
 
-extern Socket socket{};
+extern bool stop;
+
+extern Socket socket;
 
 extern threading::mutex e_threads_mutex;
 

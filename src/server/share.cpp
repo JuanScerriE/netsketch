@@ -6,6 +6,8 @@
 
 namespace server::share {
 
+bool stop{false};
+
 Socket socket{};
 
 threading::mutex e_threads_mutex {};

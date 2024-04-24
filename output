@@ -1,0 +1,468 @@
+-- Using Wayland (and turning off X11)...
+CMake Deprecation Warning at build/_deps/raylib-src/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+In file included from /home/juan/Desktop/os2proj/netsketch/src/server/server.hpp:7,
+                 from /home/juan/Desktop/os2proj/netsketch/src/server/server.cpp:3:
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp: In constructor ‘Socket::Socket(Socket&&)’:
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:120:11: error: class ‘Socket’ does not have any field named ‘m_domain’
+  120 |         : m_domain(std::exchange(other.m_domain, 0))
+      |           ^~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:120:40: error: ‘class Socket’ has no member named ‘m_domain’
+  120 |         : m_domain(std::exchange(other.m_domain, 0))
+      |                                        ^~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:126:5: error: expected ‘)’ before ‘{’ token
+  126 |     {
+      |     ^
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:125:20: note: to match this ‘(’
+  125 |         , m_sock_fd(std::exchange(other.m_sock_fd, -1)
+      |                    ^
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:276:23: error: expected ‘{’ at end of input
+  276 |     int m_domain { 0 };
+      |                       ^
+In file included from /home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:9,
+                 from /home/juan/Desktop/os2proj/netsketch/src/server/share.cpp:2:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp: In member function ‘void common::draw_list_wrapper::handle_draw(std::string, prot::draw_t)’:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:242:25: error: no matching function for call to ‘std::vector<prot::tagged_draw_t>::push_back(<brace-enclosed initializer list>)’
+  242 |         m_list.push_back(
+      |         ~~~~~~~~~~~~~~~~^
+  243 |             { std::move(username), std::move(draw) });
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/13/vector:66,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/utils.hpp:6,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/serial.hpp:8,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:10,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:4:
+/usr/include/c++/13/bits/stl_vector.h:1278:7: note: candidate: ‘void std::vector<_Tp, _Alloc>::push_back(const value_type&) [with _Tp = prot::tagged_draw_t; _Alloc = std::allocator<prot::tagged_draw_t>; value_type = prot::tagged_draw_t]’
+ 1278 |       push_back(const value_type& __x)
+      |       ^~~~~~~~~
+/usr/include/c++/13/bits/stl_vector.h:1278:35: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const std::vector<prot::tagged_draw_t>::value_type&’ {aka ‘const prot::tagged_draw_t&’}
+ 1278 |       push_back(const value_type& __x)
+      |                 ~~~~~~~~~~~~~~~~~~^~~
+/usr/include/c++/13/bits/stl_vector.h:1295:7: note: candidate: ‘void std::vector<_Tp, _Alloc>::push_back(value_type&&) [with _Tp = prot::tagged_draw_t; _Alloc = std::allocator<prot::tagged_draw_t>; value_type = prot::tagged_draw_t]’
+ 1295 |       push_back(value_type&& __x)
+      |       ^~~~~~~~~
+/usr/include/c++/13/bits/stl_vector.h:1295:30: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘std::vector<prot::tagged_draw_t>::value_type&&’ {aka ‘prot::tagged_draw_t&&’}
+ 1295 |       push_back(value_type&& __x)
+      |                 ~~~~~~~~~~~~~^~~
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp: In member function ‘void common::draw_list_wrapper::handle_select(std::string, prot::select_t)’:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:250:42: error: no match for ‘operator=’ (operand types are ‘__gnu_cxx::__alloc_traits<std::allocator<prot::tagged_draw_t>, prot::tagged_draw_t>::value_type’ {aka ‘prot::tagged_draw_t’} and ‘<brace-enclosed initializer list>’)
+  250 |                   std::move(select.draw) };
+      |                                          ^
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note: candidate: ‘prot::tagged_draw_t& prot::tagged_draw_t::operator=(const prot::tagged_draw_t&)’
+   66 | struct tagged_draw_t {
+      |        ^~~~~~~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const prot::tagged_draw_t&’
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note: candidate: ‘prot::tagged_draw_t& prot::tagged_draw_t::operator=(prot::tagged_draw_t&&)’
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘prot::tagged_draw_t&&’
+In file included from /home/juan/Desktop/os2proj/netsketch/src/server/server.hpp:7,
+                 from /home/juan/Desktop/os2proj/netsketch/src/server/main.cpp:3:
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp: In constructor ‘Socket::Socket(Socket&&)’:
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:120:11: error: class ‘Socket’ does not have any field named ‘m_domain’
+  120 |         : m_domain(std::exchange(other.m_domain, 0))
+      |           ^~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:120:40: error: ‘class Socket’ has no member named ‘m_domain’
+  120 |         : m_domain(std::exchange(other.m_domain, 0))
+      |                                        ^~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:126:5: error: expected ‘)’ before ‘{’ token
+  126 |     {
+      |     ^
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:125:20: note: to match this ‘(’
+  125 |         , m_sock_fd(std::exchange(other.m_sock_fd, -1)
+      |                    ^
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:276:23: error: expected ‘{’ at end of input
+  276 |     int m_domain { 0 };
+      |                       ^
+In file included from /home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:9,
+                 from /home/juan/Desktop/os2proj/netsketch/src/server/server.cpp:24:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp: In member function ‘void common::draw_list_wrapper::handle_draw(std::string, prot::draw_t)’:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:242:25: error: no matching function for call to ‘std::vector<prot::tagged_draw_t>::push_back(<brace-enclosed initializer list>)’
+  242 |         m_list.push_back(
+      |         ~~~~~~~~~~~~~~~~^
+  243 |             { std::move(username), std::move(draw) });
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/13/vector:66,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/utils.hpp:6,
+                 from /home/juan/Desktop/os2proj/netsketch/src/server/conn_handler.hpp:10,
+                 from /home/juan/Desktop/os2proj/netsketch/src/server/server.cpp:2:
+/usr/include/c++/13/bits/stl_vector.h:1278:7: note: candidate: ‘void std::vector<_Tp, _Alloc>::push_back(const value_type&) [with _Tp = prot::tagged_draw_t; _Alloc = std::allocator<prot::tagged_draw_t>; value_type = prot::tagged_draw_t]’
+ 1278 |       push_back(const value_type& __x)
+      |       ^~~~~~~~~
+/usr/include/c++/13/bits/stl_vector.h:1278:35: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const std::vector<prot::tagged_draw_t>::value_type&’ {aka ‘const prot::tagged_draw_t&’}
+ 1278 |       push_back(const value_type& __x)
+      |                 ~~~~~~~~~~~~~~~~~~^~~
+/usr/include/c++/13/bits/stl_vector.h:1295:7: note: candidate: ‘void std::vector<_Tp, _Alloc>::push_back(value_type&&) [with _Tp = prot::tagged_draw_t; _Alloc = std::allocator<prot::tagged_draw_t>; value_type = prot::tagged_draw_t]’
+ 1295 |       push_back(value_type&& __x)
+      |       ^~~~~~~~~
+/usr/include/c++/13/bits/stl_vector.h:1295:30: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘std::vector<prot::tagged_draw_t>::value_type&&’ {aka ‘prot::tagged_draw_t&&’}
+ 1295 |       push_back(value_type&& __x)
+      |                 ~~~~~~~~~~~~~^~~
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp: In member function ‘void common::draw_list_wrapper::handle_select(std::string, prot::select_t)’:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:250:42: error: no match for ‘operator=’ (operand types are ‘__gnu_cxx::__alloc_traits<std::allocator<prot::tagged_draw_t>, prot::tagged_draw_t>::value_type’ {aka ‘prot::tagged_draw_t’} and ‘<brace-enclosed initializer list>’)
+  250 |                   std::move(select.draw) };
+      |                                          ^
+In file included from /home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:4:
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note: candidate: ‘prot::tagged_draw_t& prot::tagged_draw_t::operator=(const prot::tagged_draw_t&)’
+   66 | struct tagged_draw_t {
+      |        ^~~~~~~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const prot::tagged_draw_t&’
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note: candidate: ‘prot::tagged_draw_t& prot::tagged_draw_t::operator=(prot::tagged_draw_t&&)’
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘prot::tagged_draw_t&&’
+In file included from /home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:22:
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp: At global scope:
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: error: ‘class server::timing::timer’ has pointer data members [-Werror=effc++]
+   13 | class timer {
+      |       ^~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: error:   but does not declare ‘server::timing::timer(const server::timing::timer&)’ [-Werror=effc++]
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: error:   or ‘operator=(const server::timing::timer&)’ [-Werror=effc++]
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:46:13: note: pointer member ‘server::timing::timer::m_timer’ declared here
+   46 |     timer_t m_timer {};
+      |             ^~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:50:11: error: declaration of ‘server::timing::timer server::timing::timer_data::timer’ changes meaning of ‘timer’ [-Wchanges-meaning]
+   50 |     timer timer {};
+      |           ^~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:50:5: note: used here to mean ‘class server::timing::timer’
+   50 |     timer timer {};
+      |     ^~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: note: declared here
+   13 | class timer {
+      |       ^~~~~
+In file included from /home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:28:
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp: In constructor ‘Socket::Socket(Socket&&)’:
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:120:11: error: class ‘Socket’ does not have any field named ‘m_domain’
+  120 |         : m_domain(std::exchange(other.m_domain, 0))
+      |           ^~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:120:40: error: ‘class Socket’ has no member named ‘m_domain’
+  120 |         : m_domain(std::exchange(other.m_domain, 0))
+      |                                        ^~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:126:5: error: expected ‘)’ before ‘{’ token
+  126 |     {
+      |     ^
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:125:20: note: to match this ‘(’
+  125 |         , m_sock_fd(std::exchange(other.m_sock_fd, -1)
+      |                    ^
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:276:23: error: expected ‘{’ at end of input
+  276 |     int m_domain { 0 };
+      |                       ^
+/home/juan/Desktop/os2proj/netsketch/src/server/share.hpp: At global scope:
+/home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:32:15: error: ‘socket’ initialized and declared ‘extern’ [-Werror]
+   32 | extern Socket socket{};
+      |               ^~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/share.cpp:9:8: error: redefinition of ‘Socket server::share::socket’
+    9 | Socket socket{};
+      |        ^~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:32:15: note: ‘Socket server::share::socket’ previously defined here
+   32 | extern Socket socket{};
+      |               ^~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/share.cpp:25:27: error: ‘timer_data’ was not declared in this scope; did you mean ‘server::timing::timer_data’?
+   25 | std::list<std::unique_ptr<timer_data>> e_timers;
+      |                           ^~~~~~~~~~
+      |                           server::timing::timer_data
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:49:8: note: ‘server::timing::timer_data’ declared here
+   49 | struct timer_data {
+      |        ^~~~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/share.cpp:25:27: error: template argument 1 is invalid
+   25 | std::list<std::unique_ptr<timer_data>> e_timers;
+      |                           ^~~~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/share.cpp:25:27: error: template argument 2 is invalid
+/home/juan/Desktop/os2proj/netsketch/src/server/share.cpp:25:37: error: template argument 1 is invalid
+   25 | std::list<std::unique_ptr<timer_data>> e_timers;
+      |                                     ^~
+/home/juan/Desktop/os2proj/netsketch/src/server/share.cpp:25:37: error: template argument 2 is invalid
+/home/juan/Desktop/os2proj/netsketch/src/server/share.cpp:25:40: error: conflicting declaration ‘int server::share::e_timers’
+   25 | std::list<std::unique_ptr<timer_data>> e_timers;
+      |                                        ^~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:49:5: note: previous declaration as ‘std::__cxx11::list<std::unique_ptr<server::timing::timer_data> > server::share::e_timers’
+   49 |     e_timers;
+      |     ^~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/share.cpp:31:5: error: conflicting declaration ‘common::ts_queue<std::variant<prot::tagged_command_t, prot::adopt_t> > server::share::e_command_queue’
+   31 |     e_command_queue {};
+      |     ^~~~~~~~~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:51:42: note: previous declaration as ‘common::ts_queue<std::variant<prot::tagged_command_t, prot::tagged_draw_t, std::vector<prot::tagged_draw_t, std::allocator<prot::tagged_draw_t> >, prot::adopt_t> > server::share::e_command_queue’
+   51 | extern common::ts_queue<prot::payload_t> e_command_queue;
+      |                                          ^~~~~~~~~~~~~~~
+In file included from /home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:22:
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp: At global scope:
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: error: ‘class server::timing::timer’ has pointer data members [-Werror=effc++]
+   13 | class timer {
+      |       ^~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: error:   but does not declare ‘server::timing::timer(const server::timing::timer&)’ [-Werror=effc++]
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: error:   or ‘operator=(const server::timing::timer&)’ [-Werror=effc++]
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:46:13: note: pointer member ‘server::timing::timer::m_timer’ declared here
+   46 |     timer_t m_timer {};
+      |             ^~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:50:11: error: declaration of ‘server::timing::timer server::timing::timer_data::timer’ changes meaning of ‘timer’ [-Wchanges-meaning]
+   50 |     timer timer {};
+      |           ^~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:50:5: note: used here to mean ‘class server::timing::timer’
+   50 |     timer timer {};
+      |     ^~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: note: declared here
+   13 | class timer {
+      |       ^~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:32:15: error: ‘socket’ initialized and declared ‘extern’ [-Werror]
+   32 | extern Socket socket{};
+      |               ^~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/server.cpp: In member function ‘void server::server_t::operator()()’:
+/home/juan/Desktop/os2proj/netsketch/src/server/server.cpp:44:18: error: ‘class Socket’ has no member named ‘open’
+   44 |         m_socket.open(AF_INET, SOCK_STREAM, 0);
+      |                  ^~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/server.cpp:46:18: error: ‘class Socket’ has no member named ‘make_non_blocking’
+   46 |         m_socket.make_non_blocking();
+      |                  ^~~~~~~~~~~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/server.cpp:53:18: error: ‘class Socket’ has no member named ‘bind’
+   53 |         m_socket.bind(
+      |                  ^~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/server.cpp:57:18: error: ‘class Socket’ has no member named ‘listen’
+   57 |         m_socket.listen(BACKLOG);
+      |                  ^~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/server.cpp: In member function ‘void server::server_t::request_loop()’:
+/home/juan/Desktop/os2proj/netsketch/src/server/server.cpp:74:32: error: ‘class Socket’ has no member named ‘poll’
+   74 |         auto result = m_socket.poll(POLLIN);
+      |                                ^~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/server.cpp:104:28: error: ‘class Socket’ has no member named ‘accept’
+  104 |                 = m_socket.accept();
+      |                            ^~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/server.cpp:303:53: error: ‘addr’ was not declared in this scope
+  303 |                 conn_handler_t { m_current_conn_fd, addr });
+      |                                                     ^~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/server.cpp:303:58: error: no matching function for call to ‘server::conn_handler_t::conn_handler_t(<brace-enclosed initializer list>)’
+  303 |                 conn_handler_t { m_current_conn_fd, addr });
+      |                                                          ^
+/home/juan/Desktop/os2proj/netsketch/src/server/conn_handler.hpp:16:14: note: candidate: ‘server::conn_handler_t::conn_handler_t(int, sockaddr_in)’
+   16 |     explicit conn_handler_t(int conn_fd, sockaddr_in addr);
+      |              ^~~~~~~~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/conn_handler.hpp:16:14: note:   conversion of argument 2 would be ill-formed:
+/home/juan/Desktop/os2proj/netsketch/src/server/conn_handler.hpp:14:7: note: candidate: ‘server::conn_handler_t::conn_handler_t(const server::conn_handler_t&)’
+   14 | class conn_handler_t {
+      |       ^~~~~~~~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/conn_handler.hpp:14:7: note:   candidate expects 1 argument, 2 provided
+/home/juan/Desktop/os2proj/netsketch/src/server/conn_handler.hpp:14:7: note: candidate: ‘server::conn_handler_t::conn_handler_t(server::conn_handler_t&&)’
+/home/juan/Desktop/os2proj/netsketch/src/server/conn_handler.hpp:14:7: note:   candidate expects 1 argument, 2 provided
+/home/juan/Desktop/os2proj/netsketch/src/server/server.cpp: In member function ‘void server::server_t::dtor()’:
+/home/juan/Desktop/os2proj/netsketch/src/server/server.cpp:353:15: error: ‘m_socket_fd’ was not declared in this scope; did you mean ‘m_socket’?
+  353 |     if (close(m_socket_fd) == -1) {
+      |               ^~~~~~~~~~~
+      |               m_socket
+In file included from /home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:9,
+                 from /home/juan/Desktop/os2proj/netsketch/src/server/updater.hpp:7,
+                 from /home/juan/Desktop/os2proj/netsketch/src/server/main.cpp:4:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp: In member function ‘void common::draw_list_wrapper::handle_draw(std::string, prot::draw_t)’:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:242:25: error: no matching function for call to ‘std::vector<prot::tagged_draw_t>::push_back(<brace-enclosed initializer list>)’
+  242 |         m_list.push_back(
+      |         ~~~~~~~~~~~~~~~~^
+  243 |             { std::move(username), std::move(draw) });
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/13/vector:66,
+                 from /usr/include/c++/13/functional:64,
+                 from /home/juan/Desktop/os2proj/netsketch/src/threading/threading.hpp:6,
+                 from /home/juan/Desktop/os2proj/netsketch/src/server/main.cpp:2:
+/usr/include/c++/13/bits/stl_vector.h:1278:7: note: candidate: ‘void std::vector<_Tp, _Alloc>::push_back(const value_type&) [with _Tp = prot::tagged_draw_t; _Alloc = std::allocator<prot::tagged_draw_t>; value_type = prot::tagged_draw_t]’
+ 1278 |       push_back(const value_type& __x)
+      |       ^~~~~~~~~
+/usr/include/c++/13/bits/stl_vector.h:1278:35: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const std::vector<prot::tagged_draw_t>::value_type&’ {aka ‘const prot::tagged_draw_t&’}
+ 1278 |       push_back(const value_type& __x)
+      |                 ~~~~~~~~~~~~~~~~~~^~~
+/usr/include/c++/13/bits/stl_vector.h:1295:7: note: candidate: ‘void std::vector<_Tp, _Alloc>::push_back(value_type&&) [with _Tp = prot::tagged_draw_t; _Alloc = std::allocator<prot::tagged_draw_t>; value_type = prot::tagged_draw_t]’
+ 1295 |       push_back(value_type&& __x)
+      |       ^~~~~~~~~
+/usr/include/c++/13/bits/stl_vector.h:1295:30: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘std::vector<prot::tagged_draw_t>::value_type&&’ {aka ‘prot::tagged_draw_t&&’}
+ 1295 |       push_back(value_type&& __x)
+      |                 ~~~~~~~~~~~~~^~~
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp: In member function ‘void common::draw_list_wrapper::handle_select(std::string, prot::select_t)’:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:250:42: error: no match for ‘operator=’ (operand types are ‘__gnu_cxx::__alloc_traits<std::allocator<prot::tagged_draw_t>, prot::tagged_draw_t>::value_type’ {aka ‘prot::tagged_draw_t’} and ‘<brace-enclosed initializer list>’)
+  250 |                   std::move(select.draw) };
+      |                                          ^
+In file included from /home/juan/Desktop/os2proj/netsketch/src/server/updater.hpp:3:
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note: candidate: ‘prot::tagged_draw_t& prot::tagged_draw_t::operator=(const prot::tagged_draw_t&)’
+   66 | struct tagged_draw_t {
+      |        ^~~~~~~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const prot::tagged_draw_t&’
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note: candidate: ‘prot::tagged_draw_t& prot::tagged_draw_t::operator=(prot::tagged_draw_t&&)’
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘prot::tagged_draw_t&&’
+In file included from /home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:22:
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp: At global scope:
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: error: ‘class server::timing::timer’ has pointer data members [-Werror=effc++]
+   13 | class timer {
+      |       ^~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: error:   but does not declare ‘server::timing::timer(const server::timing::timer&)’ [-Werror=effc++]
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: error:   or ‘operator=(const server::timing::timer&)’ [-Werror=effc++]
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:46:13: note: pointer member ‘server::timing::timer::m_timer’ declared here
+   46 |     timer_t m_timer {};
+      |             ^~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:50:11: error: declaration of ‘server::timing::timer server::timing::timer_data::timer’ changes meaning of ‘timer’ [-Wchanges-meaning]
+   50 |     timer timer {};
+      |           ^~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:50:5: note: used here to mean ‘class server::timing::timer’
+   50 |     timer timer {};
+      |     ^~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: note: declared here
+   13 | class timer {
+      |       ^~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:32:15: error: ‘socket’ initialized and declared ‘extern’ [-Werror]
+   32 | extern Socket socket{};
+      |               ^~~~~~
+In file included from /home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:9,
+                 from /home/juan/Desktop/os2proj/netsketch/src/server/conn_handler.cpp:15:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp: In member function ‘void common::draw_list_wrapper::handle_draw(std::string, prot::draw_t)’:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:242:25: error: no matching function for call to ‘std::vector<prot::tagged_draw_t>::push_back(<brace-enclosed initializer list>)’
+  242 |         m_list.push_back(
+      |         ~~~~~~~~~~~~~~~~^
+  243 |             { std::move(username), std::move(draw) });
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/13/vector:66,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/utils.hpp:6,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/serial.hpp:8,
+                 from /home/juan/Desktop/os2proj/netsketch/src/server/conn_handler.cpp:2:
+/usr/include/c++/13/bits/stl_vector.h:1278:7: note: candidate: ‘void std::vector<_Tp, _Alloc>::push_back(const value_type&) [with _Tp = prot::tagged_draw_t; _Alloc = std::allocator<prot::tagged_draw_t>; value_type = prot::tagged_draw_t]’
+ 1278 |       push_back(const value_type& __x)
+      |       ^~~~~~~~~
+/usr/include/c++/13/bits/stl_vector.h:1278:35: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const std::vector<prot::tagged_draw_t>::value_type&’ {aka ‘const prot::tagged_draw_t&’}
+ 1278 |       push_back(const value_type& __x)
+      |                 ~~~~~~~~~~~~~~~~~~^~~
+/usr/include/c++/13/bits/stl_vector.h:1295:7: note: candidate: ‘void std::vector<_Tp, _Alloc>::push_back(value_type&&) [with _Tp = prot::tagged_draw_t; _Alloc = std::allocator<prot::tagged_draw_t>; value_type = prot::tagged_draw_t]’
+ 1295 |       push_back(value_type&& __x)
+      |       ^~~~~~~~~
+/usr/include/c++/13/bits/stl_vector.h:1295:30: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘std::vector<prot::tagged_draw_t>::value_type&&’ {aka ‘prot::tagged_draw_t&&’}
+ 1295 |       push_back(value_type&& __x)
+      |                 ~~~~~~~~~~~~~^~~
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp: In member function ‘void common::draw_list_wrapper::handle_select(std::string, prot::select_t)’:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:250:42: error: no match for ‘operator=’ (operand types are ‘__gnu_cxx::__alloc_traits<std::allocator<prot::tagged_draw_t>, prot::tagged_draw_t>::value_type’ {aka ‘prot::tagged_draw_t’} and ‘<brace-enclosed initializer list>’)
+  250 |                   std::move(select.draw) };
+      |                                          ^
+In file included from /home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:4:
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note: candidate: ‘prot::tagged_draw_t& prot::tagged_draw_t::operator=(const prot::tagged_draw_t&)’
+   66 | struct tagged_draw_t {
+      |        ^~~~~~~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const prot::tagged_draw_t&’
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note: candidate: ‘prot::tagged_draw_t& prot::tagged_draw_t::operator=(prot::tagged_draw_t&&)’
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘prot::tagged_draw_t&&’
+In file included from /home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:22:
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp: At global scope:
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: error: ‘class server::timing::timer’ has pointer data members [-Werror=effc++]
+   13 | class timer {
+      |       ^~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: error:   but does not declare ‘server::timing::timer(const server::timing::timer&)’ [-Werror=effc++]
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: error:   or ‘operator=(const server::timing::timer&)’ [-Werror=effc++]
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:46:13: note: pointer member ‘server::timing::timer::m_timer’ declared here
+   46 |     timer_t m_timer {};
+      |             ^~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:50:11: error: declaration of ‘server::timing::timer server::timing::timer_data::timer’ changes meaning of ‘timer’ [-Wchanges-meaning]
+   50 |     timer timer {};
+      |           ^~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:50:5: note: used here to mean ‘class server::timing::timer’
+   50 |     timer timer {};
+      |     ^~~~~
+/home/juan/Desktop/os2proj/netsketch/src/server/timer_data.hpp:13:7: note: declared here
+   13 | class timer {
+      |       ^~~~~
+In file included from /home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:28:
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp: In constructor ‘Socket::Socket(Socket&&)’:
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:120:11: error: class ‘Socket’ does not have any field named ‘m_domain’
+  120 |         : m_domain(std::exchange(other.m_domain, 0))
+      |           ^~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:120:40: error: ‘class Socket’ has no member named ‘m_domain’
+  120 |         : m_domain(std::exchange(other.m_domain, 0))
+      |                                        ^~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:126:5: error: expected ‘)’ before ‘{’ token
+  126 |     {
+      |     ^
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:125:20: note: to match this ‘(’
+  125 |         , m_sock_fd(std::exchange(other.m_sock_fd, -1)
+      |                    ^
+/home/juan/Desktop/os2proj/netsketch/src/network/network.hpp:276:23: error: expected ‘{’ at end of input
+  276 |     int m_domain { 0 };
+      |                       ^
+/home/juan/Desktop/os2proj/netsketch/src/server/share.hpp: At global scope:
+/home/juan/Desktop/os2proj/netsketch/src/server/share.hpp:32:15: error: ‘socket’ initialized and declared ‘extern’ [-Werror]
+   32 | extern Socket socket{};
+      |               ^~~~~~
+cc1plus: all warnings being treated as errors
+make[2]: *** [src/CMakeFiles/netsketch_server.dir/build.make:90: src/CMakeFiles/netsketch_server.dir/server/share.cpp.o] Error 1
+make[2]: *** Waiting for unfinished jobs....
+cc1plus: all warnings being treated as errors
+make[2]: *** [src/CMakeFiles/netsketch_server.dir/build.make:104: src/CMakeFiles/netsketch_server.dir/server/server.cpp.o] Error 1
+cc1plus: all warnings being treated as errors
+make[2]: *** [src/CMakeFiles/netsketch_server.dir/build.make:118: src/CMakeFiles/netsketch_server.dir/server/conn_handler.cpp.o] Error 1
+In file included from /home/juan/Desktop/os2proj/netsketch/src/client/input_handler.cpp:2:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp: In member function ‘void common::draw_list_wrapper::handle_draw(std::string, prot::draw_t)’:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:242:25: error: no matching function for call to ‘std::vector<prot::tagged_draw_t>::push_back(<brace-enclosed initializer list>)’
+  242 |         m_list.push_back(
+      |         ~~~~~~~~~~~~~~~~^
+  243 |             { std::move(username), std::move(draw) });
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/13/vector:66,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/utils.hpp:6,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/serial.hpp:8,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:10,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:4:
+/usr/include/c++/13/bits/stl_vector.h:1278:7: note: candidate: ‘void std::vector<_Tp, _Alloc>::push_back(const value_type&) [with _Tp = prot::tagged_draw_t; _Alloc = std::allocator<prot::tagged_draw_t>; value_type = prot::tagged_draw_t]’
+ 1278 |       push_back(const value_type& __x)
+      |       ^~~~~~~~~
+/usr/include/c++/13/bits/stl_vector.h:1278:35: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const std::vector<prot::tagged_draw_t>::value_type&’ {aka ‘const prot::tagged_draw_t&’}
+ 1278 |       push_back(const value_type& __x)
+      |                 ~~~~~~~~~~~~~~~~~~^~~
+/usr/include/c++/13/bits/stl_vector.h:1295:7: note: candidate: ‘void std::vector<_Tp, _Alloc>::push_back(value_type&&) [with _Tp = prot::tagged_draw_t; _Alloc = std::allocator<prot::tagged_draw_t>; value_type = prot::tagged_draw_t]’
+ 1295 |       push_back(value_type&& __x)
+      |       ^~~~~~~~~
+/usr/include/c++/13/bits/stl_vector.h:1295:30: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘std::vector<prot::tagged_draw_t>::value_type&&’ {aka ‘prot::tagged_draw_t&&’}
+ 1295 |       push_back(value_type&& __x)
+      |                 ~~~~~~~~~~~~~^~~
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp: In member function ‘void common::draw_list_wrapper::handle_select(std::string, prot::select_t)’:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:250:42: error: no match for ‘operator=’ (operand types are ‘__gnu_cxx::__alloc_traits<std::allocator<prot::tagged_draw_t>, prot::tagged_draw_t>::value_type’ {aka ‘prot::tagged_draw_t’} and ‘<brace-enclosed initializer list>’)
+  250 |                   std::move(select.draw) };
+      |                                          ^
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note: candidate: ‘prot::tagged_draw_t& prot::tagged_draw_t::operator=(const prot::tagged_draw_t&)’
+   66 | struct tagged_draw_t {
+      |        ^~~~~~~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const prot::tagged_draw_t&’
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note: candidate: ‘prot::tagged_draw_t& prot::tagged_draw_t::operator=(prot::tagged_draw_t&&)’
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘prot::tagged_draw_t&&’
+In file included from /home/juan/Desktop/os2proj/netsketch/src/client/reader.cpp:2:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp: In member function ‘void common::draw_list_wrapper::handle_draw(std::string, prot::draw_t)’:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:242:25: error: no matching function for call to ‘std::vector<prot::tagged_draw_t>::push_back(<brace-enclosed initializer list>)’
+  242 |         m_list.push_back(
+      |         ~~~~~~~~~~~~~~~~^
+  243 |             { std::move(username), std::move(draw) });
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/c++/13/vector:66,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/utils.hpp:6,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/serial.hpp:8,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:10,
+                 from /home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:4:
+/usr/include/c++/13/bits/stl_vector.h:1278:7: note: candidate: ‘void std::vector<_Tp, _Alloc>::push_back(const value_type&) [with _Tp = prot::tagged_draw_t; _Alloc = std::allocator<prot::tagged_draw_t>; value_type = prot::tagged_draw_t]’
+ 1278 |       push_back(const value_type& __x)
+      |       ^~~~~~~~~
+/usr/include/c++/13/bits/stl_vector.h:1278:35: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const std::vector<prot::tagged_draw_t>::value_type&’ {aka ‘const prot::tagged_draw_t&’}
+ 1278 |       push_back(const value_type& __x)
+      |                 ~~~~~~~~~~~~~~~~~~^~~
+/usr/include/c++/13/bits/stl_vector.h:1295:7: note: candidate: ‘void std::vector<_Tp, _Alloc>::push_back(value_type&&) [with _Tp = prot::tagged_draw_t; _Alloc = std::allocator<prot::tagged_draw_t>; value_type = prot::tagged_draw_t]’
+ 1295 |       push_back(value_type&& __x)
+      |       ^~~~~~~~~
+/usr/include/c++/13/bits/stl_vector.h:1295:30: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘std::vector<prot::tagged_draw_t>::value_type&&’ {aka ‘prot::tagged_draw_t&&’}
+ 1295 |       push_back(value_type&& __x)
+      |                 ~~~~~~~~~~~~~^~~
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp: In member function ‘void common::draw_list_wrapper::handle_select(std::string, prot::select_t)’:
+/home/juan/Desktop/os2proj/netsketch/src/common/draw_list.hpp:250:42: error: no match for ‘operator=’ (operand types are ‘__gnu_cxx::__alloc_traits<std::allocator<prot::tagged_draw_t>, prot::tagged_draw_t>::value_type’ {aka ‘prot::tagged_draw_t’} and ‘<brace-enclosed initializer list>’)
+  250 |                   std::move(select.draw) };
+      |                                          ^
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note: candidate: ‘prot::tagged_draw_t& prot::tagged_draw_t::operator=(const prot::tagged_draw_t&)’
+   66 | struct tagged_draw_t {
+      |        ^~~~~~~~~~~~~
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const prot::tagged_draw_t&’
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note: candidate: ‘prot::tagged_draw_t& prot::tagged_draw_t::operator=(prot::tagged_draw_t&&)’
+/home/juan/Desktop/os2proj/netsketch/src/common/protocol.hpp:66:8: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘prot::tagged_draw_t&&’
+make[2]: *** [src/CMakeFiles/netsketch_client.dir/build.make:160: src/CMakeFiles/netsketch_client.dir/client/input_handler.cpp.o] Error 1
+make[2]: *** Waiting for unfinished jobs....
+make[2]: *** [src/CMakeFiles/netsketch_client.dir/build.make:132: src/CMakeFiles/netsketch_client.dir/client/reader.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:482: src/CMakeFiles/netsketch_client.dir/all] Error 2
+make[1]: *** Waiting for unfinished jobs....
+cc1plus: all warnings being treated as errors
+make[2]: *** [src/CMakeFiles/netsketch_server.dir/build.make:76: src/CMakeFiles/netsketch_server.dir/server/main.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:453: src/CMakeFiles/netsketch_server.dir/all] Error 2
+make: *** [Makefile:156: all] Error 2

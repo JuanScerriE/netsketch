@@ -15,7 +15,6 @@
 
 // std
 #include <cstdlib>
-#include <list>
 
 // common
 #include <abort.hpp>
@@ -26,6 +25,9 @@
 
 // threading
 #include <threading.hpp>
+
+// network
+#include <network.hpp>
 
 #define BACKLOG (MAX_CONNS)
 
@@ -40,6 +42,8 @@ void server_t::operator()()
 {
     try {
         m_socket.open(AF_INET, SOCK_STREAM, 0);
+
+        m_socket.make_non_blocking();
 
         sockaddr_in server_addr {};
         server_addr.sin_family = AF_INET;
@@ -59,185 +63,42 @@ void server_t::operator()()
 
     log.info("server listening on port {}", m_port);
 
-    requests_loop();
+    request_loop();
 }
 
-void server_t::dtor()
-{
-    if (m_current_conn_fd != -1) {
-        threading::mutex_guard guard {
-            share::e_connections_mutex
-        };
-
-        if (shutdown(m_current_conn_fd, SHUT_WR) == -1) {
-            log.error("connection shutdown failed, "
-                      "reason: {}",
-                strerror(errno));
-        }
-
-        if (close(m_current_conn_fd) == -1) {
-            log.error(
-                "closing connection failed, reason: {}",
-                strerror(errno));
-        }
-
-        share::e_connections.erase(m_current_conn_fd);
-    }
-
-    for (auto& thread : share::e_threads) {
-        thread.cancel();
-
-        thread.join();
-    }
-
-    share::e_updater_thread.cancel();
-
-    if (close(m_socket_fd) == -1) {
-        log.error("closing socket failed, reason: {}",
-            strerror(errno));
-    }
-
-    log.info("stopping server");
-
-    log.flush();
-}
-
-void server_t::requests_loop()
+void server_t::request_loop()
 {
     size_t num_of_conns { 0 };
 
     for (;;) {
-        sockaddr_in addr {};
+        auto result = m_socket.poll(POLLIN);
 
-        socklen_t addr_len { sizeof(sockaddr_in) };
-
-        pollfd poll_fd = { m_socket_fd, POLLIN, 0 };
-
-        if (poll(&poll_fd, 1, -1) == -1) {
-            if (errno == EINTR) {
-                // TODO: add info about interrupt
-                log.warn("poll interrupted");
-
-                continue;
-            }
+        if (result.has_error()) {
+            // do not handle CTRL-C
+            // if (errno == EINTR) {
+            //     log.warn("poll interrupted");
+            //
+            //     continue;
+            // }
 
             ABORTV("poll of socket failed, reason: {}",
                 strerror(errno));
         }
 
-        if (!(poll_fd.revents & POLLIN)) {
-            // TODO: investigate when this happens if at all
-            log.warn("unexpected socket event");
-
-            continue;
-        }
-
-        m_current_conn_fd = accept(
-            m_socket_fd, (sockaddr*)&addr, &addr_len);
-
-        if (m_current_conn_fd == -1) {
-            log.warn("accepting incoming connection "
-                     "failed, reason: {}",
-                strerror(errno));
-
-            continue;
-        }
-
-        pollfd check_poll_fd
-            = { m_current_conn_fd, POLLOUT, 0 };
-
-        if (poll(&check_poll_fd, 1, 60000) == -1) {
-            log.error(
-                "poll of connection failed, reason: {}",
-                strerror(errno));
-
-            if (close(m_current_conn_fd) == -1) {
-                ABORTV("closing connection failed, "
-                       "reason: {}",
-                    strerror(errno));
+        if (result.has_timed_out()) {
+            if (share::stop) {
+                break;
             }
 
-            m_current_conn_fd = -1;
-
             continue;
         }
 
-        if (check_poll_fd.revents & POLLHUP) {
-            log.warn("connection hung up");
+        Socket conn_sock {};
 
-            if (close(m_current_conn_fd) == -1) {
-                ABORTV("closing connection failed, "
-                       "reason: {}",
-                    strerror(errno));
-            }
-
-            m_current_conn_fd = -1;
-
-            continue;
-        }
-
-        if (!(check_poll_fd.revents & POLLOUT)) {
-            log.warn("establishing connection timedout");
-
-            if (close(m_current_conn_fd) == -1) {
-                ABORTV("closing connection failed, "
-                       "reason: {}",
-                    strerror(errno));
-            }
-
-            m_current_conn_fd = -1;
-
-            continue;
-        }
-
-        uint16_t check = htons(1);
-
-        if (num_of_conns >= MAX_CONNS) {
-            check = htons(2);
-        }
-
-        ssize_t check_size = write(
-            m_current_conn_fd, &check, sizeof(check));
-
-        if (check_size == -1) {
-            log.warn("reading from connection failed, "
-                     "reason: {}",
-                strerror(errno));
-
-            if (close(m_current_conn_fd) == -1) {
-                ABORTV("closing connection failed, "
-                       "reason: {}",
-                    strerror(errno));
-            }
-
-            m_current_conn_fd = -1;
-
-            continue;
-        }
-
-        if (check_size != sizeof(check)) {
-            log.warn("unexpected message size ({} bytes)",
-                check_size);
-
-            if (close(m_current_conn_fd) == -1) {
-                ABORTV("closing connection failed, "
-                       "reason: {}",
-                    strerror(errno));
-            }
-
-            m_current_conn_fd = -1;
-
-            continue;
-        }
-
-        if (num_of_conns >= MAX_CONNS) {
-            if (close(m_current_conn_fd) == -1) {
-                ABORTV(
-                    "closing connection failed, reason: {}",
-                    strerror(errno));
-            }
-
-            m_current_conn_fd = -1;
+        try {
+            conn_sock = m_socket.accept();
+        } catch (std::runtime_error& error) {
+            log.warn(error.what());
 
             continue;
         }
@@ -258,18 +119,11 @@ void server_t::requests_loop()
         //    noninheritance of file status flags and always
         //    explicitly set all required flags on the
         //    socket returned from accept().
-        int saved_flags = fcntl(m_current_conn_fd, F_GETFL);
-        ABORTIFV(saved_flags == -1,
-            "updating the connection file descriptor "
-            "failed, reason {}",
-            strerror(errno));
-        int is_non_blocking = fcntl(m_current_conn_fd,
-            F_SETFL, saved_flags & ~O_NONBLOCK);
-        ABORTIFV(is_non_blocking == -1,
-            "attempt to modify the connection file "
-            "descriptor "
-            "failed, reason {}",
-            strerror(errno));
+
+        conn_sock.make_blocking();
+
+        // beyond this point it should be taken up
+        // separately
 
         // NOTE: e_connection can be in the process
         // of being read from by the updater thread. So we
@@ -345,6 +199,46 @@ void server_t::requests_loop()
 
         log.flush();
     }
+}
+
+void server_t::dtor()
+{
+    if (m_current_conn_fd != -1) {
+        threading::mutex_guard guard {
+            share::e_connections_mutex
+        };
+
+        if (shutdown(m_current_conn_fd, SHUT_WR) == -1) {
+            log.error("connection shutdown failed, "
+                      "reason: {}",
+                strerror(errno));
+        }
+
+        if (close(m_current_conn_fd) == -1) {
+            log.error(
+                "closing connection failed, reason: {}",
+                strerror(errno));
+        }
+
+        share::e_connections.erase(m_current_conn_fd);
+    }
+
+    for (auto& thread : share::e_threads) {
+        thread.cancel();
+
+        thread.join();
+    }
+
+    share::e_updater_thread.cancel();
+
+    if (close(m_socket_fd) == -1) {
+        log.error("closing socket failed, reason: {}",
+            strerror(errno));
+    }
+
+    log.info("stopping server");
+
+    log.flush();
 }
 
 logging::log server_t::log {};

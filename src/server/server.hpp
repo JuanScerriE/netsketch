@@ -17,13 +17,11 @@ public:
     void dtor();
 
 private:
-    void requests_loop();
+    void request_loop();
 
     uint16_t m_port { 0 };
 
     Socket m_socket{};
-
-    int m_current_conn_fd { -1 };
 
     std::unordered_set<std::string> m_users {};
 

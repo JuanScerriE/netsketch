@@ -92,6 +92,8 @@ class log {
         if (log_level < m_log_level)
             return;
 
+        write_level(log_level);
+
         vfprintf(m_file, fmt, args);
 
         fprintf(m_file, "\n");

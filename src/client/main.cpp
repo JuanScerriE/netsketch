@@ -1,5 +1,5 @@
 // client
-#include <cstdlib>
+#include "client_channel.hpp"
 #include <gui.hpp>
 #include <input_handler.hpp>
 #include <log_file.hpp>
@@ -13,6 +13,9 @@
 
 // std
 #include <regex>
+
+// cstd
+#include <cstdlib>
 
 // unix
 #include <arpa/inet.h>
@@ -39,9 +42,7 @@ struct IPv4Validator : public CLI::Validator {
             };
 
             if (!std::regex_match(str, ipv4_regex))
-                return std::string {
-                    "string is not a IPv4 address"
-                };
+                return std::string { "string is not a IPv4 address" };
             else
                 return std::string {};
         };
@@ -69,11 +70,7 @@ int main(int argc, char** argv)
         ->check(IPv4);
 
     uint16_t port { 6666 };
-    app.add_option(
-           "--port",
-           port,
-           "The port number of a NetSketch server"
-    )
+    app.add_option("--port", port, "The port number of a NetSketch server")
         ->capture_default_str();
 
     std::string nickname {};
@@ -92,8 +89,7 @@ int main(int argc, char** argv)
 
     in_addr addr {};
 
-    if (inet_pton(AF_INET, ipv4_addr_str.c_str(), &addr)
-        <= 0) {
+    if (inet_pton(AF_INET, ipv4_addr_str.c_str(), &addr) <= 0) {
         // NOTE: not using ABORTIF since the above is
         // actually causing a mutation, so I just
         // want that to be clear
@@ -103,21 +99,20 @@ int main(int argc, char** argv)
     // NOTE: this is in host-readable form
     uint32_t ipv4_addr = ntohl(addr.s_addr);
 
-    // create a log file
-    using std::chrono::system_clock;
+    auto now = std::chrono::system_clock::now();
 
-    auto now = system_clock::now();
-
-    client::share::log_file.open(fmt::format(
-        "netsketch-client-log {:%Y-%m-%d %H:%M:%S}",
-        now
-    ));
+    client::share::log_file.open(
+        fmt::format("netsketch-client-log {:%Y-%m-%d %H:%M:%S}", now)
+    );
 
     ABORTIFV(
         client::share::log_file.error(),
         "opening a log file failed, reason: {}",
         client::share::log_file.reason()
     );
+
+    ClientChannel
+
 
     client::network_manager_t manager { ipv4_addr, port };
 
@@ -132,9 +127,9 @@ int main(int argc, char** argv)
     }
 
     client::share::input_thread
-        = threading::pthread { client::input_handler_t {} };
+        = threading::pthread { client::InputHandler {} };
 
-    client::gui_t gui {};
+    client::Gui gui {};
 
     // NOTE: we are running the GUI in the main
     // thread because of macOS, that is macOS

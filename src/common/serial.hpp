@@ -1,5 +1,8 @@
 #pragma once
 
+// common
+#include "overload.hpp"
+
 // cstd
 #include <cstring>
 
@@ -17,6 +20,8 @@ template <std::size_t N>
 using ByteArray = std::array<std::byte, N>;
 
 using ByteVector = std::vector<std::byte>;
+
+namespace util {
 
 template <typename T>
 ByteArray<sizeof(T)> to_bytes(T value)
@@ -37,6 +42,8 @@ T from_bytes(ByteArray<sizeof(T)> bytes)
 
     return value;
 }
+
+} // namespace util
 
 class SerialError : public std::exception {
    public:
@@ -64,7 +71,7 @@ class FSerial {
             "cannot write non-trivially copyable type"
         );
 
-        for (auto& byte : to_bytes(value)) {
+        for (auto& byte : util::to_bytes(value)) {
             m_bytes.emplace_back(byte);
         }
     }
@@ -105,7 +112,7 @@ class BSerial {
 
         m_offset += sizeof(T);
 
-        return from_bytes<T>(bytes);
+        return util::from_bytes<T>(bytes);
     }
 
    private:
@@ -116,20 +123,12 @@ class BSerial {
 
 using Serializable = std::variant<Payload>;
 
-template <typename... Types>
-struct overloaded : Types... {
-    using Types::operator()...;
-};
-
-template <typename... Types>
-overloaded(Types...) -> overloaded<Types...>;
-
 class Serialize {
    public:
     explicit Serialize(Serializable arg)
     {
         std::visit(
-            overloaded {
+            overload {
                 [this](Payload& arg) {
                     this->ser(arg);
                 },
@@ -147,7 +146,7 @@ class Serialize {
     void ser(Payload& arg)
     {
         std::visit(
-            overloaded {
+            overload {
                 [this](Adopt& arg) {
                     this->ser(arg);
                 },
@@ -161,9 +160,6 @@ class Serialize {
                     this->ser(arg);
                 },
                 [this](TaggedDrawVector& arg) {
-                    this->ser(arg);
-                },
-                [this](TaggedDraw& arg) {
                     this->ser(arg);
                 },
                 [this](TaggedAction& arg) {
@@ -226,7 +222,7 @@ class Serialize {
     void ser(Action& arg)
     {
         std::visit(
-            overloaded {
+            overload {
                 [this](Clear& arg) {
                     this->ser(arg);
                 },
@@ -277,7 +273,7 @@ class Serialize {
         m_fserial.write(ActionType::DRAW);
 
         std::visit(
-            overloaded {
+            overload {
                 [this](TextDraw& arg) {
                     this->ser(arg);
                 },
@@ -343,23 +339,12 @@ class Deserialize {
     {
     }
 
-    [[nodiscard]] PayloadHeader payload_header()
-    {
-        return deser_payload_header();
-    }
-
     [[nodiscard]] Payload payload()
     {
         return deser_payload();
     }
 
    private:
-    PayloadHeader deser_payload_header()
-    {
-        return { m_bserial.read<std::uint16_t>(),
-                 m_bserial.read<std::size_t>() };
-    }
-
     Payload deser_payload()
     {
         auto type = m_bserial.read<PayloadType>();

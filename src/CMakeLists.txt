@@ -1,22 +1,22 @@
-add_executable(netsketch_server
-        server/main.cpp
-        server/share.cpp
-        server/server.cpp
-        server/conn_handler.cpp
-)
-
-target_link_libraries(netsketch_server PRIVATE
-        CLI11::CLI11
-        fmt::fmt
-)
-target_include_directories(netsketch_server PRIVATE
-        server
-        log
-        common
-        threading
-        network
-)
-target_compile_options(netsketch_server PRIVATE -Werror -Wall -Wextra -Wpedantic -Weffc++ -Wconversion)
+# add_executable(netsketch_server
+#         server/main.cpp
+#         server/share.cpp
+#         server/server.cpp
+#         server/conn_handler.cpp
+# )
+#
+# target_link_libraries(netsketch_server PRIVATE
+#         CLI11::CLI11
+#         fmt::fmt
+# )
+# target_include_directories(netsketch_server PRIVATE
+#         server
+#         log
+#         common
+#         threading
+#         network
+# )
+# target_compile_options(netsketch_server PRIVATE -Werror -Wall -Wextra -Wpedantic -Weffc++ -Wconversion)
 
 #---------------------------------
 
@@ -24,11 +24,13 @@ add_executable(netsketch_client
         client/main.cpp
         client/share.cpp
         client/gui.cpp
-        client/network_manager.cpp
-        client/reader.cpp
-        client/writer.cpp
+        client/client_channel.cpp
         client/input_handler.cpp
         client/input_parser.cpp
+        common/tagged_draw_vector_wrapper.hpp
+        # client/network_manager.cpp
+        # client/reader.cpp
+        # client/writer.cpp
 )
 
 # Checks if OSX and links appropriate frameworks (only required on MacOS)

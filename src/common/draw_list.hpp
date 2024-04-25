@@ -183,7 +183,7 @@ class ts_draw_list {
     std::condition_variable m_cond_var {};
 };
 
-class draw_list_wrapper {
+class TaggedDrawVectorWrapper {
    public:
     explicit draw_list_wrapper(prot::TaggedDrawList& list)
         : m_list(list)

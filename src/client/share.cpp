@@ -16,17 +16,17 @@ threading::pthread input_thread {};
 // in operations (might change these)
 
 // used to stop the gui upon user exit
-common::readonly_t<bool> stop_gui { false };
+// common::readonly_t<bool> stop_gui { false };
 
 // used in the gui to decided which file
 // to show
-common::readonly_t<bool> show_mine { false };
+// common::readonly_t<bool> show_mine { false };
 
 // log file
 logging::log_file log_file {};
 
 // queues
-common::ts_queue<prot::TaggedCommand> writer_queue {};
+// common::ts_queue<prot::TaggedCommand> writer_queue {};
 
 // nickname
 std::string nickname {};
@@ -43,7 +43,7 @@ threading::mutex writer_mutex {};
 threading::rwlock rwlock1 {};
 threading::rwlock rwlock2 {};
 
-prot::TaggedDrawList list1 {};
-prot::TaggedDrawList list2 {};
+TaggedDrawVector vec1 {};
+TaggedDrawVector vec2 {};
 
 } // namespace client::share

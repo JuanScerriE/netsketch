@@ -1,6 +1,7 @@
 // std
 #include <any>
 #include <atomic>
+#include <bits/chrono.h>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -47,9 +48,24 @@ struct Header {
 };
 
 class Channel {
+    using milliseconds = std::chrono::milliseconds;
+
    public:
-    explicit Channel(std::atomic_bool& run, IPv4Socket&& conn_sock)
-        : m_run(run), m_conn_sock(std::move(conn_sock))
+    explicit Channel(IPv4Socket& conn_sock, milliseconds time_limit)
+        : m_conn_sock { conn_sock }
+        , m_is_time_limited { true }
+        , m_time_limit { time_limit }
+    {
+        setup();
+    }
+
+    explicit Channel(IPv4Socket& conn_sock)
+        : m_conn_sock(conn_sock), m_is_time_limited { false }, m_time_limit {}
+    {
+        setup();
+    }
+
+    void setup()
     {
         const struct sockaddr_in& conn_addr = m_conn_sock.get_sockaddr_in();
 
@@ -67,6 +83,13 @@ class Channel {
         m_port = std::to_string(ntohs(conn_addr.sin_port));
 
         setup_logging(m_ipv4, m_port);
+
+        m_reader = std::thread { [this] {
+            reader();
+        } };
+        m_writer = std::thread { [this] {
+            writer();
+        } };
     }
 
     void reader()
@@ -75,12 +98,10 @@ class Channel {
 
         using namespace std::chrono;
 
-        auto drop_point {
-            time_point_cast<microseconds>(high_resolution_clock::now())
-        };
+        auto drop_point { time_point_cast<milliseconds>(system_clock::now()) };
 
-        if (is_time_limited) {
-            drop_point += time_limit;
+        if (m_is_time_limited) {
+            drop_point += m_time_limit;
         }
 
         while (m_run) {
@@ -94,10 +115,9 @@ class Channel {
             }
 
             if (poll_result.has_timed_out()) {
-                if (is_time_limited) {
-                    auto current_time = time_point_cast<microseconds>(
-                        high_resolution_clock::now()
-                    );
+                if (m_is_time_limited) {
+                    auto current_time
+                        = time_point_cast<milliseconds>(system_clock::now());
 
                     if (drop_point <= current_time) {
                         log.info("closing TCP connection");
@@ -115,10 +135,9 @@ class Channel {
                 break;
             }
 
-            if (is_time_limited) {
-                drop_point = time_point_cast<microseconds>(
-                    high_resolution_clock::now()
-                ) + time_limit;
+            if (m_is_time_limited) {
+                drop_point = time_point_cast<milliseconds>(system_clock::now())
+                             + m_time_limit;
             }
 
             ByteVector payload {};
@@ -164,6 +183,8 @@ class Channel {
 
             log.flush();
         }
+
+        shutdown();
 
         m_run = false;
     }
@@ -241,16 +262,27 @@ class Channel {
             log.flush();
         }
 
+        shutdown();
+
         m_run = false;
     }
 
     virtual void send(std::any object) = 0;
 
+    virtual void shutdown() = 0;
+
     virtual ~Channel()
     {
+        m_run = false;
+
         m_reader.join();
         m_writer.join();
     };
+
+    [[nodiscard]] bool is_running() const
+    {
+        return m_run;
+    }
 
    protected:
     std::mutex m_mutex {};
@@ -269,12 +301,16 @@ class Channel {
         log.set_prefix(fmt::format("[{}:{}]", ipv4, port));
     }
 
-    std::atomic_bool& m_run;
+    std::atomic_bool m_run { true };
 
     std::thread m_reader {};
     std::thread m_writer {};
 
-    IPv4Socket m_conn_sock {};
+    IPv4Socket& m_conn_sock;
+
+    bool m_is_time_limited;
+
+    std::chrono::milliseconds m_time_limit;
 
     std::string m_ipv4;
     std::string m_port;

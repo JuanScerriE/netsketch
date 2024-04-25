@@ -12,7 +12,17 @@
 
 namespace client {
 
-class input_handler_t {
+enum class Option : uint8_t {
+    ALL,
+    MINE,
+    NONE,
+    LINE,
+    RECTANGLE,
+    CIRCLE,
+    TEXT
+};
+
+class InputHandler {
    public:
     void operator()();
 
@@ -26,7 +36,7 @@ class input_handler_t {
     // defaults
     std::optional<long> m_selected_id {};
 
-    common::option_e m_tool { common::option_e::LINE };
+    Option m_tool { Option::LINE };
 
     prot::colour_t m_colour { 0, 0, 0 };
 

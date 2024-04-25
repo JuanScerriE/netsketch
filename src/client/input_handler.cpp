@@ -13,8 +13,8 @@
 #include <vector>
 
 // common
-#include <protocol.hpp>
-#include <types.hpp>
+#include "../common/overload.hpp"
+#include "../common/types.hpp"
 
 // fmt
 #include <fmt/core.h>
@@ -24,7 +24,7 @@
 
 namespace client {
 
-void input_handler_t::operator()()
+void InputHandler::operator()()
 {
     do {
         std::string line {};
@@ -39,140 +39,109 @@ void input_handler_t::operator()()
     shutdown();
 }
 
-void input_handler_t::shutdown()
+void InputHandler::shutdown()
 {
-    if (share::writer_thread.is_initialized()
-        && share::writer_thread.is_alive())
-        share::writer_thread.cancel();
-    if (share::reader_thread.is_initialized()
-        && share::reader_thread.is_alive())
-        share::reader_thread.cancel();
-
-    // make sure to stop the gui
-    common::mutable_t<bool> { share::stop_gui }() = true;
+    // if (share::writer_thread.is_initialized()
+    //     && share::writer_thread.is_alive())
+    //     share::writer_thread.cancel();
+    // if (share::reader_thread.is_initialized()
+    //     && share::reader_thread.is_alive())
+    //     share::reader_thread.cancel();
+    //
+    // // make sure to stop the gui
+    // common::mutable_t<bool> { share::stop_gui }() = true;
 }
 
-static void print_draw(size_t index, prot::draw_t draw)
+static void print_draw(size_t index, Draw draw)
 {
-    if (std::holds_alternative<prot::line_draw_t>(draw)) {
-        auto& line = std::get<prot::line_draw_t>(draw);
-
-        fmt::println(
-            "[{}] => [line] [{} {} {}] [{} {} {} {}]",
-            index,
-            line.colour.r,
-            line.colour.g,
-            line.colour.b,
-            line.x0,
-            line.y0,
-            line.x1,
-            line.y1
-        );
-
-        return;
-    }
-
-    if (std::holds_alternative<prot::rectangle_draw_t>(draw
-        )) {
-        auto& rectangle
-            = std::get<prot::rectangle_draw_t>(draw);
-
-        fmt::println(
-            "[{}] => [rectangle] [{} {} {}] [{} {} {} {}]",
-            index,
-            rectangle.colour.r,
-            rectangle.colour.g,
-            rectangle.colour.b,
-            rectangle.x,
-            rectangle.y,
-            rectangle.w,
-            rectangle.h
-        );
-
-        return;
-    }
-
-    if (std::holds_alternative<prot::circle_draw_t>(draw)) {
-        auto& circle = std::get<prot::circle_draw_t>(draw);
-
-        fmt::println(
-            "[{}] => [circle] [{} {} {}] [{} {} {}]",
-            index,
-            circle.colour.r,
-            circle.colour.g,
-            circle.colour.b,
-            circle.x,
-            circle.y,
-            circle.r
-        );
-
-        return;
-    }
-
-    if (std::holds_alternative<prot::text_draw_t>(draw)) {
-        auto& text = std::get<prot::text_draw_t>(draw);
-
-        fmt::println(
-            "[{}] => [text] [{} {} {}] [{} {} \"{}\"]",
-            index,
-            text.colour.r,
-            text.colour.g,
-            text.colour.b,
-            text.x,
-            text.y,
-            text.string
-        );
-
-        return;
-    }
-
-    ABORT("unreachable");
+    std::visit(
+        overload {
+            [=](TextDraw& arg) {
+                fmt::println(
+                    "[{}] => [text] [{} {} {}] [{} {} \"{}\"]",
+                    index,
+                    arg.colour.r,
+                    arg.colour.g,
+                    arg.colour.b,
+                    arg.x,
+                    arg.y,
+                    arg.string
+                );
+            },
+            [=](CircleDraw& arg) {
+                fmt::println(
+                    "[{}] => [circle] [{} {} {}] [{} {} {}]",
+                    index,
+                    arg.colour.r,
+                    arg.colour.g,
+                    arg.colour.b,
+                    arg.x,
+                    arg.y,
+                    arg.r
+                );
+            },
+            [=](RectangleDraw& arg) {
+                fmt::println(
+                    "[{}] => [rectangle] [{} {} {}] [{} {} {} {}]",
+                    index,
+                    arg.colour.r,
+                    arg.colour.g,
+                    arg.colour.b,
+                    arg.x,
+                    arg.y,
+                    arg.w,
+                    arg.h
+                );
+            },
+            [=](LineDraw& arg) {
+                fmt::println(
+                    "[{}] => [line] [{} {} {}] [{} {} {} {}]",
+                    index,
+                    arg.colour.r,
+                    arg.colour.g,
+                    arg.colour.b,
+                    arg.x0,
+                    arg.y0,
+                    arg.x1,
+                    arg.y1
+                );
+            },
+        },
+        draw
+    );
 }
 
-static void list_draws(
-    common::option_e tool_qual,
-    common::option_e user_qual,
-    prot::TaggedDrawList& draw_list
-)
+static void
+list_draws(Option tool_type, Option user_qual, TaggedDrawVector& draw_vector)
 {
     using namespace common;
 
     size_t index = 0;
 
-    for (auto& tagged_draw : draw_list) {
+    for (auto& tagged_draw : draw_vector) {
         switch (user_qual) {
-        case option_e::ALL:
-            switch (tool_qual) {
-            case option_e::ALL:
+        case Option::ALL:
+            switch (tool_type) {
+            case Option::ALL:
                 print_draw(index, tagged_draw.draw);
                 break;
-            case option_e::LINE:
-                if (std::holds_alternative<
-                        prot::line_draw_t>(tagged_draw.draw
-                    )) {
+            case Option::LINE:
+                if (std::holds_alternative<LineDraw>(tagged_draw.draw)) {
                     print_draw(index, tagged_draw.draw);
                 }
                 break;
-            case option_e::RECTANGLE:
-                if (std::holds_alternative<
-                        prot::rectangle_draw_t>(
-                        tagged_draw.draw
-                    )) {
+            case Option::RECTANGLE:
+                if (std::holds_alternative<RectangleDraw>(tagged_draw.draw)) {
                     print_draw(index, tagged_draw.draw);
                 }
                 break;
-            case option_e::CIRCLE:
-                if (std::holds_alternative<
-                        prot::circle_draw_t>(
-                        tagged_draw.draw
-                    )) {
+            case Option::CIRCLE:
+                if (std::holds_alternative<CircleDraw>(tagged_draw.draw)) {
                     print_draw(index, tagged_draw.draw);
                 }
                 break;
-            case option_e::TEXT:
-                if (std::holds_alternative<
-                        prot::text_draw_t>(tagged_draw.draw
-                    )) {
+            case Option::TEXT:
+                if (std::holds_alternative<TextDraw>(tagged_draw.draw)) {
                     print_draw(index, tagged_draw.draw);
                 }
                 break;
@@ -180,41 +149,30 @@ static void list_draws(
                 ABORT("unreachable");
             }
             break;
-        case option_e::MINE:
+        case Option::MINE:
             if (share::nickname == tagged_draw.username) {
-                switch (tool_qual) {
-                case option_e::ALL:
+                switch (tool_type) {
+                case Option::ALL:
                     print_draw(index, tagged_draw.draw);
                     break;
-                case option_e::LINE:
-                    if (std::holds_alternative<
-                            prot::line_draw_t>(
-                            tagged_draw.draw
+                case Option::LINE:
+                    if (std::holds_alternative<LineDraw>(tagged_draw.draw)) {
+                        print_draw(index, tagged_draw.draw);
+                    }
+                    break;
+                case Option::RECTANGLE:
+                    if (std::holds_alternative<RectangleDraw>(tagged_draw.draw
                         )) {
                         print_draw(index, tagged_draw.draw);
                     }
                     break;
-                case option_e::RECTANGLE:
-                    if (std::holds_alternative<
-                            prot::rectangle_draw_t>(
-                            tagged_draw.draw
-                        )) {
+                case Option::CIRCLE:
+                    if (std::holds_alternative<CircleDraw>(tagged_draw.draw)) {
                         print_draw(index, tagged_draw.draw);
                     }
                     break;
-                case option_e::CIRCLE:
-                    if (std::holds_alternative<
-                            prot::circle_draw_t>(
-                            tagged_draw.draw
-                        )) {
-                        print_draw(index, tagged_draw.draw);
-                    }
-                    break;
-                case option_e::TEXT:
-                    if (std::holds_alternative<
-                            prot::text_draw_t>(
-                            tagged_draw.draw
-                        )) {
+                case Option::TEXT:
+                    if (std::holds_alternative<TextDraw>(tagged_draw.draw)) {
                         print_draw(index, tagged_draw.draw);
                     }
                     break;
@@ -231,9 +189,7 @@ static void list_draws(
     }
 }
 
-void input_handler_t::process_line(
-    std::string_view line_view
-)
+void InputHandler::process_line(std::string_view line_view)
 {
     input_parser_t parser { line_view };
 
@@ -336,22 +292,22 @@ void input_handler_t::process_line(
         std::string_view second_token = tokens[1];
 
         if (second_token == "line") {
-            m_tool = common::option_e::LINE;
+            m_tool = Option::LINE;
             return;
         }
 
         if (second_token == "rectangle") {
-            m_tool = common::option_e::RECTANGLE;
+            m_tool = Option::RECTANGLE;
             return;
         }
 
         if (second_token == "circle") {
-            m_tool = common::option_e::CIRCLE;
+            m_tool = Option::CIRCLE;
             return;
         }
 
         if (second_token == "text") {
-            m_tool = common::option_e::TEXT;
+            m_tool = Option::TEXT;
             return;
         }
 
@@ -468,7 +424,7 @@ void input_handler_t::process_line(
 
     if (first_token == "draw") {
         switch (m_tool) {
-        case common::option_e::LINE: {
+        case Option::LINE: {
             if (tokens.size() != 5) {
                 fmt::println(
                     stderr,
@@ -567,26 +523,19 @@ void input_handler_t::process_line(
                 return;
             }
 
-            prot::draw_t draw_command
-                = prot::line_draw_t { m_colour,
-                                      x0,
-                                      y0,
-                                      x1,
-                                      y1 };
-
-            if (m_selected_id.has_value()) {
-                share::writer_queue.push_front(
-                    { share::nickname,
-                      prot::select_t { *m_selected_id,
-                                       draw_command } }
-                );
-            } else {
-                share::writer_queue.push_front(
-                    { share::nickname, draw_command }
-                );
-            }
+            // LineDraw draw {m_colour, x0, y0, x1, y1};
+            // if (m_selected_id.has_value()) {
+            //     share::writer_queue.push_front(
+            //         { share::nickname,
+            //           prot::select_t { *m_selected_id, draw_command } }
+            //     );
+            // } else {
+            //     share::writer_queue.push_front({ share::nickname,
+            //     draw_command }
+            //     );
+            // }
         } break;
-        case common::option_e::RECTANGLE: {
+        case Option::RECTANGLE: {
             if (tokens.size() != 5) {
                 fmt::println(
                     stderr,
@@ -686,26 +635,21 @@ void input_handler_t::process_line(
                 return;
             }
 
-            prot::draw_t draw_command
-                = prot::rectangle_draw_t { m_colour,
-                                           x,
-                                           y,
-                                           w,
-                                           h };
-
-            if (m_selected_id.has_value()) {
-                share::writer_queue.push_front(
-                    { share::nickname,
-                      prot::select_t { *m_selected_id,
-                                       draw_command } }
-                );
-            } else {
-                share::writer_queue.push_front(
-                    { share::nickname, draw_command }
-                );
-            }
+            // prot::draw_t draw_command
+            //     = prot::rectangle_draw_t { m_colour, x, y, w, h };
+            //
+            // if (m_selected_id.has_value()) {
+            //     share::writer_queue.push_front(
+            //         { share::nickname,
+            //           prot::select_t { *m_selected_id, draw_command } }
+            //     );
+            // } else {
+            //     share::writer_queue.push_front({ share::nickname,
+            //     draw_command }
+            //     );
+            // }
         } break;
-        case common::option_e::CIRCLE: {
+        case Option::CIRCLE: {
             if (tokens.size() != 4) {
                 fmt::println(
                     stderr,
@@ -794,22 +738,21 @@ void input_handler_t::process_line(
                 return;
             }
 
-            prot::draw_t draw_command
-                = prot::circle_draw_t { m_colour, x, y, r };
-
-            if (m_selected_id.has_value()) {
-                share::writer_queue.push_front(
-                    { share::nickname,
-                      prot::select_t { *m_selected_id,
-                                       draw_command } }
-                );
-            } else {
-                share::writer_queue.push_front(
-                    { share::nickname, draw_command }
-                );
-            }
+            // prot::draw_t draw_command
+            //     = prot::circle_draw_t { m_colour, x, y, r };
+            //
+            // if (m_selected_id.has_value()) {
+            //     share::writer_queue.push_front(
+            //         { share::nickname,
+            //           prot::select_t { *m_selected_id, draw_command } }
+            //     );
+            // } else {
+            //     share::writer_queue.push_front({ share::nickname,
+            //     draw_command }
+            //     );
+            // }
         } break;
-        case common::option_e::TEXT: {
+        case Option::TEXT: {
             if (tokens.size() != 4) {
                 fmt::println(
                     stderr,
@@ -866,23 +809,19 @@ void input_handler_t::process_line(
 
             std::string text { tokens[3] };
 
-            prot::draw_t draw_command
-                = prot::text_draw_t { m_colour,
-                                      x,
-                                      y,
-                                      text };
-
-            if (m_selected_id.has_value()) {
-                share::writer_queue.push_front(
-                    { share::nickname,
-                      prot::select_t { *m_selected_id,
-                                       draw_command } }
-                );
-            } else {
-                share::writer_queue.push_front(
-                    { share::nickname, draw_command }
-                );
-            }
+            // prot::draw_t draw_command
+            //     = prot::text_draw_t { m_colour, x, y, text };
+            //
+            // if (m_selected_id.has_value()) {
+            //     share::writer_queue.push_front(
+            //         { share::nickname,
+            //           prot::select_t { *m_selected_id, draw_command } }
+            //     );
+            // } else {
+            //     share::writer_queue.push_front({ share::nickname,
+            //     draw_command }
+            //     );
+            // }
         } break;
         default:
             ABORT("unreachable");
@@ -908,30 +847,30 @@ void input_handler_t::process_line(
 
         bool second_match { false };
 
-        option_e tool_qual { option_e::ALL };
+        Option tool_qual { Option::ALL };
 
         if (second_token == "all") {
-            tool_qual = option_e::ALL;
+            tool_qual = Option::ALL;
             second_match = true;
         }
 
         if (second_token == "line") {
-            tool_qual = option_e::LINE;
+            tool_qual = Option::LINE;
             second_match = true;
         }
 
         if (second_token == "rectangle") {
-            tool_qual = option_e::RECTANGLE;
+            tool_qual = Option::RECTANGLE;
             second_match = true;
         }
 
         if (second_token == "circle") {
-            tool_qual = option_e::CIRCLE;
+            tool_qual = Option::CIRCLE;
             second_match = true;
         }
 
         if (second_token == "text") {
-            tool_qual = option_e::TEXT;
+            tool_qual = Option::TEXT;
             second_match = true;
         }
 
@@ -949,23 +888,20 @@ void input_handler_t::process_line(
 
         bool third_match { false };
 
-        option_e user_qual { option_e::ALL };
+        Option user_qual { Option::ALL };
 
         if (third_token == "all") {
-            user_qual = option_e::ALL;
+            user_qual = Option::ALL;
             third_match = true;
         }
 
         if (third_token == "mine") {
-            user_qual = option_e::MINE;
+            user_qual = Option::MINE;
             third_match = true;
         }
 
         if (!third_match) {
-            fmt::println(
-                stderr,
-                "warn: expected one of {{'all' | 'mine'}}"
-            );
+            fmt::println(stderr, "warn: expected one of {{'all' | 'mine'}}");
 
             return;
         }
@@ -974,16 +910,11 @@ void input_handler_t::process_line(
             {
                 threading::unique_rwlock_rdguard guard {
                     share::rwlock1,
-                    threading::unique_guard_policy::
-                        try_to_lock
+                    threading::unique_guard_policy::try_to_lock
                 };
 
                 if (guard.is_owning()) {
-                    list_draws(
-                        tool_qual,
-                        user_qual,
-                        share::list1
-                    );
+                    list_draws(tool_qual, user_qual, share::list1);
 
                     return;
                 }
@@ -992,16 +923,11 @@ void input_handler_t::process_line(
             {
                 threading::unique_rwlock_rdguard guard {
                     share::rwlock2,
-                    threading::unique_guard_policy::
-                        try_to_lock
+                    threading::unique_guard_policy::try_to_lock
                 };
 
                 if (guard.is_owning()) {
-                    list_draws(
-                        tool_qual,
-                        user_qual,
-                        share::list2
-                    );
+                    list_draws(tool_qual, user_qual, share::list2);
 
                     return;
                 }
@@ -1093,10 +1019,9 @@ void input_handler_t::process_line(
             return;
         }
 
-        prot::delete_t delete_command { id };
-
-        share::writer_queue.push_front({ share::nickname,
-                                         delete_command });
+        // Delete delete { id };
+        //
+        // share::writer_queue.push_front({ share::nickname, delete_command });
 
         return;
     }
@@ -1112,8 +1037,7 @@ void input_handler_t::process_line(
             return;
         }
 
-        share::writer_queue.push_front({ share::nickname,
-                                         prot::undo_t {} });
+        // share::writer_queue.push_front({ share::nickname, prot::undo_t {} });
 
         return;
     }
@@ -1132,28 +1056,23 @@ void input_handler_t::process_line(
         std::string_view second_token = tokens[1];
 
         if (second_token == "all") {
-            share::writer_queue.push_front(
-                { share::nickname,
-                  prot::clear_t { prot::qualifier_e::ALL } }
-            );
+            // share::writer_queue.push_front(
+            //     { share::nickname, prot::clear_t { prot::qualifier_e::ALL } }
+            // );
 
             return;
         }
 
         if (second_token == "mine") {
-            share::writer_queue.push_front(
-                { share::nickname,
-                  prot::clear_t {
-                      prot::qualifier_e::MINE } }
-            );
+            // share::writer_queue.push_front(
+            //     { share::nickname, prot::clear_t { prot::qualifier_e::MINE }
+            //     }
+            // );
 
             return;
         }
 
-        fmt::println(
-            stderr,
-            "warn: expected one of {{'all' | 'mine'}}"
-        );
+        fmt::println(stderr, "warn: expected one of {{'all' | 'mine'}}");
 
         return;
     }
@@ -1172,23 +1091,18 @@ void input_handler_t::process_line(
         std::string_view second_token = tokens[1];
 
         if (second_token == "all") {
-            common::mutable_t<bool> { share::show_mine }()
-                = false;
+            // common::mutable_t<bool> { share::show_mine }() = false;
 
             return;
         }
 
         if (second_token == "mine") {
-            common::mutable_t<bool> { share::show_mine }()
-                = true;
+            // common::mutable_t<bool> { share::show_mine }() = true;
 
             return;
         }
 
-        fmt::println(
-            stderr,
-            "warn: expected one of {{'all' | 'mine'}}"
-        );
+        fmt::println(stderr, "warn: expected one of {{'all' | 'mine'}}");
 
         return;
     }
@@ -1209,14 +1123,10 @@ void input_handler_t::process_line(
         return;
     }
 
-    fmt::println(
-        stderr,
-        "warn: {} is not a known command",
-        first_token
-    );
+    fmt::println(stderr, "warn: {} is not a known command", first_token);
 }
 
-void input_handler_t::dtor()
+void InputHandler::dtor()
 {
 }
 

@@ -3,34 +3,35 @@
 // common
 #include <event.hpp>
 #include <log_file.hpp>
-#include <protocol.hpp>
+// #include <protocol.hpp>
 #include <types.hpp>
 
 // std
 #include <string>
+#include <thread>
 
 // threading
 #include <threading.hpp>
 
 namespace client::share {
 
-extern threading::pthread reader_thread;
-extern threading::pthread writer_thread;
+// extern threading::pthread reader_thread;
+// extern threading::pthread writer_thread;
 
-extern threading::pthread input_thread;
+extern std::thread input_thread;
 
 // used to stop the gui
-extern common::readonly_t<bool> stop_gui;
+// extern common::readonly_t<bool> stop_gui;
 
 // used in the gui to decided which draws
 // to show
-extern common::readonly_t<bool> show_mine;
+// extern common::readonly_t<bool> show_mine;
 
 // log file
 extern logging::log_file log_file;
 
 // writer queue
-extern common::ts_queue<prot::TaggedCommand> writer_queue;
+// extern common::ts_queue<prot::TaggedCommand> writer_queue;
 
 // nickname
 extern std::string nickname;
@@ -43,7 +44,7 @@ extern threading::mutex writer_mutex;
 extern threading::rwlock rwlock1;
 extern threading::rwlock rwlock2;
 
-extern prot::TaggedDrawList list1;
-extern prot::TaggedDrawList list2;
+extern TaggedDrawVector vec1;
+extern TaggedDrawVector vec2;
 
 } // namespace client::share

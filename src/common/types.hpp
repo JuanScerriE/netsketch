@@ -41,7 +41,7 @@ struct TextDraw {
     Colour colour;
     int x;
     int y;
-    std::string string;
+    std::string string {};
 };
 
 enum class DrawType : std::uint16_t {
@@ -54,12 +54,12 @@ enum class DrawType : std::uint16_t {
 using Draw = std::variant<LineDraw, RectangleDraw, CircleDraw, TextDraw>;
 
 struct Select {
-    long id;
-    Draw draw;
+    long id {};
+    Draw draw {};
 };
 
 struct Delete {
-    long id;
+    long id {};
 };
 
 struct Undo { };
@@ -70,7 +70,7 @@ enum class Qualifier : std::uint8_t {
 };
 
 struct Clear {
-    Qualifier qualifier;
+    Qualifier qualifier {};
 };
 
 using Action = std::variant<Draw, Select, Delete, Undo, Clear>;
@@ -84,30 +84,30 @@ enum class ActionType : std::uint16_t {
 };
 
 struct TaggedAction {
-    std::string username;
-    Action action;
+    std::string username {};
+    Action action {};
 };
 
 struct TaggedDraw {
-    bool adopted;
-    std::string username;
-    Draw draw;
+    bool adopted {};
+    std::string username {};
+    Draw draw {};
 };
 
 using TaggedDrawVector = std::vector<TaggedDraw>;
 
 struct Username {
-    std::string username;
+    std::string username {};
 };
 
 struct Accept { };
 
 struct Decline {
-    std::string reason;
+    std::string reason {};
 };
 
 struct Adopt {
-    std::string username;
+    std::string username {};
 };
 
 enum class PayloadType : std::uint16_t {

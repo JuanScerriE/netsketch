@@ -87,20 +87,11 @@ class event_t {
         uint64_t notify { NOTIFY };
 
 #ifdef __APPLE__
-        if (write(
-                m_stop_event_pipe[WRITE],
-                &notify,
-                sizeof(notify)
-            )
-            == -1) {
-            ABORTV(
-                "failed to write to pipe, reason: {}",
-                strerror(errno)
-            );
+        if (write(m_stop_event_pipe[WRITE], &notify, sizeof(notify)) == -1) {
+            ABORTV("failed to write to pipe, reason: {}", strerror(errno));
         }
 #else
-        if (write(m_stop_event_fd, &notify, sizeof(notify))
-            == -1) {
+        if (write(m_stop_event_fd, &notify, sizeof(notify)) == -1) {
             ABORTV(
                 "failed to write to event file descriptor, "
                 "reason: {}",
@@ -115,24 +106,12 @@ class event_t {
         uint64_t throw_away {};
 
 #ifdef __APPLE__
-        if (read(
-                m_stop_event_pipe[READ],
-                &throw_away,
-                sizeof(throw_away)
-            )
+        if (read(m_stop_event_pipe[READ], &throw_away, sizeof(throw_away))
             == -1) {
-            ABORTV(
-                "failed to read from pipe, reason: {}",
-                strerror(errno)
-            );
+            ABORTV("failed to read from pipe, reason: {}", strerror(errno));
         }
 #else
-        if (read(
-                m_stop_event_fd,
-                &throw_away,
-                sizeof(throw_away)
-            )
-            == -1) {
+        if (read(m_stop_event_fd, &throw_away, sizeof(throw_away)) == -1) {
             ABORTV(
                 "failed to read from event file "
                 "descriptor, "

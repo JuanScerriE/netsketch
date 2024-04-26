@@ -1,10 +1,11 @@
 // server
-#include "threading.hpp"
-#include <server.hpp>
-#include <updater.hpp>
+#include "server.hpp"
+#include "share.hpp"
+#include "updater.hpp"
 
 // common
-#include <log.hpp>
+#include "../common/abort.hpp"
+#include "../common/threading.hpp"
 
 // unix
 #include <poll.h>
@@ -12,10 +13,6 @@
 
 // std
 #include <csignal>
-#include <thread>
-
-// share
-#include <share.hpp>
 
 // cli11
 #include <CLI/CLI.hpp>
@@ -25,21 +22,17 @@
 void sigint_handler(int)
 {
     // HACK or BAD: according to the standard
-    // mutexs which in out case make use of
+    // mutexes which in out case make use of
     // pthread_mutex_lock and _unlock are not
     // signal safe. Woops (seems to working
     // though)
-    threading::mutex_guard guard {
-        server::share::e_threads_mutex
-    };
+    threading::mutex_guard guard { server::share::threads_mutex };
 
-    for (auto& thread : server::share::e_threads) {
+    for (auto& thread : server::share::threads) {
         thread.cancel();
     }
 
-    server::share::e_updater_thread.cancel();
-
-    server::share::e_server_thread.cancel();
+    server::share::updater_thread.cancel();
 }
 
 int main(int argc, char** argv)
@@ -47,11 +40,7 @@ int main(int argc, char** argv)
     CLI::App app;
 
     uint16_t port { SERVER_PORT };
-    app.add_option(
-           "--port",
-           port,
-           "The port number of the NetSketch server"
-    )
+    app.add_option("--port", port, "The port number of the NetSketch server")
         ->capture_default_str();
 
     CLI11_PARSE(app, argc, argv);
@@ -72,27 +61,18 @@ int main(int argc, char** argv)
         );
     }
 
-    server::share::e_updater_thread
-        = threading::pthread { server::updater_t {} };
+    server::share::updater_thread = threading::thread { server::Updater {} };
 
-    // NOTE: we are indeed wasting a bit of
-    // resources associated with the main thread,
-    // however, the wrapping & isolation provided
-    // by threading::pthread is too convenient to
-    // pass up on.
-    server::share::e_server_thread
-        = threading::pthread { server::server_t { port } };
+    server::Server server { port };
 
-    server::share::e_server_thread.join();
+    server();
 
-    server::share::e_updater_thread.join();
+    server::share::updater_thread.join();
 
     {
-        threading::mutex_guard guard {
-            server::share::e_timers_mutex
-        };
+        threading::mutex_guard guard { server::share::timers_mutex };
 
-        server::share::e_timers.clear();
+        server::share::timers.clear();
     }
 
     return 0;

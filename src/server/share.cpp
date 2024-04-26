@@ -1,40 +1,34 @@
 // share
-#include <share.hpp>
-
-// network
-#include <network.hpp>
-
-// atomic
-#include <atomic>
+#include "share.hpp"
 
 namespace server::share {
 
 std::atomic_bool run { true };
 
-IPv4Socket socket {};
+threading::mutex threads_mutex {};
 
-threading::mutex e_threads_mutex {};
+std::list<threading::thread> threads {};
 
-std::list<threading::pthread> e_threads {};
+threading::thread updater_thread {};
 
-threading::pthread e_updater_thread {};
+threading::mutex connections_mutex {};
 
-threading::pthread e_server_thread {};
+std::unordered_map<int, IPv4Socket> connections {};
 
-threading::mutex e_connections_mutex {};
+threading::mutex timers_mutex {};
 
-std::unordered_set<int> e_connections {};
-
-threading::mutex e_timers_mutex {};
-
-std::list<std::unique_ptr<timer_data>> e_timers;
+std::list<std::unique_ptr<TimerData>> timers;
 
 bool e_stop_server { false };
 
-common::ts_queue<
-    std::variant<prot::TaggedCommand, prot::adopt_t>>
-    e_command_queue {};
+threading::mutex update_mutex {};
 
-common::ts_draw_list e_draw_list {};
+threading::cond_var update_cond {};
+
+TaggedDrawVector tagged_draw_vector {};
+
+std::queue<Payload> payload_queue {};
+
+logging::log timing_log{};
 
 } // namespace server::share

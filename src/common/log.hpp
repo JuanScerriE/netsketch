@@ -8,7 +8,7 @@
 #include <fmt/core.h>
 
 // logging
-#include <log_file.hpp>
+#include "../common/log_file.hpp"
 
 namespace logging {
 
@@ -54,19 +54,12 @@ class log {
     void flush()
     {
         if (fflush(m_file) == EOF) {
-            ABORTV(
-                "flushing log file failed, reason: {}",
-                strerror(errno)
-            );
+            ABORTV("flushing log file failed, reason: {}", strerror(errno));
         }
     }
 
     template <typename... T>
-    void write(
-        level log_level,
-        fmt::format_string<T...> fmt,
-        T&&... args
-    )
+    void write(level log_level, fmt::format_string<T...> fmt, T&&... args)
     {
         if (m_disabled)
             return;
@@ -81,8 +74,7 @@ class log {
         fmt::println(m_file, fmt, args...);
     }
 
-    void
-    c_write(level log_level, const char* fmt, va_list args)
+    void c_write(level log_level, const char* fmt, va_list args)
     {
         if (m_disabled)
             return;
@@ -160,16 +152,16 @@ class log {
     {
         switch (log_level) {
         case level::debug:
-            fmt::print(m_file, "{} [debug] : ", m_prefix);
+            fmt::print(m_file, "{}[debug] : ", m_prefix);
             break;
         case level::info:
-            fmt::print(m_file, "{} [info] : ", m_prefix);
+            fmt::print(m_file, "{}[info] : ", m_prefix);
             break;
         case level::warn:
-            fmt::print(m_file, "{} [warn] : ", m_prefix);
+            fmt::print(m_file, "{}[warn] : ", m_prefix);
             break;
         case level::error:
-            fmt::print(m_file, "{} [error] : ", m_prefix);
+            fmt::print(m_file, "{}[error] : ", m_prefix);
             break;
         }
     }

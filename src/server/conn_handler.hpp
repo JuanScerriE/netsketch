@@ -4,41 +4,37 @@
 #include <netinet/in.h>
 
 // common
-#include <log.hpp>
-
-// util
-#include <utils.hpp>
+#include "../common/bytes.hpp"
+#include "../common/channel.hpp"
+#include "../common/log.hpp"
+#include "../common/network.hpp"
 
 namespace server {
 
-class conn_handler_t {
+class ConnHandler {
    public:
-    explicit conn_handler_t(int conn_fd, sockaddr_in addr);
+    explicit ConnHandler(IPv4SocketRef sock);
 
     void operator()();
-
-    void dtor();
 
    private:
     void setup_readable_net_info();
 
-    void send_full_list();
+    bool send_full_list();
 
-    void handle_payload(const util::ByteVector& payload);
+    void handle_payload(const ByteVector& bytes);
 
-    int m_conn_fd {};
+    IPv4SocketRef m_sock {};
 
-    sockaddr_in m_addr {};
+    Channel m_channel {};
 
     std::string m_ipv4 {};
-
-    uint16_t m_port {};
+    std::string m_port {};
 
     // logging
     static logging::log log;
 
-    static void
-    setup_logging(std::string ipv4, uint16_t port);
+    static void setup_logging(std::string ipv4, std::string port);
 };
 
 } // namespace server

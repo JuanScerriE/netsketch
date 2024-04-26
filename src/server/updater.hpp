@@ -1,107 +1,52 @@
 #pragma once
 
-#include "protocol.hpp"
-#include "threading.hpp"
-#include <log.hpp>
-#include <poll.h>
-#include <share.hpp>
-#include <variant>
+// common
+#include "../common/channel.hpp"
+#include "../common/log.hpp"
+#include "../common/threading.hpp"
+
+// server
+#include "share.hpp"
 
 namespace server {
 
-class updater_t {
+class Updater {
    public:
     [[noreturn]] void operator()()
     {
         setup_logging();
 
         for (;;) {
-            // block until we get something
-            auto command
-                = share::e_command_queue.pop_front();
-
-            // serialize the command
-            prot::serialize_t serializer { command };
-
-            util::byte_vector payload_bytes
-                = serializer.bytes();
-
-            // setup the header
-            prot::PayloadHeader header { MAGIC_BYTES,
-                                         payload_bytes.size(
-                                         ) };
-
-            // build the full packet
-            util::byte_vector packet {};
-
-            packet.reserve(
-                sizeof(header) + payload_bytes.size()
-            );
-
-            for (auto& byte : util::to_bytes(header)) {
-                packet.push_back(byte);
-            }
-
-            for (auto& byte : payload_bytes) {
-                packet.push_back(byte);
-            }
-
-            log.debug(
-                "payload size {}",
-                payload_bytes.size()
-            );
-
-            log.debug("packet size {}", packet.size());
+            Payload payload {};
 
             {
-                threading::mutex_guard guard {
-                    share::e_connections_mutex
-                };
+                threading::unique_mutex_guard guard { share::update_mutex };
 
-                // NOTE: that the size of e_connections
-                // might change under our feet
-                for (int conn_fd : share::e_connections) {
-                    pollfd conn_poll { conn_fd,
-                                       POLLOUT,
-                                       0 };
+                share::update_cond.wait(guard, []() {
+                    return share::payload_queue.empty();
+                });
 
-                    if (poll(&conn_poll, 1, -1) == -1) {
-                        log.error(
-                            "poll of connection failed, "
-                            "reason: {}",
-                            strerror(errno)
-                        );
+                payload = share::payload_queue.back();
 
-                        continue;
-                    }
+                share::payload_queue.pop();
+            }
 
-                    if (conn_poll.revents & POLLHUP) {
-                        log.error("connection hung up");
+            ByteVector bytes = Serialize { payload }.bytes();
 
-                        continue;
-                    }
+            {
+                threading::mutex_guard guard { share::connections_mutex };
 
-                    if (write(
-                            conn_fd,
-                            packet.data(),
-                            packet.size()
-                        )
-                        == -1) {
-                        log.error(
-                            "writing to connection failed, "
-                            "reason: {}",
-                            strerror(errno)
-                        );
+                for (auto& [fd, conn] : share::connections) {
+                    Channel channel { conn };
 
-                        continue;
+                    auto status = channel.write(bytes);
+
+                    if (status != ChannelErrorCode::OK) {
+                        log.error("[{}] writing failed, reason {}", fd, status.what());
                     }
                 }
             }
         }
-    }
-
-    void dtor()
-    {
     }
 
    private:

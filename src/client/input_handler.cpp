@@ -1,10 +1,9 @@
 // client
-#include "draw_list.hpp"
-#include <input_handler.hpp>
-#include <input_parser.hpp>
+#include "input_handler.hpp"
+#include "input_parser.hpp"
+#include "share.hpp"
 
 // std
-#include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
@@ -14,13 +13,11 @@
 
 // common
 #include "../common/overload.hpp"
+#include "../common/threading.hpp"
 #include "../common/types.hpp"
 
 // fmt
 #include <fmt/core.h>
-
-// share
-#include <share.hpp>
 
 namespace client {
 
@@ -41,15 +38,14 @@ void InputHandler::operator()()
 
 void InputHandler::shutdown()
 {
-    // if (share::writer_thread.is_initialized()
-    //     && share::writer_thread.is_alive())
-    //     share::writer_thread.cancel();
-    // if (share::reader_thread.is_initialized()
-    //     && share::reader_thread.is_alive())
-    //     share::reader_thread.cancel();
-    //
-    // // make sure to stop the gui
-    // common::mutable_t<bool> { share::stop_gui }() = true;
+    if (share::writer_thread.is_initialized()
+        && share::writer_thread.is_alive())
+        share::writer_thread.cancel();
+    if (share::reader_thread.is_initialized()
+        && share::reader_thread.is_alive())
+        share::reader_thread.cancel();
+
+    share::run_gui = false;
 }
 
 static void print_draw(size_t index, Draw draw)
@@ -114,8 +110,6 @@ static void print_draw(size_t index, Draw draw)
 static void
 list_draws(Option tool_type, Option user_qual, TaggedDrawVector& draw_vector)
 {
-    using namespace common;
-
     size_t index = 0;
 
     for (auto& tagged_draw : draw_vector) {
@@ -150,7 +144,7 @@ list_draws(Option tool_type, Option user_qual, TaggedDrawVector& draw_vector)
             }
             break;
         case Option::MINE:
-            if (share::nickname == tagged_draw.username) {
+            if (share::username == tagged_draw.username) {
                 switch (tool_type) {
                 case Option::ALL:
                     print_draw(index, tagged_draw.draw);
@@ -221,58 +215,42 @@ void InputHandler::process_line(std::string_view line_view)
         }
 
         fmt::println(
-            " 1. help - list all available commands and "
-            "their usage"
-            "\n 2. tool {{line | rectangle | circle | "
-            "text}} "
-            "- select a tool for drawing"
-            "\n 3. colour {{RED}} {{GREEN}} {{BLUE}} - "
-            "sets "
-            "the drawing colour using RED, GREEN, BLUE "
-            "values"
-            "\n 4. draw {{...}}... - draw a shape "
-            "according "
-            "to the selected tool and colour on the canvas"
-            "\n    \twhen tool is 'line', draw {{X0}} "
-            "{{Y0}} {{X1}} {{Y1}} - draw a line between "
-            "the points (X0, Y0) to (X1, Y1)"
-            "\n    \twhen tool is 'rectangle', draw {{X}} "
-            "{{Y}} {{WIDTH}} {{HEIGHT}} - draw a rectangle "
-            "starting at (X, Y) having width WIDTH and "
-            "height HEIGHT"
-            "\n    \twhen tool is 'circle', draw {{X}} "
-            "{{Y}} {{RADIUS}} - draw a circle at (X, Y) "
-            "with radius RADIUS"
-            "\n    \twhen tool is 'text', draw {{X}} {{Y}} "
-            "{{STRING}} - draw a string at (X, Y) with the "
-            "characters in STRING"
-            "\n 5. list [all | line | rectangle | circle | "
-            "text] [all | mine] - displays issued draw "
-            "commands in the console, filtered by tool "
-            "type and/or user"
-            "\n 6. select {{none | ID}} - select an "
-            "existing "
-            "draw command (with the specified id ID) to be "
-            "modified by a subsequent "
-            "draw command"
-            "\n 7. delete {{ID}} - deletes the draw "
-            "command "
-            "with the specified id ID"
+            " 1. help - list all available commands and their usage"
+            "\n 2. tool {{line | rectangle | circle | text}} - select a tool "
+            "for drawing"
+            "\n 3. colour {{RED}} {{GREEN}} {{BLUE}} - sets the drawing colour "
+            "using RED, GREEN, BLUE values"
+            "\n 4. draw {{...}}... - draw a shape according to the selected "
+            "tool and colour on the canvas"
+            "\n    \twhen tool is 'line', draw {{X0}} {{Y0}} {{X1}} {{Y1}} - "
+            "draw a line between the points (X0, Y0) to (X1, Y1)"
+            "\n    \twhen tool is 'rectangle', draw {{X}} {{Y}} {{WIDTH}} "
+            "{{HEIGHT}} - draw a rectangle starting at (X, Y) having width "
+            "WIDTH and height HEIGHT"
+            "\n    \twhen tool is 'circle', draw {{X}} {{Y}} {{RADIUS}} - draw "
+            "a circle at (X, Y) with radius RADIUS"
+            "\n    \twhen tool is 'text', draw {{X}} {{Y}} {{STRING}} - draw a "
+            "string at (X, Y) with the characters in STRING"
+            "\n 5. list [all | line | rectangle | circle | text] [all | mine] "
+            "- displays issued draw commands in, filtered by tool type and/or "
+            "user"
+            "\n 6. select {{none | ID}} - select an existing draw command "
+            "(with the specified id ID) to be modified by a subsequent draw "
+            "command"
+            "\n 7. delete {{ID}} - deletes the draw command with the specified "
+            "id ID"
             "\n 8. undo - revert the last action"
             "\n 9. clear {{all | mine}} - clears the canvas"
             "\n    \tusing 'all' clears all draw commands"
-            "\n    \tusing 'mine' clears only draw "
-            "commands "
-            "issued by the running client"
-            "\n10. show {{all | mine}} - controls what is "
-            "displayed on the canvas"
+            "\n    \tusing 'mine' clears only draw commands issued by the "
+            "running client"
+            "\n10. show {{all | mine}} - controls what is displayed on the "
+            "canvas"
             "\n    \tusing 'all' displays all draw commands"
-            "\n    \tusing 'mine' displays only draw "
-            "commands "
-            "issued by the running client"
-            "\n11. exit - (if the client is running in "
-            "--server mode disconnect from the "
-            "server and) exit the application"
+            "\n    \tusing 'mine' displays only draw commands issued by the "
+            "running client"
+            "\n11. exit - (if the client is running in --server mode "
+            "disconnect from the server and) exit the application"
         );
 
         return;
@@ -282,8 +260,7 @@ void InputHandler::process_line(std::string_view line_view)
         if (tokens.size() != 2) {
             fmt::println(
                 stderr,
-                "warn: an unexpected number of token for "
-                "tool"
+                "warn: an unexpected number of token for tool"
             );
 
             return;
@@ -313,8 +290,7 @@ void InputHandler::process_line(std::string_view line_view)
 
         fmt::println(
             stderr,
-            "warn: expected one of {{'line' | 'rectangle' "
-            "| 'circle' | 'text'}}"
+            "warn: expected one of {{'line' | 'rectangle' | 'circle' | 'text'}}"
         );
 
         return;
@@ -324,8 +300,7 @@ void InputHandler::process_line(std::string_view line_view)
         if (tokens.size() != 4) {
             fmt::println(
                 stderr,
-                "warn: an unexpected number of tokens for "
-                "colour"
+                "warn: an unexpected number of tokens for colour"
             );
 
             return;
@@ -352,8 +327,8 @@ void InputHandler::process_line(std::string_view line_view)
         if (red_has_error) {
             fmt::println(
                 stderr,
-                "warn: expected an integer in the range "
-                "0-255 (inclusive) for RED"
+                "warn: expected an integer in the range 0-255 (inclusive) for "
+                "RED"
             );
 
             return;
@@ -380,8 +355,8 @@ void InputHandler::process_line(std::string_view line_view)
         if (green_has_error) {
             fmt::println(
                 stderr,
-                "warn: expected an integer in the range "
-                "0-255 (inclusive) for GREEN"
+                "warn: expected an integer in the range 0-255 (inclusive) for "
+                "GREEN"
             );
 
             return;
@@ -408,8 +383,8 @@ void InputHandler::process_line(std::string_view line_view)
         if (blue_has_error) {
             fmt::println(
                 stderr,
-                "warn: expected an integer in the range "
-                "0-255 (inclusive) for BLUE"
+                "warn: expected an integer in the range 0-255 (inclusive) for "
+                "BLUE"
             );
 
             return;
@@ -428,8 +403,8 @@ void InputHandler::process_line(std::string_view line_view)
             if (tokens.size() != 5) {
                 fmt::println(
                     stderr,
-                    "warn: an unexpected number of "
-                    "tokens for draw with line selected"
+                    "warn: an unexpected number of tokens for draw with line "
+                    "selected"
                 );
 
                 return;
@@ -440,19 +415,11 @@ void InputHandler::process_line(std::string_view line_view)
             try {
                 x0 = std::stoi(tokens[1]);
             } catch (std::invalid_argument&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for x0"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for x0");
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for x0"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for x0");
 
                 return;
             }
@@ -462,19 +429,11 @@ void InputHandler::process_line(std::string_view line_view)
             try {
                 y0 = std::stoi(tokens[2]);
             } catch (std::invalid_argument&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for y0"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for y0");
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for y0"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for y0");
 
                 return;
             }
@@ -484,19 +443,11 @@ void InputHandler::process_line(std::string_view line_view)
             try {
                 x1 = std::stoi(tokens[3]);
             } catch (std::invalid_argument&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for x1"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for x1");
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for x1"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for x1");
 
                 return;
             }
@@ -506,42 +457,37 @@ void InputHandler::process_line(std::string_view line_view)
             try {
                 y1 = std::stoi(tokens[4]);
             } catch (std::invalid_argument&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for y1"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for y1");
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for y1"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for y1");
 
                 return;
             }
 
-            // LineDraw draw {m_colour, x0, y0, x1, y1};
-            // if (m_selected_id.has_value()) {
-            //     share::writer_queue.push_front(
-            //         { share::nickname,
-            //           prot::select_t { *m_selected_id, draw_command } }
-            //     );
-            // } else {
-            //     share::writer_queue.push_front({ share::nickname,
-            //     draw_command }
-            //     );
-            // }
+            LineDraw draw { m_colour, x0, y0, x1, y1 };
+
+            Action action { draw };
+
+            if (m_selected_id) {
+                action = Select { *m_selected_id, draw };
+            }
+
+            {
+                threading::mutex_guard guard { share::writer_mutex };
+
+                share::writer_queue.push(action);
+            }
+
+            share::writer_cond.notify_one();
         } break;
         case Option::RECTANGLE: {
             if (tokens.size() != 5) {
                 fmt::println(
                     stderr,
-                    "warn: an unexpected number of "
-                    "tokens for draw with rectangle "
-                    "selected"
+                    "warn: an unexpected number of tokens for draw with "
+                    "rectangle selected"
                 );
 
                 return;
@@ -552,19 +498,11 @@ void InputHandler::process_line(std::string_view line_view)
             try {
                 x = std::stoi(tokens[1]);
             } catch (std::invalid_argument&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for x"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for x");
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for x"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for x");
 
                 return;
             }
@@ -574,19 +512,11 @@ void InputHandler::process_line(std::string_view line_view)
             try {
                 y = std::stoi(tokens[2]);
             } catch (std::invalid_argument&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for y"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for y");
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for y"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for y");
 
                 return;
             }
@@ -596,19 +526,11 @@ void InputHandler::process_line(std::string_view line_view)
             try {
                 w = std::stoi(tokens[3]);
             } catch (std::invalid_argument&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for w"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for w");
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for w"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for w");
 
                 return;
             }
@@ -618,43 +540,36 @@ void InputHandler::process_line(std::string_view line_view)
             try {
                 h = std::stoi(tokens[4]);
             } catch (std::invalid_argument&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for h"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for h");
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for h"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for h");
 
                 return;
             }
 
-            // prot::draw_t draw_command
-            //     = prot::rectangle_draw_t { m_colour, x, y, w, h };
-            //
-            // if (m_selected_id.has_value()) {
-            //     share::writer_queue.push_front(
-            //         { share::nickname,
-            //           prot::select_t { *m_selected_id, draw_command } }
-            //     );
-            // } else {
-            //     share::writer_queue.push_front({ share::nickname,
-            //     draw_command }
-            //     );
-            // }
+            RectangleDraw draw { m_colour, x, y, w, h };
+
+            Action action { draw };
+
+            if (m_selected_id) {
+                action = Select { *m_selected_id, draw };
+            }
+
+            {
+                threading::mutex_guard guard { share::writer_mutex };
+
+                share::writer_queue.push(action);
+            }
+
+            share::writer_cond.notify_one();
         } break;
         case Option::CIRCLE: {
             if (tokens.size() != 4) {
                 fmt::println(
                     stderr,
-                    "warn: an unexpected number of "
-                    "tokens for draw with circle "
+                    "warn: an unexpected number of tokens for draw with circle "
                     "selected"
                 );
 
@@ -666,19 +581,11 @@ void InputHandler::process_line(std::string_view line_view)
             try {
                 x = std::stoi(tokens[1]);
             } catch (std::invalid_argument&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for x"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for x");
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for x"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for x");
 
                 return;
             }
@@ -688,19 +595,11 @@ void InputHandler::process_line(std::string_view line_view)
             try {
                 y = std::stoi(tokens[2]);
             } catch (std::invalid_argument&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for y"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for y");
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for y"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for y");
 
                 return;
             }
@@ -710,19 +609,11 @@ void InputHandler::process_line(std::string_view line_view)
             try {
                 r = std::stof(tokens[3]);
             } catch (std::invalid_argument&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected float (32-bit) "
-                    "for r"
-                );
+                fmt::println(stderr, "warn: expected float (32-bit) for r");
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected float (32-bit) "
-                    "for r"
-                );
+                fmt::println(stderr, "warn: expected float (32-bit) for r");
 
                 return;
             }
@@ -730,34 +621,34 @@ void InputHandler::process_line(std::string_view line_view)
             if (0 > r) {
                 fmt::println(
                     stderr,
-                    "warn: expected positive float "
-                    "(32-bit) "
-                    "for r"
+                    "warn: expected positive float (32-bit) for r"
                 );
 
                 return;
             }
 
-            // prot::draw_t draw_command
-            //     = prot::circle_draw_t { m_colour, x, y, r };
-            //
-            // if (m_selected_id.has_value()) {
-            //     share::writer_queue.push_front(
-            //         { share::nickname,
-            //           prot::select_t { *m_selected_id, draw_command } }
-            //     );
-            // } else {
-            //     share::writer_queue.push_front({ share::nickname,
-            //     draw_command }
-            //     );
-            // }
+            CircleDraw draw { m_colour, x, y, r };
+
+            Action action { draw };
+
+            if (m_selected_id) {
+                action = Select { *m_selected_id, draw };
+            }
+
+            {
+                threading::mutex_guard guard { share::writer_mutex };
+
+                share::writer_queue.push(action);
+            }
+
+            share::writer_cond.notify_one();
         } break;
         case Option::TEXT: {
             if (tokens.size() != 4) {
                 fmt::println(
                     stderr,
-                    "warn: an unexpected number of "
-                    "tokens for draw with text selected"
+                    "warn: an unexpected number of tokens for draw with text "
+                    "selected"
                 );
 
                 return;
@@ -768,19 +659,11 @@ void InputHandler::process_line(std::string_view line_view)
             try {
                 x = std::stoi(tokens[1]);
             } catch (std::invalid_argument&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for x"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for x");
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for x"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for x");
 
                 return;
             }
@@ -790,38 +673,32 @@ void InputHandler::process_line(std::string_view line_view)
             try {
                 y = std::stoi(tokens[2]);
             } catch (std::invalid_argument&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for y"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for y");
 
                 return;
             } catch (std::out_of_range&) {
-                fmt::println(
-                    stderr,
-                    "warn: expected integer (32-bit) "
-                    "for y"
-                );
+                fmt::println(stderr, "warn: expected integer (32-bit) for y");
 
                 return;
             }
 
             std::string text { tokens[3] };
 
-            // prot::draw_t draw_command
-            //     = prot::text_draw_t { m_colour, x, y, text };
-            //
-            // if (m_selected_id.has_value()) {
-            //     share::writer_queue.push_front(
-            //         { share::nickname,
-            //           prot::select_t { *m_selected_id, draw_command } }
-            //     );
-            // } else {
-            //     share::writer_queue.push_front({ share::nickname,
-            //     draw_command }
-            //     );
-            // }
+            TextDraw draw { m_colour, x, y, text };
+
+            Action action { draw };
+
+            if (m_selected_id) {
+                action = Select { *m_selected_id, draw };
+            }
+
+            {
+                threading::mutex_guard guard { share::writer_mutex };
+
+                share::writer_queue.push(action);
+            }
+
+            share::writer_cond.notify_one();
         } break;
         default:
             ABORT("unreachable");
@@ -831,8 +708,6 @@ void InputHandler::process_line(std::string_view line_view)
     }
 
     if (first_token == "list") {
-        using namespace common;
-
         if (tokens.size() != 3) {
             fmt::println(
                 stderr,
@@ -877,8 +752,8 @@ void InputHandler::process_line(std::string_view line_view)
         if (!second_match) {
             fmt::println(
                 stderr,
-                "warn: expected one of {{'all' | 'line' | "
-                "'rectangle' | 'circle' | 'text'}}"
+                "warn: expected one of {{'all' | 'line' | 'rectangle' | "
+                "'circle' | 'text'}}"
             );
 
             return;
@@ -914,7 +789,7 @@ void InputHandler::process_line(std::string_view line_view)
                 };
 
                 if (guard.is_owning()) {
-                    list_draws(tool_qual, user_qual, share::list1);
+                    list_draws(tool_qual, user_qual, share::vec1);
 
                     return;
                 }
@@ -927,7 +802,7 @@ void InputHandler::process_line(std::string_view line_view)
                 };
 
                 if (guard.is_owning()) {
-                    list_draws(tool_qual, user_qual, share::list2);
+                    list_draws(tool_qual, user_qual, share::vec2);
 
                     return;
                 }
@@ -941,8 +816,7 @@ void InputHandler::process_line(std::string_view line_view)
         if (tokens.size() != 2) {
             fmt::println(
                 stderr,
-                "warn: an unexpected number of tokens for "
-                "select"
+                "warn: an unexpected number of tokens for select"
             );
 
             return;
@@ -971,9 +845,8 @@ void InputHandler::process_line(std::string_view line_view)
         if (id_has_error) {
             fmt::println(
                 stderr,
-                "warn: expected an 'none' or an "
-                "integer greater than "
-                "or equal to 0 for ID"
+                "warn: expected an 'none' or an integer greater than or equal "
+                "to 0 for ID"
             );
 
             return;
@@ -988,8 +861,7 @@ void InputHandler::process_line(std::string_view line_view)
         if (tokens.size() != 2) {
             fmt::println(
                 stderr,
-                "warn: an unexpected number of tokens for "
-                "delete"
+                "warn: an unexpected number of tokens for delete"
             );
 
             return;
@@ -1012,16 +884,19 @@ void InputHandler::process_line(std::string_view line_view)
         if (id_has_error) {
             fmt::println(
                 stderr,
-                "warn: expected an integer greater than or "
-                "equal to 0 for ID"
+                "warn: expected an integer greater than or equal to 0 for ID"
             );
 
             return;
         }
 
-        // Delete delete { id };
-        //
-        // share::writer_queue.push_front({ share::nickname, delete_command });
+        {
+            threading::mutex_guard guard { share::writer_mutex };
+
+            share::writer_queue.emplace(Delete { id });
+        }
+
+        share::writer_cond.notify_one();
 
         return;
     }
@@ -1030,14 +905,19 @@ void InputHandler::process_line(std::string_view line_view)
         if (tokens.size() != 1) {
             fmt::println(
                 stderr,
-                "warn: an unexpected number of tokens for "
-                "undo"
+                "warn: an unexpected number of tokens for undo"
             );
 
             return;
         }
 
-        // share::writer_queue.push_front({ share::nickname, prot::undo_t {} });
+        {
+            threading::mutex_guard guard { share::writer_mutex };
+
+            share::writer_queue.emplace(Undo {});
+        }
+
+        share::writer_cond.notify_one();
 
         return;
     }
@@ -1046,8 +926,7 @@ void InputHandler::process_line(std::string_view line_view)
         if (tokens.size() != 2) {
             fmt::println(
                 stderr,
-                "warn: an unexpected number of tokens for "
-                "clear"
+                "warn: an unexpected number of tokens for clear"
             );
 
             return;
@@ -1056,18 +935,25 @@ void InputHandler::process_line(std::string_view line_view)
         std::string_view second_token = tokens[1];
 
         if (second_token == "all") {
-            // share::writer_queue.push_front(
-            //     { share::nickname, prot::clear_t { prot::qualifier_e::ALL } }
-            // );
+            {
+                threading::mutex_guard guard { share::writer_mutex };
+
+                share::writer_queue.emplace(Clear { Qualifier::ALL });
+            }
+
+            share::writer_cond.notify_one();
 
             return;
         }
 
         if (second_token == "mine") {
-            // share::writer_queue.push_front(
-            //     { share::nickname, prot::clear_t { prot::qualifier_e::MINE }
-            //     }
-            // );
+            {
+                threading::mutex_guard guard { share::writer_mutex };
+
+                share::writer_queue.emplace(Clear { Qualifier::MINE });
+            }
+
+            share::writer_cond.notify_one();
 
             return;
         }
@@ -1081,8 +967,7 @@ void InputHandler::process_line(std::string_view line_view)
         if (tokens.size() != 2) {
             fmt::println(
                 stderr,
-                "warn: an unexpected number of tokens for "
-                "show"
+                "warn: an unexpected number of tokens for show"
             );
 
             return;
@@ -1091,13 +976,13 @@ void InputHandler::process_line(std::string_view line_view)
         std::string_view second_token = tokens[1];
 
         if (second_token == "all") {
-            // common::mutable_t<bool> { share::show_mine }() = false;
+            share::show_mine = false;
 
             return;
         }
 
         if (second_token == "mine") {
-            // common::mutable_t<bool> { share::show_mine }() = true;
+            share::show_mine = true;
 
             return;
         }
@@ -1111,8 +996,7 @@ void InputHandler::process_line(std::string_view line_view)
         if (tokens.size() != 1) {
             fmt::println(
                 stderr,
-                "warn: an unexpected number of tokens for "
-                "exit"
+                "warn: an unexpected number of tokens for exit"
             );
 
             return;
@@ -1124,10 +1008,6 @@ void InputHandler::process_line(std::string_view line_view)
     }
 
     fmt::println(stderr, "warn: {} is not a known command", first_token);
-}
-
-void InputHandler::dtor()
-{
 }
 
 } // namespace client

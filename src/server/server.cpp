@@ -1,11 +1,13 @@
 // server
-#include <conn_handler.hpp>
-#include <server.hpp>
+#include "server.hpp"
+#include "conn_handler.hpp"
+#include "share.hpp"
 
 // unix (hopefully)
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <optional>
 #include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -13,37 +15,33 @@
 // fmt
 #include <fmt/core.h>
 
-// std
+// cstd
 #include <cstdlib>
 
+// std
+#include <type_traits>
+
 // common
-#include <abort.hpp>
-#include <log.hpp>
+#include "../common/abort.hpp"
+#include "../common/channel.hpp"
+#include "../common/log.hpp"
+#include "../common/network.hpp"
+#include "../common/serial.hpp"
+#include "../common/threading.hpp"
 
-// share
-#include <share.hpp>
-
-// threading
-#include <threading.hpp>
-
-// network
-#include <network.hpp>
-
-#define BACKLOG (MAX_CONNS)
+#define BACKLOG (16)
 
 namespace server {
 
-server_t::server_t(uint16_t port)
+Server::Server(uint16_t port)
     : m_port(port)
 {
 }
 
-void server_t::operator()()
+void Server::operator()()
 {
     try {
         m_sock.open(SOCK_STREAM, 0);
-
-        m_sock.make_non_blocking();
 
         sockaddr_in server_addr {};
         server_addr.sin_family = AF_INET;
@@ -57,6 +55,8 @@ void server_t::operator()()
     } catch (std::runtime_error& error) {
         log.error(error.what());
 
+        share::updater_thread.cancel();
+
         return;
     }
 
@@ -65,28 +65,20 @@ void server_t::operator()()
     request_loop();
 }
 
-void server_t::request_loop()
+void Server::request_loop()
 {
-    size_t num_of_conns { 0 };
-
     while (share::run) {
-        auto result = m_sock.poll(POLLIN);
+        PollResult poll_result {};
 
-        if (result.has_error()) {
-            // do not handle CTRL-C
-            // if (errno == EINTR) {
-            //     log.warn("poll interrupted");
-            //
-            //     continue;
-            // }
+        try {
+            poll_result = m_sock.poll({ POLLIN });
+        } catch (std::runtime_error& error) {
+            log.error(error.what());
 
-            ABORTV(
-                "poll of socket failed, reason: {}",
-                result.get_error()
-            );
+            break;
         }
 
-        if (result.has_timed_out()) {
+        if (poll_result.has_timed_out()) {
             continue;
         }
 
@@ -119,6 +111,28 @@ void server_t::request_loop()
 
         conn_sock.make_blocking();
 
+        auto username = is_valid_username(Channel { conn_sock });
+
+        if (!username.has_value()) {
+            continue;
+        }
+
+        {
+            threading::mutex_guard guard { share::timers_mutex };
+
+            for (auto iter = share::timers.rbegin();
+                 iter != share::timers.rend();
+                 iter++) {
+                if (iter->get()->user == *username) {
+                    share::timers.erase(iter.base());
+
+                    break;
+                }
+            }
+        }
+
+        IPv4SocketRef conn_sock_ref { conn_sock };
+
         // beyond this point it should be taken up
         // separately
 
@@ -126,11 +140,10 @@ void server_t::request_loop()
         // of being read from by the updater thread. So we
         // should lock
         {
-            threading::mutex_guard guard {
-                share::e_connections_mutex
-            };
+            threading::mutex_guard guard { share::connections_mutex };
 
-            share::e_connections.insert(m_current_conn_fd);
+            share::connections[conn_sock.native_handle()]
+                = std::move(conn_sock);
         }
 
         // Additionally, if we receive a SIGINT
@@ -143,11 +156,10 @@ void server_t::request_loop()
         // cancel which good.
 
         {
-            threading::mutex_guard guard {
-                share::e_threads_mutex
-            };
+            threading::mutex_guard guard { share::threads_mutex };
 
-            threading::pthread::test_cancel();
+            // TODO: test whether this is necessary
+            threading::thread::test_cancel();
 
             // So, what we'll do is we will test for
             // cancellation after acquiring the lock. This
@@ -177,79 +189,132 @@ void server_t::request_loop()
             // start the thread cancelled if cancelling if
             // properly done.
 
-            share::e_threads.emplace_back(
-                conn_handler_t { m_current_conn_fd, addr }
-            );
-
-            m_current_conn_fd = -1;
+            share::threads.emplace_back(ConnHandler { conn_sock_ref });
 
             // trim any finished threads
-            share::e_threads.erase(
+            share::threads.erase(
                 std::remove_if(
-                    share::e_threads.begin(),
-                    share::e_threads.end(),
+                    share::threads.begin(),
+                    share::threads.end(),
                     [](auto& thread) {
                         return !thread.is_alive();
                     }
                 ),
-                share::e_threads.end()
+                share::threads.end()
             );
-
-            num_of_conns = share::e_threads.size();
         }
 
         log.flush();
     }
 }
 
-void server_t::dtor()
+std::optional<std::string> Server::is_valid_username(Channel channel)
 {
-    if (m_current_conn_fd != -1) {
-        threading::mutex_guard guard {
-            share::e_connections_mutex
-        };
+    auto [res, read_status] = channel.read(60000);
 
-        if (shutdown(m_current_conn_fd, SHUT_WR) == -1) {
-            log.error(
-                "connection shutdown failed, "
-                "reason: {}",
-                strerror(errno)
-            );
-        }
+    if (read_status != ChannelErrorCode::OK) {
+        log.warn("reading failed, reason {}", read_status.what());
 
-        if (close(m_current_conn_fd) == -1) {
-            log.error(
-                "closing connection failed, reason: {}",
-                strerror(errno)
-            );
-        }
-
-        share::e_connections.erase(m_current_conn_fd);
+        return {};
     }
 
-    for (auto& thread : share::e_threads) {
-        thread.cancel();
+    Deserialize deserialize { res };
 
-        thread.join();
+    auto [payload, deser_status] = deserialize.payload();
+
+    if (deser_status != DeserializeErrorCode::OK) {
+        log.warn("deserialization error occurred, {}", deser_status.what());
+
+        return {};
     }
 
-    share::e_updater_thread.cancel();
-
-    if (close(m_socket_fd) == -1) {
-        log.error(
-            "closing socket failed, reason: {}",
-            strerror(errno)
+    if (!std::holds_alternative<Username>(payload)) {
+        log.warn(
+            "expected username payload, instead got {}",
+            var_type(payload).name()
         );
+
+        return {};
     }
 
-    log.info("stopping server");
+    auto username = std::get<Username>(payload).username;
 
-    log.flush();
+    if (m_users.count(username) > 0) {
+        ByteVector req { Serialize {
+            Decline {
+                fmt::format("user with name {} already exists", username) } }
+                             .bytes() };
+
+        {
+            auto status = channel.write(req);
+
+            if (status != ChannelErrorCode::OK) {
+                log.warn(
+                    "responding failed reason {}",
+                    var_type(payload).name()
+                );
+
+                return {};
+            }
+        }
+
+        return {};
+    }
+
+    ByteVector req { Serialize { Accept {} }.bytes() };
+
+    auto write_status = channel.write(req);
+
+    if (write_status != ChannelErrorCode::OK) {
+        log.warn("writing failed, reason {}", write_status.what());
+
+        return {};
+    }
+
+    return std::make_optional(username);
 }
 
-logging::log server_t::log {};
+// void Server::dtor()
+// {
+//     if (m_current_conn_fd != -1) {
+//         threading::mutex_guard guard { share::e_connections_mutex };
+//
+//         if (shutdown(m_current_conn_fd, SHUT_WR) == -1) {
+//             log.error(
+//                 "connection shutdown failed, "
+//                 "reason: {}",
+//                 strerror(errno)
+//             );
+//         }
+//
+//         if (close(m_current_conn_fd) == -1) {
+//             log.error("closing connection failed, reason: {}",
+//             strerror(errno));
+//         }
+//
+//         share::e_connections.erase(m_current_conn_fd);
+//     }
+//
+//     for (auto& thread : share::e_threads) {
+//         thread.cancel();
+//
+//         thread.join();
+//     }
+//
+//     share::updater_thread.cancel();
+//
+//     if (close(m_socket_fd) == -1) {
+//         log.error("closing socket failed, reason: {}", strerror(errno));
+//     }
+//
+//     log.info("stopping server");
+//
+//     log.flush();
+// }
 
-void server_t::setup_logging()
+logging::log Server::log {};
+
+void Server::setup_logging()
 {
     using namespace logging;
 

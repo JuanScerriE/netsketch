@@ -1,32 +1,29 @@
 #pragma once
 
-// logging
-#include <log.hpp>
-
-#include "protocol.hpp"
-#include "utils.hpp"
+// common
+#include "../common/channel.hpp"
+#include "../common/log.hpp"
+#include "../common/types.hpp"
 
 namespace client {
 
-class reader_t {
+class Reader {
    public:
-    explicit reader_t(int conn_fd);
+    explicit Reader(const Channel& channel);
 
     void operator()();
 
     void shutdown();
 
-    void dtor();
-
    private:
-    void handle_loop();
+    void read_loop();
 
-    void handle_payload(util::ByteVector& payload);
+    void handle_payload(ByteVector& payload);
 
-    void update_list(prot::TaggedCommand& tagged_command);
-    void update_whole_list(prot::TaggedDrawList& list);
+    void update_list(TaggedAction& tagged_command);
+    void update_whole_list(TaggedDrawVector& list);
 
-    const int m_conn_fd;
+    Channel m_channel;
 
     // logging
     static logging::log log;

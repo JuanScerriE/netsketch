@@ -24,8 +24,6 @@ namespace details {
     {
         auto* callable = reinterpret_cast<Wrapper*>(target);
 
-        (*callable).dtor();
-
         (*callable).die();
 
         delete callable;
@@ -45,127 +43,97 @@ namespace details {
         return nullptr;
     }
 
-    template <typename Callable, typename... Types>
-    class callable_wrapper {
+    template <typename Callable, typename... ArgTypes>
+    class thread_wrapper {
        public:
-        callable_wrapper(const callable_wrapper<
-                         Callable,
-                         Types...>&)
+        thread_wrapper(const thread_wrapper<Callable, ArgTypes...>&) = delete;
+
+        thread_wrapper<Callable, ArgTypes...>&
+        operator=(const thread_wrapper<Callable, ArgTypes...>&)
             = delete;
 
-        callable_wrapper<Callable, Types...>&
-        operator=(const callable_wrapper<
-                  Callable,
-                  Types...>&)
-            = delete;
-
-        explicit callable_wrapper(
-            bool* is_alive_,
+        explicit thread_wrapper(
+            bool* is_alive,
             Callable&& callable,
-            Types&&... args
+            ArgTypes&&... args
         )
-            : is_alive(is_alive_)
+            : is_alive { is_alive }
             , callable { std::forward<Callable>(callable) }
-            , args { std::forward<Types>(args)... }
+            , args { std::forward<ArgTypes>(args)... }
         {
-        }
-
-        void operator()()
-        {
-            apply(std::make_index_sequence<sizeof...(Types
-                  )> {});
-        }
-
-        void dtor()
-        {
-            callable.dtor();
         }
 
         void die()
         {
-            (*is_alive) = false;
+            *is_alive = false;
+        }
+
+        void operator()()
+        {
+            std::apply(callable, args);
         }
 
        private:
-        template <std::size_t... indices>
-        void apply(std::index_sequence<indices...>)
-        {
-            callable(std::move(std::get<indices>(args))...);
-        }
-
         bool* is_alive { nullptr };
 
         Callable callable;
 
-        std::tuple<std::decay_t<Types>...> args;
+        std::tuple<std::decay_t<ArgTypes>...> args;
     };
 
 } // namespace details
 
-class pthread {
+class thread {
    public:
-    pthread() = default;
+    thread() = default;
 
     template <typename Callable, typename... ArgTypes>
-    explicit pthread(
-        Callable&& callable,
-        ArgTypes&&... args
-    )
+    explicit thread(Callable&& callable, ArgTypes&&... args)
     {
-        is_alive_ = new bool { true };
+        m_is_alive = new bool { true };
 
-        auto* target_function = new details::
-            callable_wrapper<Callable, ArgTypes...>(
-                is_alive_,
-                std::forward<Callable>(callable),
-                std::forward<ArgTypes>(args)...
-            );
+        auto* target = new details::thread_wrapper<Callable, ArgTypes...>(
+            m_is_alive,
+            std::forward<Callable>(callable),
+            std::forward<ArgTypes>(args)...
+        );
 
-        using signature = std::remove_reference_t<
-            decltype(*target_function)>;
+        using signature = std::remove_reference_t<decltype(*target)>;
 
         auto creation_result = pthread_create(
             &thread_handle,
             nullptr,
             &details::call_target<signature>,
-            target_function
+            target
         );
 
         if (creation_result != 0) {
-            delete target_function;
+            delete target;
 
-            *is_alive_ = false;
+            *m_is_alive = false;
 
-            throw std::runtime_error {
-                strerror(creation_result)
-            };
+            throw std::runtime_error { strerror(creation_result) };
         }
     }
 
-    pthread(const pthread&) = delete;
+    thread(const thread&) = delete;
 
-    pthread& operator=(const pthread&) = delete;
+    thread& operator=(const thread&) = delete;
 
-    pthread(pthread&& other) noexcept
-        : is_alive_ { std::exchange(
-            other.is_alive_,
-            nullptr
-        ) }
-        , thread_handle { std::exchange(
-              other.thread_handle,
-              static_cast<pthread_t>(-1)
-          ) }
+    thread(thread&& other) noexcept
+        : m_is_alive { std::exchange(other.m_is_alive, nullptr) }
+        , thread_handle {
+            std::exchange(other.thread_handle, static_cast<pthread_t>(-1))
+        }
     {
     }
 
-    pthread& operator=(pthread&& other) noexcept
+    thread& operator=(thread&& other) noexcept
     {
-        is_alive_ = std::exchange(other.is_alive_, nullptr);
+        m_is_alive = std::exchange(other.m_is_alive, nullptr);
 
-        thread_handle = std::exchange(
-            other.thread_handle,
-            static_cast<pthread_t>(-1)
-        );
+        thread_handle
+            = std::exchange(other.thread_handle, static_cast<pthread_t>(-1));
 
         return *this;
     }
@@ -207,37 +175,37 @@ class pthread {
         pthread_testcancel();
     }
 
-    static pthread self()
+    static thread self()
     {
-        pthread this_thread {};
+        thread this_thread {};
 
-        *this_thread.is_alive_ = true;
+        *this_thread.m_is_alive = true;
 
         this_thread.thread_handle = pthread_self();
 
         return this_thread;
     }
 
-    ~pthread()
+    ~thread()
     {
-        delete is_alive_;
-    };
+        delete m_is_alive;
+    }
 
     [[nodiscard]] bool is_alive() const
     {
-        if (is_alive_)
-            return *is_alive_;
+        if (m_is_alive)
+            return *m_is_alive;
 
         throw std::logic_error { "uninitialized thread" };
     }
 
     [[nodiscard]] bool is_initialized() const
     {
-        return is_alive_;
+        return m_is_alive;
     }
 
    private:
-    bool* is_alive_ { nullptr };
+    bool* m_is_alive { nullptr };
 
     pthread_t thread_handle { static_cast<pthread_t>(-1) };
 };
@@ -249,27 +217,23 @@ class mutex {
     mutex& operator=(const mutex&) = delete;
 
     mutex(mutex&& other) noexcept
-        : mutex_handle { std::exchange(
-            other.mutex_handle,
-            PTHREAD_MUTEX_INITIALIZER
-        ) }
+        : mutex_handle {
+            std::exchange(other.mutex_handle, PTHREAD_MUTEX_INITIALIZER)
+        }
     {
     }
 
     mutex& operator=(mutex&& other) noexcept
     {
-        mutex_handle = std::exchange(
-            other.mutex_handle,
-            PTHREAD_MUTEX_INITIALIZER
-        );
+        mutex_handle
+            = std::exchange(other.mutex_handle, PTHREAD_MUTEX_INITIALIZER);
 
         return *this;
     }
 
     mutex()
     {
-        auto ret
-            = pthread_mutex_init(&mutex_handle, nullptr);
+        auto ret = pthread_mutex_init(&mutex_handle, nullptr);
 
         if (ret != 0) {
             throw std::runtime_error { strerror(ret) };
@@ -324,8 +288,7 @@ class mutex {
     }
 
    private:
-    pthread_mutex_t mutex_handle
-        = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_t mutex_handle = PTHREAD_MUTEX_INITIALIZER;
 };
 
 class mutex_guard {
@@ -361,10 +324,7 @@ class unique_mutex_guard {
         lock();
     }
 
-    explicit unique_mutex_guard(
-        mutex& mutex_ref,
-        unique_guard_policy policy
-    )
+    explicit unique_mutex_guard(mutex& mutex_ref, unique_guard_policy policy)
         : mutex_ref(mutex_ref)
     {
         switch (policy) {
@@ -377,8 +337,7 @@ class unique_mutex_guard {
 
     unique_mutex_guard(const unique_mutex_guard&) = delete;
 
-    unique_mutex_guard& operator=(const unique_mutex_guard&)
-        = delete;
+    unique_mutex_guard& operator=(const unique_mutex_guard&) = delete;
 
     void lock()
     {
@@ -437,19 +396,16 @@ class cond_var {
     cond_var& operator=(const cond_var& other) = delete;
 
     cond_var(cond_var&& other) noexcept
-        : cond_handle { std::exchange(
-            other.cond_handle,
-            PTHREAD_COND_INITIALIZER
-        ) }
+        : cond_handle {
+            std::exchange(other.cond_handle, PTHREAD_COND_INITIALIZER)
+        }
     {
     }
 
     cond_var& operator=(cond_var&& other) noexcept
     {
-        cond_handle = std::exchange(
-            other.cond_handle,
-            PTHREAD_COND_INITIALIZER
-        );
+        cond_handle
+            = std::exchange(other.cond_handle, PTHREAD_COND_INITIALIZER);
 
         return *this;
     }
@@ -490,16 +446,20 @@ class cond_var {
         }
     }
 
-    void wait(
-        unique_mutex_guard& lock,
-        const std::function<bool()>& pred
-    )
+    void wait(unique_mutex_guard& lock)
     {
-        while (!pred()) {
-            auto ret = pthread_cond_wait(
-                &cond_handle,
-                lock.native_handle_ptr()
-            );
+        auto ret = pthread_cond_wait(&cond_handle, lock.native_handle_ptr());
+
+        if (ret != 0) {
+            throw std::runtime_error { strerror(ret) };
+        }
+    }
+
+    void wait(unique_mutex_guard& lock, const std::function<bool()>& pred)
+    {
+        while (pred()) {
+            auto ret
+                = pthread_cond_wait(&cond_handle, lock.native_handle_ptr());
 
             if (ret != 0) {
                 throw std::runtime_error { strerror(ret) };
@@ -518,27 +478,23 @@ class rwlock {
     rwlock& operator=(const rwlock&) = delete;
 
     rwlock(rwlock&& other) noexcept
-        : rwlock_handle { std::exchange(
-            other.rwlock_handle,
-            PTHREAD_RWLOCK_INITIALIZER
-        ) }
+        : rwlock_handle {
+            std::exchange(other.rwlock_handle, PTHREAD_RWLOCK_INITIALIZER)
+        }
     {
     }
 
     rwlock& operator=(rwlock&& other) noexcept
     {
-        rwlock_handle = std::exchange(
-            other.rwlock_handle,
-            PTHREAD_RWLOCK_INITIALIZER
-        );
+        rwlock_handle
+            = std::exchange(other.rwlock_handle, PTHREAD_RWLOCK_INITIALIZER);
 
         return *this;
     }
 
     rwlock()
     {
-        auto ret
-            = pthread_rwlock_init(&rwlock_handle, nullptr);
+        auto ret = pthread_rwlock_init(&rwlock_handle, nullptr);
 
         if (ret != 0) {
             throw std::runtime_error { strerror(ret) };
@@ -617,8 +573,7 @@ class rwlock {
     }
 
    private:
-    pthread_rwlock_t rwlock_handle
-        = PTHREAD_RWLOCK_INITIALIZER;
+    pthread_rwlock_t rwlock_handle = PTHREAD_RWLOCK_INITIALIZER;
 };
 
 class rwlock_rdguard {
@@ -631,8 +586,7 @@ class rwlock_rdguard {
 
     rwlock_rdguard(const rwlock_rdguard&) = delete;
 
-    rwlock_rdguard& operator=(const rwlock_rdguard&)
-        = delete;
+    rwlock_rdguard& operator=(const rwlock_rdguard&) = delete;
 
     ~rwlock_rdguard()
     {
@@ -665,12 +619,9 @@ class unique_rwlock_rdguard {
         };
     }
 
-    unique_rwlock_rdguard(const unique_rwlock_rdguard&)
-        = delete;
+    unique_rwlock_rdguard(const unique_rwlock_rdguard&) = delete;
 
-    unique_rwlock_rdguard&
-    operator=(const unique_rwlock_rdguard&)
-        = delete;
+    unique_rwlock_rdguard& operator=(const unique_rwlock_rdguard&) = delete;
 
     void lock()
     {
@@ -732,8 +683,7 @@ class rwlock_wrguard {
 
     rwlock_wrguard(const rwlock_wrguard&) = delete;
 
-    rwlock_wrguard& operator=(const rwlock_wrguard&)
-        = delete;
+    rwlock_wrguard& operator=(const rwlock_wrguard&) = delete;
 
     ~rwlock_wrguard()
     {
@@ -766,12 +716,9 @@ class unique_rwlock_wrguard {
         };
     }
 
-    unique_rwlock_wrguard(const unique_rwlock_wrguard&)
-        = delete;
+    unique_rwlock_wrguard(const unique_rwlock_wrguard&) = delete;
 
-    unique_rwlock_wrguard&
-    operator=(const unique_rwlock_wrguard&)
-        = delete;
+    unique_rwlock_wrguard& operator=(const unique_rwlock_wrguard&) = delete;
 
     void lock()
     {

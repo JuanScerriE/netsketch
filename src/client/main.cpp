@@ -1,15 +1,12 @@
 // client
-#include "client_channel.hpp"
-#include <gui.hpp>
-#include <input_handler.hpp>
-#include <log_file.hpp>
-#include <network_manager.hpp>
+#include "gui.hpp"
+#include "input_handler.hpp"
+#include "network_manager.hpp"
+#include "share.hpp"
 
 // common
-#include <types.hpp>
-
-// threading
-#include <threading.hpp>
+#include "../common/log_file.hpp"
+#include "../common/threading.hpp"
 
 // std
 #include <regex>
@@ -28,9 +25,6 @@
 // fmt
 #include <fmt/chrono.h>
 #include <fmt/format.h>
-
-// share
-#include <share.hpp>
 
 struct IPv4Validator : public CLI::Validator {
     IPv4Validator()
@@ -85,7 +79,7 @@ int main(int argc, char** argv)
     CLI11_PARSE(app, argc, argv);
 
     // set the nickname of the user
-    client::share::nickname = nickname;
+    client::share::username = nickname;
 
     in_addr addr {};
 
@@ -111,10 +105,7 @@ int main(int argc, char** argv)
         client::share::log_file.reason()
     );
 
-    ClientChannel
-
-
-    client::network_manager_t manager { ipv4_addr, port };
+    client::NetworkManager manager { ipv4_addr, port };
 
     if (!manager.setup()) {
         if (client::share::log_file.is_open()) {
@@ -126,8 +117,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    client::share::input_thread
-        = threading::pthread { client::InputHandler {} };
+    client::share::input_thread = threading::thread { client::InputHandler {} };
 
     client::Gui gui {};
 
@@ -140,8 +130,6 @@ int main(int argc, char** argv)
     }
 
     client::share::input_thread.join();
-
-    manager.close();
 
     if (client::share::log_file.is_open()) {
         client::share::log_file.close();

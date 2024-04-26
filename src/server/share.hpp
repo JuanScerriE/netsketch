@@ -1,57 +1,51 @@
 #pragma once
 
+// common
+#include "../common/network.hpp"
+#include "../common/threading.hpp"
+#include "../common/types.hpp"
+#include "../common/log.hpp"
+
 // std
+#include <atomic>
 #include <list>
 #include <memory>
-#include <unordered_set>
-
-// common
-#include <draw_list.hpp>
-#include <types.hpp>
+#include <queue>
+#include <unordered_map>
 
 // server
-#include <event.hpp>
-
-// protocol
-#include <protocol.hpp>
-
-// threading
-#include <threading.hpp>
-
-// timing
-#include <timer_data.hpp>
+#include "timer_data.hpp"
 
 // I think 64 connections is a reasonable number of
 // connections for a whiteboard (for know).
 #define MAX_CONNS (3)
 
-#include <network.hpp>
-
 namespace server::share {
 
 extern std::atomic_bool run;
 
-extern IPv4Socket socket;
+extern threading::mutex threads_mutex;
 
-extern threading::mutex e_threads_mutex;
+extern std::list<threading::thread> threads;
 
-extern std::list<threading::pthread> e_threads;
+extern threading::thread updater_thread;
 
-extern threading::pthread e_updater_thread;
+extern threading::mutex connections_mutex;
 
-extern threading::pthread e_server_thread;
+extern std::unordered_map<int, IPv4Socket> connections;
 
-extern threading::mutex e_connections_mutex;
+extern threading::mutex timers_mutex;
 
-extern std::unordered_set<int> e_connections;
+extern std::list<std::unique_ptr<TimerData>> timers;
 
-extern threading::mutex e_timers_mutex;
+extern threading::mutex update_mutex;
 
-extern std::list<std::unique_ptr<timing::timer_data>>
-    e_timers;
+extern threading::cond_var update_cond;
 
-extern common::ts_queue<prot::Payload> e_command_queue;
+extern TaggedDrawVector tagged_draw_vector;
 
-extern common::ts_draw_list e_draw_list;
+extern std::queue<Payload> payload_queue;
+
+extern logging::log timing_log;
 
 } // namespace server::share

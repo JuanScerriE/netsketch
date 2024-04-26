@@ -4,16 +4,16 @@
 #include <raylib.h>
 
 // client
-#include <log_file.hpp>
+#include "../common/log_file.hpp"
 
 // prot
 // #include <protocol.hpp>
 
 // common
-#include <types.hpp>
+#include "../common/types.hpp"
 
 // logging
-#include <log.hpp>
+#include "../common/log.hpp"
 
 namespace client {
 

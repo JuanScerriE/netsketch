@@ -1,10 +1,9 @@
+// client
+#include "input_parser.hpp"
+
 // std
-#include <iostream>
 #include <utility>
 #include <vector>
-
-// client
-#include <input_parser.hpp>
 
 // fmt
 #include <fmt/core.h>
@@ -99,9 +98,7 @@ void input_parser_t::string()
     advance();
 
     // we can use substring constructor
-    std::string value { m_source,
-                        m_start + 1,
-                        m_current - 1 - m_start - 1 };
+    std::string value { m_source, m_start + 1, m_current - 1 - m_start - 1 };
 
     m_tokens.push_back(value);
 }
@@ -121,9 +118,7 @@ void input_parser_t::number()
         }
     }
 
-    m_tokens.push_back(
-        m_source.substr(m_start, m_current - m_start)
-    );
+    m_tokens.push_back(m_source.substr(m_start, m_current - m_start));
 }
 
 char input_parser_t::peek_next()
@@ -141,9 +136,7 @@ void input_parser_t::identifier()
         advance();
     }
 
-    std::string value { m_source,
-                        m_start,
-                        m_current - m_start };
+    std::string value { m_source, m_start, m_current - m_start };
 
     m_tokens.push_back(value);
 }
@@ -160,8 +153,7 @@ bool input_parser_t::is_digit(char c)
 
 bool input_parser_t::is_alpha(char c)
 {
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-           || c == '_';
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
 }
 
 bool input_parser_t::is_alpha_numeric(char c)

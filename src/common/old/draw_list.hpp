@@ -24,8 +24,7 @@ class ts_draw_list {
             std::scoped_lock<std::mutex> lock { m_mutex };
 
             for (auto& tagged_draw : m_vector) {
-                if (tagged_draw.username
-                    == adopt.username) {
+                if (tagged_draw.username == adopt.username) {
                     tagged_draw.adopted = true;
                 }
             }
@@ -39,57 +38,42 @@ class ts_draw_list {
 
             std::string username = tagged_command.username;
 
-            if (std::holds_alternative<prot::draw_t>(
-                    tagged_command.command
-                )) {
-                auto& draw = std::get<prot::draw_t>(
-                    tagged_command.command
-                );
+            if (std::holds_alternative<prot::draw_t>(tagged_command.command)) {
+                auto& draw = std::get<prot::draw_t>(tagged_command.command);
 
                 handle_draw(username, draw);
 
                 return;
             }
 
-            if (std::holds_alternative<prot::select_t>(
-                    tagged_command.command
+            if (std::holds_alternative<prot::select_t>(tagged_command.command
                 )) {
-                auto& select = std::get<prot::select_t>(
-                    tagged_command.command
-                );
+                auto& select = std::get<prot::select_t>(tagged_command.command);
 
                 handle_select(username, select);
 
                 return;
             }
 
-            if (std::holds_alternative<prot::delete_t>(
-                    tagged_command.command
+            if (std::holds_alternative<prot::delete_t>(tagged_command.command
                 )) {
-                auto& delete_ = std::get<prot::delete_t>(
-                    tagged_command.command
-                );
+                auto& delete_
+                    = std::get<prot::delete_t>(tagged_command.command);
 
                 handle_delete(delete_);
 
                 return;
             }
 
-            if (std::holds_alternative<prot::undo_t>(
-                    tagged_command.command
-                )) {
+            if (std::holds_alternative<prot::undo_t>(tagged_command.command)) {
 
                 handle_undo(username);
 
                 return;
             }
 
-            if (std::holds_alternative<prot::clear_t>(
-                    tagged_command.command
-                )) {
-                auto& clear = std::get<prot::clear_t>(
-                    tagged_command.command
-                );
+            if (std::holds_alternative<prot::clear_t>(tagged_command.command)) {
+                auto& clear = std::get<prot::clear_t>(tagged_command.command);
 
                 handle_clear(username, clear);
 
@@ -117,22 +101,14 @@ class ts_draw_list {
     }
 
    private:
-    void
-    handle_draw(std::string username, prot::draw_t draw)
+    void handle_draw(std::string username, prot::draw_t draw)
     {
-        m_vector.push_back(
-            { false, std::move(username), std::move(draw) }
-        );
+        m_vector.push_back({ false, std::move(username), std::move(draw) });
     }
-    void handle_select(
-        std::string username,
-        prot::select_t select
-    )
+    void handle_select(std::string username, prot::select_t select)
     {
         m_vector[static_cast<size_t>(select.id)]
-            = { false,
-                std::move(username),
-                std::move(select.draw) };
+            = { false, std::move(username), std::move(select.draw) };
     }
     void handle_delete(prot::delete_t delete_)
     {
@@ -140,9 +116,7 @@ class ts_draw_list {
     }
     void handle_undo(std::string& username)
     {
-        for (auto iter = m_vector.rbegin();
-             iter != m_vector.rend();
-             iter++) {
+        for (auto iter = m_vector.rbegin(); iter != m_vector.rend(); iter++) {
             if (iter->username == username) {
                 m_vector.erase(iter.base());
 
@@ -150,8 +124,7 @@ class ts_draw_list {
             }
         }
     }
-    void
-    handle_clear(std::string& username, prot::clear_t clear)
+    void handle_clear(std::string& username, prot::clear_t clear)
 
     {
         switch (clear.quailifier) {
@@ -159,16 +132,13 @@ class ts_draw_list {
             m_vector.clear();
             break;
         case prot::qualifier_e::MINE:
-            std::vector<prot::TaggedDraw>
-                filtered_commands {};
+            std::vector<prot::TaggedDraw> filtered_commands {};
 
             filtered_commands.reserve(m_vector.size());
 
             for (auto& tagged_draw : m_vector) {
                 if (tagged_draw.username != username) {
-                    filtered_commands.push_back(
-                        std::move(tagged_draw)
-                    );
+                    filtered_commands.push_back(std::move(tagged_draw));
                 }
             }
 
@@ -192,64 +162,45 @@ class TaggedDrawVectorWrapper {
 
     draw_list_wrapper(const ts_draw_list&) = delete;
 
-    draw_list_wrapper& operator=(const ts_draw_list&)
-        = delete;
+    draw_list_wrapper& operator=(const ts_draw_list&) = delete;
 
     void update(const prot::TaggedCommand& tagged_command)
     {
         std::string username = tagged_command.username;
 
-        if (std::holds_alternative<prot::draw_t>(
-                tagged_command.command
-            )) {
-            auto& draw = std::get<prot::draw_t>(
-                tagged_command.command
-            );
+        if (std::holds_alternative<prot::draw_t>(tagged_command.command)) {
+            auto& draw = std::get<prot::draw_t>(tagged_command.command);
 
             handle_draw(username, draw);
 
             return;
         }
 
-        if (std::holds_alternative<prot::select_t>(
-                tagged_command.command
-            )) {
-            auto& select = std::get<prot::select_t>(
-                tagged_command.command
-            );
+        if (std::holds_alternative<prot::select_t>(tagged_command.command)) {
+            auto& select = std::get<prot::select_t>(tagged_command.command);
 
             handle_select(username, select);
 
             return;
         }
 
-        if (std::holds_alternative<prot::delete_t>(
-                tagged_command.command
-            )) {
-            auto& delete_ = std::get<prot::delete_t>(
-                tagged_command.command
-            );
+        if (std::holds_alternative<prot::delete_t>(tagged_command.command)) {
+            auto& delete_ = std::get<prot::delete_t>(tagged_command.command);
 
             handle_delete(delete_);
 
             return;
         }
 
-        if (std::holds_alternative<prot::undo_t>(
-                tagged_command.command
-            )) {
+        if (std::holds_alternative<prot::undo_t>(tagged_command.command)) {
 
             handle_undo(username);
 
             return;
         }
 
-        if (std::holds_alternative<prot::clear_t>(
-                tagged_command.command
-            )) {
-            auto& clear = std::get<prot::clear_t>(
-                tagged_command.command
-            );
+        if (std::holds_alternative<prot::clear_t>(tagged_command.command)) {
+            auto& clear = std::get<prot::clear_t>(tagged_command.command);
 
             handle_clear(username, clear);
 
@@ -260,20 +211,14 @@ class TaggedDrawVectorWrapper {
     }
 
    private:
-    void
-    handle_draw(std::string username, prot::draw_t draw)
+    void handle_draw(std::string username, prot::draw_t draw)
     {
-        m_list.push_back({ std::move(username),
-                           std::move(draw) });
+        m_list.push_back({ std::move(username), std::move(draw) });
     }
-    void handle_select(
-        std::string username,
-        prot::select_t select
-    )
+    void handle_select(std::string username, prot::select_t select)
     {
         m_list[static_cast<size_t>(select.id)]
-            = { std::move(username),
-                std::move(select.draw) };
+            = { std::move(username), std::move(select.draw) };
     }
     void handle_delete(prot::delete_t delete_)
     {
@@ -281,9 +226,7 @@ class TaggedDrawVectorWrapper {
     }
     void handle_undo(std::string& username)
     {
-        for (auto iter = m_list.rbegin();
-             iter != m_list.rend();
-             iter++) {
+        for (auto iter = m_list.rbegin(); iter != m_list.rend(); iter++) {
             if (iter->username == username) {
                 m_list.erase(iter.base());
 
@@ -291,8 +234,7 @@ class TaggedDrawVectorWrapper {
             }
         }
     }
-    void
-    handle_clear(std::string& username, prot::clear_t clear)
+    void handle_clear(std::string& username, prot::clear_t clear)
 
     {
         switch (clear.quailifier) {
@@ -300,16 +242,13 @@ class TaggedDrawVectorWrapper {
             m_list.clear();
             break;
         case prot::qualifier_e::MINE:
-            std::vector<prot::TaggedDraw>
-                filtered_commands {};
+            std::vector<prot::TaggedDraw> filtered_commands {};
 
             filtered_commands.reserve(m_list.size());
 
             for (auto& tagged_draw : m_list) {
                 if (tagged_draw.username != username) {
-                    filtered_commands.push_back(
-                        std::move(tagged_draw)
-                    );
+                    filtered_commands.push_back(std::move(tagged_draw));
                 }
             }
 

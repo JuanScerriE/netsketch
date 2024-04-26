@@ -1,27 +1,30 @@
 #pragma once
 
-// common
-#include <log.hpp>
-
-#include <network.hpp>
+// std
+#include <optional>
 #include <unordered_set>
+
+// common
+#include "../common/channel.hpp"
+#include "../common/log.hpp"
+#include "../common/network.hpp"
 
 namespace server {
 
-class server_t {
+class Server {
    public:
-    explicit server_t(uint16_t port);
+    explicit Server(uint16_t port);
 
     void operator()();
-
-    void dtor();
 
    private:
     void request_loop();
 
-    uint16_t m_port { 0 };
+    std::optional<std::string> is_valid_username(Channel channel);
 
     IPv4Socket m_sock {};
+
+    uint16_t m_port {};
 
     std::unordered_set<std::string> m_users {};
 

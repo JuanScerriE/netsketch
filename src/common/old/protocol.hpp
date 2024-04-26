@@ -32,12 +32,10 @@ class serialize_t {
 
     void ser_payload(Payload& payload)
     {
-        if (std::holds_alternative<TaggedCommand>(payload
-            )) {
+        if (std::holds_alternative<TaggedCommand>(payload)) {
             m_fserial.write(payload_type_e::TAGGED_COMMAND);
 
-            auto& command
-                = std::get<TaggedCommand>(payload);
+            auto& command = std::get<TaggedCommand>(payload);
 
             ser_tagged_command(command);
 
@@ -47,21 +45,17 @@ class serialize_t {
         if (std::holds_alternative<TaggedDraw>(payload)) {
             m_fserial.write(payload_type_e::TAGGED_DRAW);
 
-            auto& tagged_draw
-                = std::get<TaggedDraw>(payload);
+            auto& tagged_draw = std::get<TaggedDraw>(payload);
 
             ser_tagged_draw(tagged_draw);
 
             return;
         }
 
-        if (std::holds_alternative<TaggedDrawList>(payload
-            )) {
-            m_fserial.write(payload_type_e::TAGGED_DRAW_LIST
-            );
+        if (std::holds_alternative<TaggedDrawList>(payload)) {
+            m_fserial.write(payload_type_e::TAGGED_DRAW_LIST);
 
-            auto& tagged_draw_list
-                = std::get<TaggedDrawList>(payload);
+            auto& tagged_draw_list = std::get<TaggedDrawList>(payload);
 
             m_fserial.write(tagged_draw_list.size());
 
@@ -110,27 +104,20 @@ class serialize_t {
             m_fserial.write(character);
         }
 
-        if (std::holds_alternative<draw_t>(
-                tagged_command.command
-            )) {
+        if (std::holds_alternative<draw_t>(tagged_command.command)) {
             m_fserial.write(command_type_e::DRAW);
 
-            auto& draw
-                = std::get<draw_t>(tagged_command.command);
+            auto& draw = std::get<draw_t>(tagged_command.command);
 
             ser_draw(draw);
 
             return;
         }
 
-        if (std::holds_alternative<select_t>(
-                tagged_command.command
-            )) {
+        if (std::holds_alternative<select_t>(tagged_command.command)) {
             m_fserial.write(command_type_e::SELECT);
 
-            auto& select
-                = std::get<select_t>(tagged_command.command
-                );
+            auto& select = std::get<select_t>(tagged_command.command);
 
             m_fserial.write(select.id);
 
@@ -139,35 +126,26 @@ class serialize_t {
             return;
         }
 
-        if (std::holds_alternative<delete_t>(
-                tagged_command.command
-            )) {
+        if (std::holds_alternative<delete_t>(tagged_command.command)) {
             m_fserial.write(command_type_e::DELETE);
 
-            auto& delete_
-                = std::get<delete_t>(tagged_command.command
-                );
+            auto& delete_ = std::get<delete_t>(tagged_command.command);
 
             m_fserial.write(delete_.id);
 
             return;
         }
 
-        if (std::holds_alternative<undo_t>(
-                tagged_command.command
-            )) {
+        if (std::holds_alternative<undo_t>(tagged_command.command)) {
             m_fserial.write(command_type_e::UNDO);
 
             return;
         }
 
-        if (std::holds_alternative<clear_t>(
-                tagged_command.command
-            )) {
+        if (std::holds_alternative<clear_t>(tagged_command.command)) {
             m_fserial.write(command_type_e::CLEAR);
 
-            auto& clear
-                = std::get<clear_t>(tagged_command.command);
+            auto& clear = std::get<clear_t>(tagged_command.command);
 
             m_fserial.write(clear.quailifier);
 
@@ -189,12 +167,10 @@ class serialize_t {
             return;
         }
 
-        if (std::holds_alternative<rectangle_draw_t>(draw
-            )) {
+        if (std::holds_alternative<rectangle_draw_t>(draw)) {
             m_fserial.write(tool_e::RECTANGLE);
 
-            auto& rectangle
-                = std::get<rectangle_draw_t>(draw);
+            auto& rectangle = std::get<rectangle_draw_t>(draw);
 
             m_fserial.write(rectangle);
 
@@ -255,8 +231,7 @@ class deserialize_t {
 
     Payload deser_payload()
     {
-        auto payload_type
-            = m_bserial.read<payload_type_e>();
+        auto payload_type = m_bserial.read<payload_type_e>();
 
         switch (payload_type) {
         case payload_type_e::TAGGED_COMMAND:
@@ -323,8 +298,7 @@ class deserialize_t {
             username.push_back(m_bserial.read<char>());
         }
 
-        auto command_type
-            = m_bserial.read<command_type_e>();
+        auto command_type = m_bserial.read<command_type_e>();
 
         command_t command {};
 
@@ -333,23 +307,18 @@ class deserialize_t {
             command = deser_draw();
             break;
         case command_type_e::SELECT:
-            command = select_t {
-                m_bserial.read<decltype(select_t::id)>(),
-                deser_draw()
-            };
+            command = select_t { m_bserial.read<decltype(select_t::id)>(),
+                                 deser_draw() };
             break;
 
         case command_type_e::DELETE:
-            command = delete_t {
-                m_bserial.read<decltype(delete_t::id)>()
-            };
+            command = delete_t { m_bserial.read<decltype(delete_t::id)>() };
             break;
         case command_type_e::UNDO:
             command = undo_t {};
             break;
         case command_type_e::CLEAR:
-            command
-                = clear_t { m_bserial.read<qualifier_e>() };
+            command = clear_t { m_bserial.read<qualifier_e>() };
             break;
         default:
             throw util::serial_error_t("unexpected type");
@@ -371,12 +340,8 @@ class deserialize_t {
             return m_bserial.read<circle_draw_t>();
         case tool_e::TEXT: {
             auto colour = m_bserial.read<colour_t>();
-            auto x
-                = m_bserial.read<decltype(text_draw_t::x)>(
-                );
-            auto y
-                = m_bserial.read<decltype(text_draw_t::y)>(
-                );
+            auto x = m_bserial.read<decltype(text_draw_t::x)>();
+            auto y = m_bserial.read<decltype(text_draw_t::y)>();
             auto size = m_bserial.read<size_t>();
 
             std::string text {};

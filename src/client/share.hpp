@@ -1,45 +1,38 @@
 #pragma once
 
 // common
-#include <event.hpp>
-#include <log_file.hpp>
-// #include <protocol.hpp>
-#include <types.hpp>
+#include "../common/log_file.hpp"
+#include "../common/threading.hpp"
+#include "../common/types.hpp"
 
 // std
+#include <queue>
 #include <string>
-#include <thread>
-
-// threading
-#include <threading.hpp>
 
 namespace client::share {
 
-// extern threading::pthread reader_thread;
-// extern threading::pthread writer_thread;
+extern threading::thread reader_thread;
+extern threading::thread writer_thread;
+extern threading::thread input_thread;
 
-extern std::thread input_thread;
-
-// used to stop the gui
-// extern common::readonly_t<bool> stop_gui;
-
-// used in the gui to decided which draws
-// to show
-// extern common::readonly_t<bool> show_mine;
-
-// log file
 extern logging::log_file log_file;
 
-// writer queue
-// extern common::ts_queue<prot::TaggedCommand> writer_queue;
+extern std::string username;
 
-// nickname
-extern std::string nickname;
+extern bool show_mine;
+
+extern bool run_gui;
+
+extern threading::mutex writer_mutex;
+
+extern threading::cond_var writer_cond;
+
+extern std::queue<Action> writer_queue;
 
 // double instance locking state
 // (http://concurrencyfreaks.blogspot.com/2013/11/double-instance-locking.html)
 
-extern threading::mutex writer_mutex;
+extern threading::mutex tagged_draw_vector_mutex;
 
 extern threading::rwlock rwlock1;
 extern threading::rwlock rwlock2;

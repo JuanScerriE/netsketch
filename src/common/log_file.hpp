@@ -9,7 +9,7 @@
 #include <fmt/core.h>
 
 // common
-#include <abort.hpp>
+#include "../common/abort.hpp"
 
 namespace logging {
 
@@ -50,10 +50,7 @@ class log_file {
 
     void close()
     {
-        ABORTIF(
-            !m_file,
-            "trying to close a nullptr FILE *"
-        );
+        ABORTIF(!m_file, "trying to close a nullptr FILE *");
 
         // NOTE: cppreference.com on std::fclose => Whether
         // or not the operation succeeds, the stream is no
@@ -65,11 +62,7 @@ class log_file {
         // the only reasonable thing to do is to warn the
         // user
         if (std::fclose(m_file) == EOF) {
-            fmt::println(
-                stderr,
-                "warn: closing file {} failed",
-                m_name
-            );
+            fmt::println(stderr, "warn: closing file {} failed", m_name);
         }
 
         m_file = nullptr;
@@ -77,10 +70,7 @@ class log_file {
 
     bool write(std::basic_string_view<char> message)
     {
-        ABORTIF(
-            !m_file,
-            "trying to write to a nullptr FILE *"
-        );
+        ABORTIF(!m_file, "trying to write to a nullptr FILE *");
 
         // NOTE: each of the individual elements
         // of a string view must be chars, for
@@ -88,12 +78,7 @@ class log_file {
         // 3 chars. there using fwrite in
         // this manner should be correct
 
-        std::fwrite(
-            message.data(),
-            sizeof(char),
-            message.length(),
-            m_file
-        );
+        std::fwrite(message.data(), sizeof(char), message.length(), m_file);
 
         if (std::ferror(m_file)) {
             m_has_error = true;

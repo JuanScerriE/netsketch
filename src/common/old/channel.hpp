@@ -15,10 +15,10 @@
 #include <arpa/inet.h>
 
 // network
+#include "../common/serial.hpp"
+#include "../common/types.hpp"
 #include "abort.hpp"
 #include "network.hpp"
-#include <serial.hpp>
-#include <types.hpp>
 
 #define MAGIC_BYTES (static_cast<short>(0x2003))
 
@@ -291,6 +291,9 @@ class Channel {
 
     std::queue<ByteVector> m_writer_queue {};
 
+    // logging
+    inline static logging::log log;
+
    private:
     static void setup_logging(std::string ipv4, std::string port)
     {
@@ -314,7 +317,4 @@ class Channel {
 
     std::string m_ipv4;
     std::string m_port;
-
-    // logging
-    inline static logging::log log;
 };

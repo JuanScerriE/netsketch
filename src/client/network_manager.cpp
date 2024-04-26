@@ -1,13 +1,12 @@
 // client
-#include <network_manager.hpp>
-#include <reader.hpp>
-#include <writer.hpp>
+#include "network_manager.hpp"
+#include "reader.hpp"
+#include "share.hpp"
+#include "writer.hpp"
 
-// share
-#include <share.hpp>
-
-// logging
-#include <log.hpp>
+// common
+#include "../common/log.hpp"
+#include "../common/serial.hpp"
 
 // unix (hopefully)
 #include <netinet/in.h>
@@ -16,233 +15,141 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+// std
+#include <variant>
+
 namespace client {
 
-network_manager_t::network_manager_t(
-    uint32_t ipv4_addr,
-    uint16_t port
-)
-    : m_ipv4_addr(ipv4_addr), m_port(port)
+NetworkManager::NetworkManager(uint32_t ipv4, uint16_t port)
+    : m_ipv4(ipv4), m_port(port)
 {
     setup_logging();
 }
 
-bool network_manager_t::setup()
+NetworkManager::~NetworkManager()
 {
-    if (!setup_connection()) {
+    close_reader();
+    close_writer();
+}
+
+bool NetworkManager::setup()
+{
+    if (!open_socket()) {
         return false;
     }
 
-    setup_reader_thread();
-    setup_writer_thread();
+    wrap_socket();
+
+    if (!send_username()) {
+        return false;
+    }
+
+    start_reader();
+    start_writer();
 
     return true;
 }
 
-void network_manager_t::close()
+bool NetworkManager::open_socket()
 {
-    close_writer_thread();
-    close_reader_thread();
-    close_connection();
+    try {
+        m_conn.open(SOCK_STREAM, 0);
+
+        sockaddr_in addr {};
+        addr.sin_family = AF_INET;
+        addr.sin_addr.s_addr = htonl(m_ipv4);
+        addr.sin_port = htons(m_port);
+
+        m_conn.connect(&addr);
+    } catch (std::runtime_error& error) {
+        log.error(error.what());
+
+        return false;
+    }
+
+    return true;
 }
 
-bool network_manager_t::setup_connection()
+void NetworkManager::wrap_socket()
 {
-    m_conn_fd = socket(AF_INET, SOCK_STREAM, 0);
+    m_channel = Channel { m_conn };
+}
 
-    if (m_conn_fd == -1) {
-        log.error(
-            "could not create socket, reason: {}",
-            strerror(errno)
-        );
+bool NetworkManager::send_username()
+{
+    Username username { share::username };
 
-        log.flush();
+    ByteVector req { Serialize { username }.bytes() };
 
-        return false;
-    }
+    auto write_status = m_channel.write(req);
 
-    sockaddr_in server_addr {};
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = htonl(m_ipv4_addr);
-    server_addr.sin_port = htons(m_port);
-
-    if (connect(
-            m_conn_fd,
-            (sockaddr*)&server_addr,
-            sizeof(server_addr)
-        )
-        == -1) {
-        log.error(
-            "could not connect, reason: {}",
-            strerror(errno)
-        );
-
-        log.flush();
-
-        if (::close(m_conn_fd) == -1) {
-            ABORTV(
-                "closing connection failed, reason: {}",
-                strerror(errno)
-            );
-        }
+    if (write_status != ChannelErrorCode::OK) {
+        log.error("writing failed, reason {}", write_status.what());
 
         return false;
     }
 
-    pollfd poll_fd = { m_conn_fd, POLLIN, 0 };
+    auto [res, read_status] = m_channel.read(60000);
 
-    if (poll(&poll_fd, 1, 60000) == -1) {
-        log.error(
-            "poll of connection failed, reason: {}",
-            strerror(errno)
-        );
-
-        if (::close(m_conn_fd) == -1) {
-            ABORTV(
-                "closing connection failed, reason: {}",
-                strerror(errno)
-            );
-        }
+    if (read_status != ChannelErrorCode::OK) {
+        log.error("reading failed, reason {}", read_status.what());
 
         return false;
     }
 
-    if (poll_fd.revents & POLLHUP) {
-        log.warn("connection hung up");
+    Deserialize deserialize { res };
 
-        if (::close(m_conn_fd) == -1) {
-            ABORTV(
-                "closing connection failed, reason: {}",
-                strerror(errno)
-            );
-        }
+    auto [payload, status] = deserialize.payload();
+
+    if (status != DeserializeErrorCode::OK) {
+        log.error("reading failed, reason {}", read_status.what());
 
         return false;
     }
 
-    if (!(poll_fd.revents & POLLIN)) {
-        log.warn("establishing connection timedout");
-
-        if (::close(m_conn_fd) == -1) {
-            ABORTV(
-                "closing connection failed, reason: {}",
-                strerror(errno)
-            );
-        }
-
-        return false;
-    }
-
-    uint16_t check {};
-
-    ssize_t check_size
-        = read(m_conn_fd, &check, sizeof(check));
-
-    if (check_size == -1) {
+    if (std::holds_alternative<Decline>(payload)) {
         log.warn(
-            "reading from connection failed, "
-            "reason: {}",
-            strerror(errno)
+            "connection declined, reason {}",
+            std::get<Decline>(payload).reason
         );
-
-        if (::close(m_conn_fd) == -1) {
-            ABORTV(
-                "closing connection failed, reason: {}",
-                strerror(errno)
-            );
-        }
 
         return false;
     }
 
-    if (check_size != sizeof(check)) {
-        log.warn(
-            "unexpected message size ({} bytes)",
-            check_size
-        );
-
-        if (::close(m_conn_fd) == -1) {
-            ABORTV(
-                "closing connection failed, reason: {}",
-                strerror(errno)
-            );
-        }
-
-        return false;
-    }
-
-    uint16_t host_check = ntohs(check);
-
-    // accepted
-    if (host_check == 1) {
-        log.info("connection established");
-
+    if (std::holds_alternative<Accept>(payload)) {
         return true;
     }
 
-    // declined
-    if (host_check == 2) {
-        log.info("connection refused");
-
-        if (::close(m_conn_fd) == -1) {
-            ABORTV(
-                "closing connection failed, reason: {}",
-                strerror(errno)
-            );
-        }
-
-        return false;
-    }
-
-    log.error("unexpected result");
-
-    if (::close(m_conn_fd) == -1) {
-        ABORTV(
-            "closing connection failed, reason: {}",
-            strerror(errno)
-        );
-    }
+    log.error("unexpected payload type {}", var_type(payload).name());
 
     return false;
 }
 
-void network_manager_t::close_connection()
+void NetworkManager::start_reader()
 {
-    if (::close(m_conn_fd) == -1) {
-        ABORTV(
-            "closing connection failed, reason: {}",
-            strerror(errno)
-        );
-    }
+    share::reader_thread = threading::thread { Reader { m_channel } };
 }
 
-void network_manager_t::setup_reader_thread()
+void NetworkManager::start_writer()
 {
-    share::reader_thread
-        = threading::pthread { reader_t { m_conn_fd } };
+    share::writer_thread = threading::thread { Writer { m_channel } };
 }
 
-void network_manager_t::close_reader_thread()
+void NetworkManager::close_reader()
 {
     if (share::reader_thread.is_initialized())
         share::reader_thread.join();
 }
 
-void network_manager_t::setup_writer_thread()
-{
-    share::writer_thread
-        = threading::pthread { writer_t { m_conn_fd } };
-}
-
-void network_manager_t::close_writer_thread()
+void NetworkManager::close_writer()
 {
     if (share::writer_thread.is_initialized())
         share::writer_thread.join();
 }
 
-logging::log network_manager_t::log {};
+logging::log NetworkManager::log {};
 
-void network_manager_t::setup_logging()
+void NetworkManager::setup_logging()
 {
     using namespace logging;
 

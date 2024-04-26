@@ -1,22 +1,27 @@
 #pragma once
 
 // common
-#include "../common/channel.hpp"
-#include "../common/log.hpp"
+#include <log.hpp>
+
+// util
+#include <utils.hpp>
+
+// prot
+#include <protocol.hpp>
 
 namespace client {
 
-class Writer {
+class writer_t {
    public:
-    explicit Writer(Channel channel);
+    explicit writer_t(int m_conn_fd);
 
     void operator()();
 
-    void shutdown();
+    void dtor();
 
    private:
     // connection
-    Channel m_channel {};
+    const int m_conn_fd;
 
     // logging
     static logging::log log;

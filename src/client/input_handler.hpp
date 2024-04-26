@@ -5,10 +5,7 @@
 #include <string_view>
 
 // common
-#include <types.hpp>
-
-// client
-#include <gui.hpp>
+#include "../common/types.hpp"
 
 namespace client {
 
@@ -28,8 +25,6 @@ class InputHandler {
 
     void shutdown();
 
-    void dtor();
-
    private:
     void process_line(std::string_view line_view);
 
@@ -38,7 +33,7 @@ class InputHandler {
 
     Option m_tool { Option::LINE };
 
-    prot::colour_t m_colour { 0, 0, 0 };
+    Colour m_colour { 0, 0, 0 };
 
     bool m_should_exit { false };
 };

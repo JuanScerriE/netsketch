@@ -1,53 +1,56 @@
-// std
-#include "threading.hpp"
+// cstd
 #include <cerrno>
 #include <csignal>
-
-// unix
 #include <ctime>
 
-// share
-#include <share.hpp>
-#include <sys/time.h>
+// server
+#include "share.hpp"
 
-namespace server::timing {
+#include "../common/tagged_draw_vector_wrapper.hpp"
+#include "../common/threading.hpp"
+#include "../common/types.hpp"
+
+namespace server {
 
 void handle_timer(union sigval val)
 {
-    auto* timer = static_cast<timer_data*>(val.sival_ptr);
+    auto* timer = static_cast<TimerData*>(val.sival_ptr);
+
+    std::string username{timer->user};
 
     {
-        std::string username = timer->user;
+        Adopt adopt { username };
 
-        prot::adopt_t adopt { username };
+        {
+            threading::unique_mutex_guard guard { share::update_mutex };
 
-        // these should really be atomic operations
-        share::e_draw_list.update(adopt);
+            TaggedDrawVectorWrapper { share::tagged_draw_vector }.adopt(adopt);
 
-        share::e_command_queue.push_back(adopt);
+            share::payload_queue.emplace(adopt);
+        }
+
+        share::update_cond.notify_one();
     }
 
     {
-        threading::mutex_guard guard {
-            share::e_timers_mutex
-        };
+        threading::mutex_guard guard { share::timers_mutex };
 
-        for (auto iter = share::e_timers.rbegin();
-             iter != share::e_timers.rend();
+        for (auto iter = share::timers.rbegin(); iter != share::timers.rend();
              iter++) {
             if ((*iter).get() == timer) {
-                share::e_timers.erase(iter.base());
+                share::timers.erase(iter.base());
 
                 break;
             }
         }
     }
+
+    share::timing_log.info("adopted {}'s draws", username);
 }
 
 void create_client_timer(const std::string& user)
 {
-    std::unique_ptr<timer_data> data
-        = std::make_unique<timer_data>();
+    std::unique_ptr<TimerData> data = std::make_unique<TimerData>();
 
     data->user = user;
 
@@ -63,22 +66,20 @@ void create_client_timer(const std::string& user)
 
     data->timer.create(CLOCK_REALTIME, &ev);
 
-    timer_data* data_raw = data.get();
+    TimerData* data_raw = data.get();
 
     {
-        threading::mutex_guard guard {
-            share::e_timers_mutex
-        };
+        threading::mutex_guard guard { share::timers_mutex };
 
-        share::e_timers.push_back(std::move(data));
+        share::timers.push_back(std::move(data));
+
+        itimerspec its {};
+        bzero(&its, sizeof(itimerspec));
+        its.it_value.tv_sec = 60 * 5; // 5 minutes;
+        its.it_value.tv_nsec = 0;
+
+        data_raw->timer.set(0, &its, nullptr);
     }
-
-    itimerspec its {};
-    bzero(&its, sizeof(itimerspec));
-    its.it_value.tv_sec = 60 * 5; // 5 minutes;
-    its.it_value.tv_nsec = 0;
-
-    data_raw->timer.set(0, &its, nullptr);
 }
 
 // so, at first I thought I'd want

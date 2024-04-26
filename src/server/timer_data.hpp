@@ -9,15 +9,21 @@
 // unix
 #include <ctime>
 
-namespace server::timing {
-class timer {
-   public:
-    timer() = default;
+namespace server {
 
-    timer(clockid_t clockid, sigevent* evp)
+class Timer {
+   public:
+    Timer() = default;
+
+    Timer(const Timer& other) = delete;
+
+    Timer& operator=(const Timer& other) = delete;
+
+    Timer(clockid_t clockid, sigevent* evp)
     {
         create(clockid, evp);
     }
+
 
     void create(clockid_t clockid, sigevent* evp)
     {
@@ -27,17 +33,14 @@ class timer {
     }
 
     void
-    set(int flags,
-        const struct itimerspec* newval,
-        struct itimerspec* oldval)
+    set(int flags, const struct itimerspec* newval, struct itimerspec* oldval)
     {
-        if (timer_settime(m_timer, flags, newval, oldval)
-            == -1) {
+        if (timer_settime(m_timer, flags, newval, oldval) == -1) {
             throw std::runtime_error { strerror(errno) };
         }
     }
 
-    ~timer() noexcept(false)
+    ~Timer() noexcept(false)
     {
         if (timer_delete(m_timer) == -1) {
             throw std::runtime_error { strerror(errno) };
@@ -48,9 +51,9 @@ class timer {
     timer_t m_timer {};
 };
 
-struct timer_data {
-    timer timer {};
+struct TimerData {
+    Timer timer {};
     std::string user {};
 };
 
-} // namespace server::timing
+} // namespace server

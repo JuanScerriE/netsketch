@@ -1,36 +1,36 @@
 #pragma once
 
-// logging
-#include <log.hpp>
+// common
+#include "../common/channel.hpp"
+#include "../common/log.hpp"
+#include "../common/network.hpp"
 
 namespace client {
 
-class network_manager_t {
+class NetworkManager {
    public:
-    explicit network_manager_t(
-        uint32_t ipv4_addr,
-        uint16_t port
-    );
+    explicit NetworkManager(uint32_t ipv4, uint16_t port);
 
     bool setup();
-    void close();
+
+    ~NetworkManager();
 
    private:
-    bool setup_connection();
-    void close_connection();
-
-    void setup_reader_thread();
-    void close_reader_thread();
-
-    void setup_writer_thread();
-    void close_writer_thread();
+    bool open_socket();
+    void wrap_socket();
+    bool send_username();
+    void start_reader();
+    void start_writer();
+    void close_reader();
+    void close_writer();
 
     // info
-    const uint32_t m_ipv4_addr;
+    const uint32_t m_ipv4;
     const uint16_t m_port;
 
-    // socket
-    int m_conn_fd {};
+    IPv4Socket m_conn {};
+
+    Channel m_channel {};
 
     // logging
     static logging::log log;

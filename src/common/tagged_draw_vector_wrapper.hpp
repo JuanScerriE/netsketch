@@ -19,10 +19,10 @@ class TaggedDrawVectorWrapper {
 
     TaggedDrawVectorWrapper& operator=(const TaggedDrawVectorWrapper&) = delete;
 
-    void adopt(const std::string& username)
+    void adopt(const Adopt& adopt)
     {
         for (auto iter = m_vector.rbegin(); iter != m_vector.rend(); iter++) {
-            if (iter->username == username) {
+            if (iter->username == adopt.username) {
                 iter->adopted = true;
             }
         }
@@ -34,19 +34,19 @@ class TaggedDrawVectorWrapper {
 
         std::visit(
             overload {
-                [this, username](Draw& arg) {
+                [this, username](const Clear& arg) {
                     handle(username, arg);
                 },
-                [this, username](Select& arg) {
+                [this, username](const Undo& arg) {
                     handle(username, arg);
                 },
-                [this, username](Delete& arg) {
+                [this, username](const Delete& arg) {
                     handle(username, arg);
                 },
-                [this, username](Undo& arg) {
+                [this, username](const Select& arg) {
                     handle(username, arg);
                 },
-                [this, username](Clear& arg) {
+                [this, username](const Draw& arg) {
                     handle(username, arg);
                 },
             },

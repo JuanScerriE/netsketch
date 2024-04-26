@@ -13,7 +13,7 @@ using ByteArray = std::array<std::byte, N>;
 using ByteVector = std::vector<std::byte>;
 
 template <typename T>
-ByteArray<sizeof(T)> to_bytes(T value)
+ByteArray<sizeof(T)> to_bytes(T value) noexcept
 {
     ByteArray<sizeof(T)> bytes {};
 
@@ -23,7 +23,7 @@ ByteArray<sizeof(T)> to_bytes(T value)
 }
 
 template <typename T>
-T from_bytes(ByteArray<sizeof(T)> bytes)
+T from_bytes(ByteArray<sizeof(T)> bytes) noexcept
 {
     T value {};
 

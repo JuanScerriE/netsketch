@@ -51,8 +51,7 @@ class ts_queue {
     {
         {
             threading::mutex_guard lock { m_mutex };
-            m_deque.emplace_back(std::forward<Args>(args)...
-            );
+            m_deque.emplace_back(std::forward<Args>(args)...);
         }
         m_cond_var.notify_one();
     }
@@ -91,8 +90,7 @@ class ts_queue {
     {
         {
             threading::mutex_guard lock { m_mutex };
-            m_deque.emplace_front(std::forward<Args>(args
-            )...);
+            m_deque.emplace_front(std::forward<Args>(args)...);
         }
         m_cond_var.notify_one();
     }

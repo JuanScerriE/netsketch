@@ -1,64 +1,43 @@
 #pragma once
 
 // common
+#include "bytes.hpp"
 #include "overload.hpp"
+#include "types.hpp"
 
 // cstd
 #include <cstring>
 
 // std
-#include <array>
 #include <exception>
 #include <string>
 #include <variant>
-#include <vector>
 
 // types
-#include <types.hpp>
 
-template <std::size_t N>
-using ByteArray = std::array<std::byte, N>;
-
-using ByteVector = std::vector<std::byte>;
-
-namespace util {
-
-template <typename T>
-ByteArray<sizeof(T)> to_bytes(T value)
-{
-    ByteArray<sizeof(T)> bytes {};
-
-    std::memcpy(&bytes, &value, sizeof(T));
-
-    return bytes;
-}
-
-template <typename T>
-T from_bytes(ByteArray<sizeof(T)> bytes)
-{
-    T value {};
-
-    std::memcpy(&value, &bytes, sizeof(T));
-
-    return value;
-}
-
-} // namespace util
-
-class SerialError : public std::exception {
+class ExceededSizeError : public std::exception {
    public:
-    explicit SerialError(std::string message)
-        : m_message(std::move(message))
+    explicit ExceededSizeError(
+        std::size_t expected_size,
+        std::size_t exceeded_by
+    )
+        : m_expected_size { expected_size }, m_exceeded_by { exceeded_by }
     {
     }
 
-    [[nodiscard]] const char* what() const noexcept override
+    [[nodiscard]] std::size_t expected_size() const
     {
-        return m_message.c_str();
+        return m_expected_size;
+    }
+
+    [[nodiscard]] std::size_t exceeded_by() const
+    {
+        return m_exceeded_by;
     }
 
    private:
-    std::string m_message {};
+    std::size_t m_expected_size;
+    std::size_t m_exceeded_by;
 };
 
 class FSerial {
@@ -71,7 +50,7 @@ class FSerial {
             "cannot write non-trivially copyable type"
         );
 
-        for (auto& byte : util::to_bytes(value)) {
+        for (auto& byte : to_bytes(value)) {
             m_bytes.emplace_back(byte);
         }
     }
@@ -101,7 +80,10 @@ class BSerial {
         );
 
         if (m_offset + sizeof(T) > m_bytes.size()) {
-            throw SerialError("exceeded vector size");
+            throw ExceededSizeError(
+                m_bytes.size(),
+                m_offset + sizeof(T) - m_bytes.size()
+            );
         }
 
         ByteArray<sizeof(T)> bytes {};
@@ -112,7 +94,7 @@ class BSerial {
 
         m_offset += sizeof(T);
 
-        return util::from_bytes<T>(bytes);
+        return from_bytes<T>(bytes);
     }
 
    private:
@@ -130,7 +112,7 @@ class Serialize {
         std::visit(
             overload {
                 [this](Payload& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
             },
             arg
@@ -148,22 +130,22 @@ class Serialize {
         std::visit(
             overload {
                 [this](Adopt& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
                 [this](Decline& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
                 [this](Accept& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
                 [this](Username& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
                 [this](TaggedDrawVector& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
                 [this](TaggedAction& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
             },
             arg
@@ -186,7 +168,7 @@ class Serialize {
 
     void ser(Accept&)
     {
-        m_fserial.write(PayloadType::DECLINE);
+        m_fserial.write(PayloadType::ACCEPT);
     }
 
     void ser(Username& arg)
@@ -215,6 +197,8 @@ class Serialize {
 
     void ser(TaggedAction& arg)
     {
+//        m_fserial.write(PayloadType::TAGGED_ACTION);
+
         ser(arg.username);
         ser(arg.action);
     }
@@ -224,19 +208,19 @@ class Serialize {
         std::visit(
             overload {
                 [this](Clear& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
                 [this](Undo& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
                 [this](Delete& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
                 [this](Select& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
                 [this](Draw& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
             },
             arg
@@ -275,16 +259,16 @@ class Serialize {
         std::visit(
             overload {
                 [this](TextDraw& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
                 [this](CircleDraw& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
                 [this](RectangleDraw& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
                 [this](LineDraw& arg) {
-                    this->ser(arg);
+                    ser(arg);
                 },
             },
             arg
@@ -332,6 +316,78 @@ class Serialize {
     FSerial m_fserial {};
 };
 
+class UnexpectedTypeError : public std::exception {
+   public:
+    explicit UnexpectedTypeError(uint32_t type)
+        : m_type { type }
+    {
+    }
+
+    [[nodiscard]] uint32_t type() const
+    {
+        return m_type;
+    }
+
+   private:
+    uint32_t m_type {};
+};
+
+enum class DeserializeErrorCode {
+    EXCEEDED_SIZE,
+    OK,
+    UNEXPECTED_TYPE,
+};
+
+struct DeserializeError {
+    DeserializeError(ExceededSizeError error)
+        : m_code(DeserializeErrorCode::EXCEEDED_SIZE), m_what(error)
+    {
+    }
+
+    DeserializeError(UnexpectedTypeError error)
+        : m_code(DeserializeErrorCode::UNEXPECTED_TYPE), m_what(error)
+    {
+    }
+
+    DeserializeError(DeserializeErrorCode code)
+        : m_code(code)
+    {
+    }
+
+    operator DeserializeErrorCode() const
+    {
+        return m_code;
+    }
+
+    [[nodiscard]] std::string what() const
+    {
+        return std::visit(
+            overload {
+                [](const UnexpectedTypeError& error) {
+                    return fmt::format("unexpected type {}", error.type());
+                },
+                [](const ExceededSizeError& error) {
+                    return fmt::format(
+                        "exceeded {} by {} (bytes)",
+                        error.expected_size(),
+                        error.exceeded_by()
+                    );
+                },
+                [](const std::monostate&) {
+                    return std::string {};
+                },
+            },
+            m_what
+        );
+    }
+
+   private:
+    DeserializeErrorCode m_code { DeserializeErrorCode::OK };
+
+    std::variant<std::monostate, UnexpectedTypeError, ExceededSizeError>
+        m_what { std::monostate {} };
+};
+
 class Deserialize {
    public:
     explicit Deserialize(ByteVector bytes)
@@ -339,9 +395,15 @@ class Deserialize {
     {
     }
 
-    [[nodiscard]] Payload payload()
+    [[nodiscard]] std::pair<Payload, DeserializeError> payload() noexcept
     {
-        return deser_payload();
+        try {
+            return std::make_pair(deser_payload(), DeserializeErrorCode::OK);
+        } catch (UnexpectedTypeError& error) {
+            return std::make_pair(Payload {}, error);
+        } catch (ExceededSizeError& error) {
+            return std::make_pair(Payload {}, error);
+        }
     }
 
    private:
@@ -363,7 +425,7 @@ class Deserialize {
         case PayloadType::TAGGED_ACTION:
             return deser_tagged_action();
         default:
-            throw SerialError("unexpected type");
+            throw UnexpectedTypeError(static_cast<uint32_t>(type));
         }
     }
 
@@ -425,7 +487,7 @@ class Deserialize {
                               deser_string() };
         }
         default:
-            throw SerialError("unexpected type");
+            throw UnexpectedTypeError(static_cast<uint32_t>(type));
         }
     }
 
@@ -451,7 +513,7 @@ class Deserialize {
         case ActionType::CLEAR:
             return Clear { m_bserial.read<Qualifier>() };
         default:
-            throw SerialError("unexpected type");
+            throw UnexpectedTypeError(static_cast<uint32_t>(type));
         }
     }
 
@@ -460,6 +522,8 @@ class Deserialize {
         auto string_size = m_bserial.read<size_t>();
 
         std::string string {};
+
+        // TODO: make sure that you do not allocate too much when size_t is very large due to incorrect packet
 
         string.reserve(string_size);
 

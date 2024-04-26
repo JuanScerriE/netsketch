@@ -1,13 +1,11 @@
 // client
-#include "protocol.hpp"
-#include <utils.hpp>
-#include <writer.hpp>
-
-// share
-#include <share.hpp>
+#include "writer.hpp"
+#include "share.hpp"
 
 // common
-#include <types.hpp>
+#include "../common/serial.hpp"
+#include "../common/threading.hpp"
+#include "../common/types.hpp"
 
 // unix
 #include <poll.h>
@@ -18,80 +16,56 @@
 
 namespace client {
 
-writer_t::writer_t(int conn_fd)
-    : m_conn_fd(conn_fd)
+Writer::Writer(Channel channel)
+    : m_channel(channel)
 {
 }
 
-void writer_t::operator()()
+void Writer::operator()()
 {
     for (;;) {
-        // wait for tagged_command
-        prot::TaggedCommand tagged_command
-            = share::writer_queue.pop_back();
+        Action action {};
 
-        // serialize the command
-        prot::serialize_t serializer { tagged_command };
+        {
+            threading::unique_mutex_guard guard { share::writer_mutex };
 
-        util::ByteVector payload = serializer.bytes();
+            share::writer_cond.wait(guard, []() {
+                return share::writer_queue.empty();
+            });
 
-        // setup the header
-        prot::PayloadHeader header { MAGIC_BYTES,
-                                     payload.size() };
+            action = share::writer_queue.back();
 
-        // build the full packet
-        util::ByteVector packet {};
-
-        packet.reserve(sizeof(header) + payload.size());
-
-        for (auto& byte : util::to_bytes(header)) {
-            packet.push_back(byte);
+            share::writer_queue.pop();
         }
 
-        for (auto& byte : payload) {
-            packet.push_back(byte);
-        }
+        Serialize serializer { TaggedAction { share::username, action } };
 
-        log.debug("payload size {}", payload.size());
+        auto status = m_channel.write(serializer.bytes());
 
-        log.debug("packet size {}", packet.size());
+        if (status != ChannelErrorCode::OK) {
+            log.error("writing failed, reason {}", status.what());
 
-        pollfd conn_poll { m_conn_fd, POLLOUT, 0 };
-
-        if (poll(&conn_poll, 1, -1) == -1) {
-            log.error(
-                "poll of connection failed, reason: {}",
-                strerror(errno)
-            );
-
-            return;
-        }
-
-        if (conn_poll.revents & POLLHUP) {
-            log.error("connection hung up");
-
-            return;
-        }
-
-        if (write(m_conn_fd, packet.data(), packet.size())
-            == -1) {
-            log.error(
-                "writing to connection failed, reason: {}",
-                strerror(errno)
-            );
-
-            return;
+            break;
         }
     }
+
+    shutdown();
 }
 
-void writer_t::dtor()
+void Writer::shutdown()
 {
+    if (share::reader_thread.is_initialized()
+        && share::reader_thread.is_alive())
+        share::reader_thread.cancel();
+    if (share::input_thread.is_initialized() && share::input_thread.is_alive())
+        share::input_thread.cancel();
+
+    share::run_gui = false;
 }
 
-logging::log writer_t::log {};
+logging::log Writer::log {};
 
-void writer_t::setup_logging()
+void Writer::setup_logging()
 {
     using namespace logging;
 

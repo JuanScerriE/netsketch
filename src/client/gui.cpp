@@ -1,25 +1,15 @@
 // client
 #include "gui.hpp"
 #include "share.hpp"
-#include "threading.hpp"
 
 // common
 #include "../common/overload.hpp"
+#include "../common/threading.hpp"
 #include "../common/types.hpp"
-
-// cstd
-#include <cmath>
-
-// std
-#include <variant>
 
 // raylib
 #include <raylib.h>
 #include <raymath.h>
-
-// fmt
-#include <fmt/chrono.h>
-#include <fmt/core.h>
 
 namespace client {
 
@@ -83,13 +73,13 @@ inline void Gui::draw_scene()
             };
 
             if (guard.is_owning()) {
-                if (share::show_mine()) {
-                    for (auto& tagged_draw : share::list1) {
-                        if (tagged_draw.username == share::nickname)
+                if (share::show_mine) {
+                    for (auto& tagged_draw : share::vec1) {
+                        if (tagged_draw.username == share::username)
                             process_draw(tagged_draw.draw);
                     }
                 } else {
-                    for (auto& tagged_draw : share::list1) {
+                    for (auto& tagged_draw : share::vec2) {
                         process_draw(tagged_draw.draw);
                     }
                 }
@@ -105,13 +95,13 @@ inline void Gui::draw_scene()
             };
 
             if (guard.is_owning()) {
-                if (share::show_mine()) {
-                    for (auto& tagged_draw : share::list1) {
-                        if (tagged_draw.username == share::nickname)
+                if (share::show_mine) {
+                    for (auto& tagged_draw : share::vec2) {
+                        if (tagged_draw.username == share::username)
                             process_draw(tagged_draw.draw);
                     }
                 } else {
-                    for (auto& tagged_draw : share::list1) {
+                    for (auto& tagged_draw : share::vec2) {
                         process_draw(tagged_draw.draw);
                     }
                 }
@@ -188,7 +178,7 @@ void Gui::game_loop()
 
     SetTargetFPS(m_target_fps);
 
-    while (!share::stop_gui()) {
+    while (share::run_gui) {
         if (IsKeyPressed(KEY_H)) {
             m_camera = { { 0, 0 }, { 0, 0 }, 0, 1.0 };
         }

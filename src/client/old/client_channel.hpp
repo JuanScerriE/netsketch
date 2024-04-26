@@ -5,9 +5,11 @@
 #include "../common/tagged_draw_vector_wrapper.hpp"
 #include "../network/channel.hpp"
 #include "../threading/threading.hpp"
-#include "draw_list.hpp"
 #include "serial.hpp"
 #include "share.hpp"
+
+// std
+#include <any>
 
 namespace client {
 
@@ -27,25 +29,24 @@ class ClientChannel : public Channel {
         std::visit(
             overload {
                 [](Adopt& arg) {
-                    threading::mutex_guard guard { share::writer_mutex };
+                    threading::mutex_guard guard {
+                        share::tagged_draw_vector_mutex
+                    };
 
                     {
                         threading::rwlock_wrguard wrguard { share::rwlock1 };
 
-                        TaggedDrawVectorWrapper { share::vec1 }.adopt(
-                            arg.username
-                        );
+                        TaggedDrawVectorWrapper { share::vec1 }.adopt(arg);
                     }
 
                     {
                         threading::rwlock_wrguard wrguard { share::rwlock2 };
 
-                        TaggedDrawVectorWrapper { share::vec1 }.adopt(
-                            arg.username
-                        );
+                        TaggedDrawVectorWrapper { share::vec1 }.adopt(arg);
                     }
                 },
                 [](Decline& arg) {
+                    (void)arg;
                 },
                 [](Accept&) {
                     log.info("connection accepted");
@@ -54,7 +55,9 @@ class ClientChannel : public Channel {
                     ABORT("unexpected type");
                 },
                 [](TaggedDrawVector& arg) {
-                    threading::mutex_guard guard { share::writer_mutex };
+                    threading::mutex_guard guard {
+                        share::tagged_draw_vector_mutex
+                    };
 
                     {
                         threading::rwlock_wrguard wrguard { share::rwlock1 };
@@ -72,7 +75,9 @@ class ClientChannel : public Channel {
                     ABORT("unexpected type");
                 },
                 [](TaggedAction& arg) {
-                    threading::mutex_guard guard { share::writer_mutex };
+                    threading::mutex_guard guard {
+                        share::tagged_draw_vector_mutex
+                    };
 
                     {
                         threading::rwlock_wrguard wrguard { share::rwlock1 };
@@ -89,28 +94,45 @@ class ClientChannel : public Channel {
             },
             payload
         );
-
-        if (std::holds_alternative<prot::TaggedCommand>(payload_object)) {
-            auto& tagged_command
-                = std::get<prot::TaggedCommand>(payload_object);
-            update_list(tagged_command);
-
-            return;
-        }
-
-        if (std::holds_alternative<prot::TaggedDraw>(payload_object)) {
-            auto& tagged_draw = std::get<prot::TaggedDraw>(payload_object);
-            (void)tagged_draw;
-
-            return;
-        }
-
-        throw std::runtime_error("does not contain known type");
     }
 
     void send(std::any object) override
     {
-        (void)object;
+        if (object.type() == typeid(Username)) {
+            send(std::any_cast<Username>(object));
+        }
+
+        if (object.type() == typeid(TaggedAction)) {
+            send(std::any_cast<TaggedAction>(object));
+        }
+
+        ABORT("unreachable");
+    }
+
+    void send(const Username& username)
+    {
+        Serialize serialize { username };
+
+        {
+            std::scoped_lock lock { m_mutex };
+
+            m_writer_queue.push(serialize.bytes());
+        }
+
+        m_cond_var.notify_one();
+    }
+
+    void send(const TaggedAction& tagged_action)
+    {
+        Serialize serialize { tagged_action };
+
+        {
+            std::scoped_lock lock { m_mutex };
+
+            m_writer_queue.push(serialize.bytes());
+        }
+
+        m_cond_var.notify_one();
     }
 
     void shutdown() override

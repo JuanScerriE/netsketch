@@ -12,6 +12,7 @@
 #include <memory>
 #include <queue>
 #include <unordered_map>
+#include <unordered_set>
 
 // server
 #include "timer_data.hpp"
@@ -23,6 +24,10 @@
 namespace server::share {
 
 extern std::atomic_bool run;
+
+extern threading::mutex users_mutex;
+
+extern std::unordered_set<std::string> users;
 
 extern threading::mutex threads_mutex;
 

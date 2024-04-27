@@ -24,7 +24,6 @@ class Timer {
         create(clockid, evp);
     }
 
-
     void create(clockid_t clockid, sigevent* evp)
     {
         if (timer_create(clockid, evp, &m_timer) == -1) {

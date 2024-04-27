@@ -13,7 +13,7 @@ namespace server {
 
 class ConnHandler {
    public:
-    explicit ConnHandler(IPv4SocketRef sock);
+    explicit ConnHandler(IPv4SocketRef sock, std::string username);
 
     void operator()();
 
@@ -30,6 +30,8 @@ class ConnHandler {
 
     std::string m_ipv4 {};
     std::string m_port {};
+
+    std::string m_username {};
 
     // logging
     static logging::log log;

@@ -64,7 +64,7 @@ struct Delete {
 
 struct Undo { };
 
-enum class Qualifier : std::uint8_t {
+enum class Qualifier : std::uint16_t {
     ALL,
     MINE
 };

@@ -5,6 +5,10 @@ namespace server::share {
 
 std::atomic_bool run { true };
 
+threading::mutex users_mutex {};
+
+std::unordered_set<std::string> users {};
+
 threading::mutex threads_mutex {};
 
 std::list<threading::thread> threads {};
@@ -29,6 +33,6 @@ TaggedDrawVector tagged_draw_vector {};
 
 std::queue<Payload> payload_queue {};
 
-logging::log timing_log{};
+logging::log timing_log {};
 
 } // namespace server::share

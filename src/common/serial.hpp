@@ -13,7 +13,8 @@
 #include <string>
 #include <variant>
 
-// types
+// fmt
+#include <fmt/core.h>
 
 class ExceededSizeError : public std::exception {
    public:
@@ -97,6 +98,16 @@ class BSerial {
         return from_bytes<T>(bytes);
     }
 
+    [[nodiscard]] size_t current_offset() const
+    {
+        return m_offset;
+    }
+
+    [[nodiscard]] size_t expected_size() const
+    {
+        return m_bytes.size();
+    }
+
    private:
     size_t m_offset { 0 };
 
@@ -130,21 +141,27 @@ class Serialize {
         std::visit(
             overload {
                 [this](Adopt& arg) {
+                    m_fserial.write(PayloadType::ADOPT);
                     ser(arg);
                 },
                 [this](Decline& arg) {
+                    m_fserial.write(PayloadType::DECLINE);
                     ser(arg);
                 },
                 [this](Accept& arg) {
+                    m_fserial.write(PayloadType::ACCEPT);
                     ser(arg);
                 },
                 [this](Username& arg) {
+                    m_fserial.write(PayloadType::USERNAME);
                     ser(arg);
                 },
                 [this](TaggedDrawVector& arg) {
+                    m_fserial.write(PayloadType::TAGGED_DRAW_VECTOR);
                     ser(arg);
                 },
                 [this](TaggedAction& arg) {
+                    m_fserial.write(PayloadType::TAGGED_ACTION);
                     ser(arg);
                 },
             },
@@ -154,33 +171,26 @@ class Serialize {
 
     void ser(Adopt& arg)
     {
-        m_fserial.write(PayloadType::ADOPT);
-
         ser(arg.username);
     }
 
     void ser(Decline& arg)
     {
-        m_fserial.write(PayloadType::DECLINE);
-
         ser(arg.reason);
     }
 
     void ser(Accept&)
     {
-        m_fserial.write(PayloadType::ACCEPT);
     }
 
     void ser(Username& arg)
     {
-        m_fserial.write(PayloadType::USERNAME);
-
         ser(arg.username);
     }
 
     void ser(TaggedDrawVector& arg)
     {
-        m_fserial.write(PayloadType::TAGGED_DRAW_VECTOR);
+        m_fserial.write(arg.size());
 
         for (auto& arg_ : arg) {
             ser(arg_);
@@ -197,8 +207,6 @@ class Serialize {
 
     void ser(TaggedAction& arg)
     {
-//        m_fserial.write(PayloadType::TAGGED_ACTION);
-
         ser(arg.username);
         ser(arg.action);
     }
@@ -208,18 +216,23 @@ class Serialize {
         std::visit(
             overload {
                 [this](Clear& arg) {
+                    m_fserial.write(ActionType::CLEAR);
                     ser(arg);
                 },
                 [this](Undo& arg) {
+                    m_fserial.write(ActionType::UNDO);
                     ser(arg);
                 },
                 [this](Delete& arg) {
+                    m_fserial.write(ActionType::DELETE);
                     ser(arg);
                 },
                 [this](Select& arg) {
+                    m_fserial.write(ActionType::SELECT);
                     ser(arg);
                 },
                 [this](Draw& arg) {
+                    m_fserial.write(ActionType::DRAW);
                     ser(arg);
                 },
             },
@@ -229,24 +242,20 @@ class Serialize {
 
     void ser(Clear& arg)
     {
-        m_fserial.write(ActionType::CLEAR);
         m_fserial.write(arg.qualifier);
     }
 
     void ser(Undo&)
     {
-        m_fserial.write(ActionType::UNDO);
     }
 
     void ser(Delete& arg)
     {
-        m_fserial.write(ActionType::DELETE);
         m_fserial.write(arg.id);
     }
 
     void ser(Select& arg)
     {
-        m_fserial.write(ActionType::SELECT);
         m_fserial.write(arg.id);
 
         ser(arg.draw);
@@ -254,20 +263,22 @@ class Serialize {
 
     void ser(Draw& arg)
     {
-        m_fserial.write(ActionType::DRAW);
-
         std::visit(
             overload {
                 [this](TextDraw& arg) {
+                    m_fserial.write(DrawType::TEXT);
                     ser(arg);
                 },
                 [this](CircleDraw& arg) {
+                    m_fserial.write(DrawType::CIRCLE);
                     ser(arg);
                 },
                 [this](RectangleDraw& arg) {
+                    m_fserial.write(DrawType::RECTANGLE);
                     ser(arg);
                 },
                 [this](LineDraw& arg) {
+                    m_fserial.write(DrawType::LINE);
                     ser(arg);
                 },
             },
@@ -277,7 +288,6 @@ class Serialize {
 
     void ser(TextDraw& arg)
     {
-        m_fserial.write(DrawType::TEXT);
         m_fserial.write(arg.colour);
         m_fserial.write(arg.x);
         m_fserial.write(arg.y);
@@ -287,19 +297,16 @@ class Serialize {
 
     void ser(CircleDraw& arg)
     {
-        m_fserial.write(DrawType::CIRCLE);
         m_fserial.write(arg);
     }
 
     void ser(RectangleDraw& arg)
     {
-        m_fserial.write(DrawType::RECTANGLE);
         m_fserial.write(arg);
     }
 
     void ser(LineDraw& arg)
     {
-        m_fserial.write(DrawType::LINE);
         m_fserial.write(arg);
     }
 
@@ -453,6 +460,15 @@ class Deserialize {
     {
         auto vector_size = m_bserial.read<size_t>();
 
+        if (vector_size + m_bserial.current_offset()
+            > m_bserial.expected_size()) {
+            throw ExceededSizeError(
+                m_bserial.expected_size(),
+                vector_size + m_bserial.current_offset()
+                    - m_bserial.expected_size()
+            );
+        }
+
         TaggedDrawVector vector {};
 
         vector.reserve(vector_size);
@@ -521,9 +537,16 @@ class Deserialize {
     {
         auto string_size = m_bserial.read<size_t>();
 
-        std::string string {};
+        if (string_size + m_bserial.current_offset()
+            > m_bserial.expected_size()) {
+            throw ExceededSizeError(
+                m_bserial.expected_size(),
+                string_size + m_bserial.current_offset()
+                    - m_bserial.expected_size()
+            );
+        }
 
-        // TODO: make sure that you do not allocate too much when size_t is very large due to incorrect packet
+        std::string string {};
 
         string.reserve(string_size);
 

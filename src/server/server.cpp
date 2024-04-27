@@ -18,11 +18,7 @@
 // cstd
 #include <cstdlib>
 
-// std
-#include <type_traits>
-
 // common
-#include "../common/abort.hpp"
 #include "../common/channel.hpp"
 #include "../common/log.hpp"
 #include "../common/network.hpp"
@@ -118,13 +114,21 @@ void Server::request_loop()
         }
 
         {
+            threading::mutex_guard guard { share::users_mutex };
+
+            share::users.insert(*username);
+        }
+
+        {
             threading::mutex_guard guard { share::timers_mutex };
 
-            for (auto iter = share::timers.rbegin();
-                 iter != share::timers.rend();
+            for (auto iter = share::timers.cbegin();
+                 iter != share::timers.cend();
                  iter++) {
                 if (iter->get()->user == *username) {
-                    share::timers.erase(iter.base());
+                    share::timers.erase(iter);
+
+                    log.info("{} reconnected", *username);
 
                     break;
                 }
@@ -189,7 +193,8 @@ void Server::request_loop()
             // start the thread cancelled if cancelling if
             // properly done.
 
-            share::threads.emplace_back(ConnHandler { conn_sock_ref });
+            share::threads.emplace_back(ConnHandler { conn_sock_ref, *username }
+            );
 
             // trim any finished threads
             share::threads.erase(
@@ -239,7 +244,15 @@ std::optional<std::string> Server::is_valid_username(Channel channel)
 
     auto username = std::get<Username>(payload).username;
 
-    if (m_users.count(username) > 0) {
+    bool is_valid { true };
+
+    {
+        threading::mutex_guard guard { share::users_mutex };
+
+        is_valid = share::users.count(username) > 0;
+    }
+
+    if (is_valid) {
         ByteVector req { Serialize {
             Decline {
                 fmt::format("user with name {} already exists", username) } }

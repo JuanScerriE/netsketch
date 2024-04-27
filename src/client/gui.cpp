@@ -75,11 +75,11 @@ inline void Gui::draw_scene()
             if (guard.is_owning()) {
                 if (share::show_mine) {
                     for (auto& tagged_draw : share::vec1) {
-                        if (tagged_draw.username == share::username)
+                        if (tagged_draw.username == share::username && !tagged_draw.adopted)
                             process_draw(tagged_draw.draw);
                     }
                 } else {
-                    for (auto& tagged_draw : share::vec2) {
+                    for (auto& tagged_draw : share::vec1) {
                         process_draw(tagged_draw.draw);
                     }
                 }
@@ -97,7 +97,7 @@ inline void Gui::draw_scene()
             if (guard.is_owning()) {
                 if (share::show_mine) {
                     for (auto& tagged_draw : share::vec2) {
-                        if (tagged_draw.username == share::username)
+                        if (tagged_draw.username == share::username && !tagged_draw.adopted)
                             process_draw(tagged_draw.draw);
                     }
                 } else {

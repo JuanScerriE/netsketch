@@ -26,8 +26,6 @@ class Server {
 
     uint16_t m_port {};
 
-    std::unordered_set<std::string> m_users {};
-
     // logging
     static logging::log log;
 

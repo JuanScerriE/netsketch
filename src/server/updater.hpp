@@ -33,6 +33,8 @@ class Updater {
 
             ByteVector bytes = Serialize { payload }.bytes();
 
+            log.debug("sending: 0x{}", bytes_to_string(bytes));
+
             {
                 threading::mutex_guard guard { share::connections_mutex };
 

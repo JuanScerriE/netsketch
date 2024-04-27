@@ -7,13 +7,6 @@
 #include "../common/threading.hpp"
 #include "../common/types.hpp"
 
-// unix
-#include <poll.h>
-
-// fmt
-#include <fmt/core.h>
-#include <fmt/format.h>
-
 namespace client {
 
 Writer::Writer(Channel channel)
@@ -40,13 +33,19 @@ void Writer::operator()()
 
         Serialize serializer { TaggedAction { share::username, action } };
 
-        auto status = m_channel.write(serializer.bytes());
+        ByteVector bytes = serializer.bytes();
+
+        log.debug("sending: 0x{}", bytes_to_string(bytes));
+
+        auto status = m_channel.write(bytes);
 
         if (status != ChannelErrorCode::OK) {
             log.error("writing failed, reason {}", status.what());
 
             break;
         }
+
+        log.flush();
     }
 
     shutdown();

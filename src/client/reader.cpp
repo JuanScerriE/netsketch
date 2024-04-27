@@ -54,6 +54,8 @@ void Reader::read_loop()
 
 void Reader::handle_payload(ByteVector& bytes)
 {
+    log.debug("received: 0x{}", bytes_to_string(bytes));
+
     Deserialize deserializer { bytes };
 
     auto [payload, status] = deserializer.payload();
@@ -80,7 +82,7 @@ void Reader::handle_payload(ByteVector& bytes)
                 {
                     threading::rwlock_wrguard wrguard { share::rwlock2 };
 
-                    TaggedDrawVectorWrapper { share::vec1 }.adopt(arg);
+                    TaggedDrawVectorWrapper { share::vec2 }.adopt(arg);
                 }
             },
             [](TaggedDrawVector& arg) {
@@ -114,7 +116,7 @@ void Reader::handle_payload(ByteVector& bytes)
                 {
                     threading::rwlock_wrguard wrguard { share::rwlock2 };
 
-                    TaggedDrawVectorWrapper { share::vec1 }.update(arg);
+                    TaggedDrawVectorWrapper { share::vec2 }.update(arg);
                 }
             },
             [](auto& object) {

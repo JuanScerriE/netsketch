@@ -16,7 +16,7 @@ void handle_timer(union sigval val)
 {
     auto* timer = static_cast<TimerData*>(val.sival_ptr);
 
-    std::string username{timer->user};
+    std::string username { timer->user };
 
     {
         Adopt adopt { username };
@@ -35,10 +35,10 @@ void handle_timer(union sigval val)
     {
         threading::mutex_guard guard { share::timers_mutex };
 
-        for (auto iter = share::timers.rbegin(); iter != share::timers.rend();
+        for (auto iter = share::timers.cbegin(); iter != share::timers.cend();
              iter++) {
-            if ((*iter).get() == timer) {
-                share::timers.erase(iter.base());
+            if (iter->get() == timer) {
+                share::timers.erase(iter);
 
                 break;
             }
@@ -71,7 +71,7 @@ void create_client_timer(const std::string& user)
     {
         threading::mutex_guard guard { share::timers_mutex };
 
-        share::timers.push_back(std::move(data));
+        share::timers.push_front(std::move(data));
 
         itimerspec its {};
         bzero(&its, sizeof(itimerspec));

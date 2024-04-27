@@ -1,6 +1,7 @@
 // server
 #include "conn_handler.hpp"
 #include "share.hpp"
+#include "timing.hpp"
 
 // unix
 #include <arpa/inet.h>
@@ -22,8 +23,8 @@
 
 namespace server {
 
-ConnHandler::ConnHandler(IPv4SocketRef sock)
-    : m_sock(sock), m_channel(m_sock)
+ConnHandler::ConnHandler(IPv4SocketRef sock, std::string username)
+    : m_sock(sock), m_channel(m_sock), m_username(std::move(username))
 {
 }
 
@@ -54,9 +55,19 @@ void ConnHandler::operator()()
         [](void* untyped_self) {
             auto* self = static_cast<ConnHandler*>(untyped_self);
 
-            threading::mutex_guard guard { share::connections_mutex };
+            create_client_timer(self->m_username);
 
-            share::connections.erase(self->m_sock.native_handle());
+            {
+                threading::mutex_guard guard { share::connections_mutex };
+
+                share::connections.erase(self->m_sock.native_handle());
+            }
+
+            {
+                threading::mutex_guard guard { share::users_mutex };
+
+                share::users.erase(self->m_username);
+            }
         },
         this
     );

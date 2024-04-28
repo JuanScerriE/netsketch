@@ -7,6 +7,7 @@
 // common
 #include "../common/log.hpp"
 #include "../common/serial.hpp"
+#include "../common/overload.hpp"
 
 // unix (hopefully)
 #include <netinet/in.h>
@@ -79,7 +80,7 @@ bool NetworkManager::send_username()
 {
     Username username { share::username };
 
-    ByteVector req { Serialize { username }.bytes() };
+    ByteString req { serialize<Payload>({ username }) };
 
     auto write_status = m_channel.write(req);
 
@@ -97,9 +98,7 @@ bool NetworkManager::send_username()
         return false;
     }
 
-    Deserialize deserialize { res };
-
-    auto [payload, status] = deserialize.payload();
+    auto [payload, status] = deserialize<Payload>(res);
 
     if (status != DeserializeErrorCode::OK) {
         log.error("reading failed, reason {}", read_status.what());

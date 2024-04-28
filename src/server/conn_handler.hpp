@@ -22,7 +22,7 @@ class ConnHandler {
 
     bool send_full_list();
 
-    void handle_payload(const ByteVector& bytes);
+    void handle_payload(const ByteString& bytes);
 
     IPv4SocketRef m_sock {};
 

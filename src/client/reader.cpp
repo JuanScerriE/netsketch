@@ -52,13 +52,11 @@ void Reader::read_loop()
     shutdown();
 }
 
-void Reader::handle_payload(ByteVector& bytes)
+void Reader::handle_payload(ByteString& bytes)
 {
-    log.debug("received: 0x{}", bytes_to_string(bytes));
+    // log.debug("received: 0x{}", bytes_to_hex(bytes));
 
-    Deserialize deserializer { bytes };
-
-    auto [payload, status] = deserializer.payload();
+    auto [payload, status] = deserialize<Payload>(bytes);
 
     if (status != DeserializeErrorCode::OK) {
         log.warn("deserialization failed, reason {}", status.what());

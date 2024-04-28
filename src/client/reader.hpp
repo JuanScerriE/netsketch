@@ -18,7 +18,7 @@ class Reader {
    private:
     void read_loop();
 
-    void handle_payload(ByteVector& payload);
+    void handle_payload(ByteString& payload);
 
     void update_list(TaggedAction& tagged_command);
     void update_whole_list(TaggedDrawVector& list);

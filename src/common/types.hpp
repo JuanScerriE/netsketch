@@ -9,46 +9,69 @@
 #include <vector>
 
 struct Colour {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
+    uint8_t r { 0 };
+    uint8_t g { 0 };
+    uint8_t b { 0 };
+
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(r, g, b);
+    }
 };
 
 struct LineDraw {
-    Colour colour;
-    int x0;
-    int y0;
-    int x1;
-    int y1;
+    Colour colour {};
+    int x0 { 0 };
+    int y0 { 0 };
+    int x1 { 0 };
+    int y1 { 0 };
+
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(colour, x0, y0, x1, y1);
+    }
 };
 
 struct RectangleDraw {
-    Colour colour;
-    int x;
-    int y;
-    int w;
-    int h;
+    Colour colour {};
+    int x { 0 };
+    int y { 0 };
+    int w { 0 };
+    int h { 0 };
+
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(colour, x, y, w, h);
+    }
 };
 
 struct CircleDraw {
-    Colour colour;
-    int x;
-    int y;
-    float r;
+    Colour colour {};
+    int x { 0 };
+    int y { 0 };
+    float r { 0 };
+
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(colour, x, y, r);
+    }
 };
 
 struct TextDraw {
-    Colour colour;
-    int x;
-    int y;
+    Colour colour {};
+    int x { 0 };
+    int y { 0 };
     std::string string {};
-};
 
-enum class DrawType : std::uint16_t {
-    LINE,
-    RECTANGLE,
-    CIRCLE,
-    TEXT
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(colour, x, y, string);
+    }
 };
 
 using Draw = std::variant<LineDraw, RectangleDraw, CircleDraw, TextDraw>;
@@ -56,13 +79,30 @@ using Draw = std::variant<LineDraw, RectangleDraw, CircleDraw, TextDraw>;
 struct Select {
     long id {};
     Draw draw {};
+
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(id, draw);
+    }
 };
 
 struct Delete {
     long id {};
+
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(id);
+    }
 };
 
-struct Undo { };
+struct Undo {
+    template <class Archive>
+    void serialize(Archive&)
+    {
+    }
+};
 
 enum class Qualifier : std::uint16_t {
     ALL,
@@ -71,52 +111,76 @@ enum class Qualifier : std::uint16_t {
 
 struct Clear {
     Qualifier qualifier {};
+
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(qualifier);
+    }
 };
 
 using Action = std::variant<Draw, Select, Delete, Undo, Clear>;
 
-enum class ActionType : std::uint16_t {
-    DRAW,
-    SELECT,
-    DELETE,
-    UNDO,
-    CLEAR
-};
-
 struct TaggedAction {
     std::string username {};
     Action action {};
+
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(username, action);
+    }
 };
 
 struct TaggedDraw {
     bool adopted {};
     std::string username {};
     Draw draw {};
+
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(adopted, username, draw);
+    }
 };
 
 using TaggedDrawVector = std::vector<TaggedDraw>;
 
 struct Username {
     std::string username {};
+
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(username);
+    }
 };
 
-struct Accept { };
+struct Accept {
+    template <class Archive>
+    void serialize(Archive&)
+    {
+    }
+};
 
 struct Decline {
     std::string reason {};
+
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(reason);
+    }
 };
 
 struct Adopt {
     std::string username {};
-};
 
-enum class PayloadType : std::uint16_t {
-    TAGGED_ACTION,
-    TAGGED_DRAW_VECTOR,
-    USERNAME,
-    ACCEPT,
-    DECLINE,
-    ADOPT
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(username);
+    }
 };
 
 using Payload = std::

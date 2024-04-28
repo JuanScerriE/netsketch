@@ -1,10 +1,10 @@
 #pragma once
 
 // common
+#include "../common/log.hpp"
 #include "../common/network.hpp"
 #include "../common/threading.hpp"
 #include "../common/types.hpp"
-#include "../common/log.hpp"
 
 // std
 #include <atomic>
@@ -16,10 +16,6 @@
 
 // server
 #include "timer_data.hpp"
-
-// I think 64 connections is a reasonable number of
-// connections for a whiteboard (for know).
-#define MAX_CONNS (3)
 
 namespace server::share {
 

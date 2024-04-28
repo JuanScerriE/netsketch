@@ -14,6 +14,7 @@
 // std
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 // cstd
 #include <cerrno>
@@ -85,7 +86,7 @@ class ReadResult {
    public:
     ReadResult() = default;
 
-    ReadResult(bool eof, ByteVector bytes)
+    ReadResult(bool eof, ByteString bytes)
         : m_eof(eof), m_bytes(std::move(bytes))
     {
     }
@@ -97,7 +98,7 @@ class ReadResult {
         return m_eof;
     }
 
-    [[nodiscard]] ByteVector get_bytes() const
+    [[nodiscard]] ByteString get_bytes() const
     {
         ABORTIF(!m_checked, "poll result not checked");
 
@@ -109,7 +110,7 @@ class ReadResult {
 
     bool m_eof {};
 
-    ByteVector m_bytes {};
+    ByteString m_bytes {};
 };
 
 class IPv4Socket {
@@ -315,9 +316,11 @@ class IPv4Socket {
     {
         ABORTIF(m_sock_fd == -1, "uninitialized socket");
 
-        ByteVector bytes { size };
+        std::vector<char> vec_bytes {};
 
-        ssize_t read_size = ::read(m_sock_fd, bytes.data(), size);
+        vec_bytes.reserve(size);
+
+        ssize_t read_size = ::read(m_sock_fd, vec_bytes.data(), size);
 
         if (read_size < 0) {
             throw std::runtime_error {
@@ -333,10 +336,18 @@ class IPv4Socket {
             throw std::runtime_error { "read(): fewer bytes than expected" };
         }
 
+        ByteString bytes {};
+
+        bytes.reserve(size);
+
+        for (size_t i = 0; i < size; i++) {
+            bytes.push_back(vec_bytes[i]);
+        }
+
         return { false, bytes };
     }
 
-    void write(ByteVector bytes) const
+    void write(ByteString bytes) const
     {
         ABORTIF(m_sock_fd == -1, "uninitialized socket");
 
@@ -462,9 +473,11 @@ class IPv4SocketRef {
     {
         ABORTIF(m_sock_fd == -1, "uninitialized socket");
 
-        ByteVector bytes { size };
+        std::vector<char> vec_bytes {};
 
-        ssize_t read_size = ::read(m_sock_fd, bytes.data(), size);
+        vec_bytes.reserve(size);
+
+        ssize_t read_size = ::read(m_sock_fd, vec_bytes.data(), size);
 
         if (read_size < 0) {
             throw std::runtime_error {
@@ -480,10 +493,18 @@ class IPv4SocketRef {
             throw std::runtime_error { "read(): fewer bytes than expected" };
         }
 
+        ByteString bytes {};
+
+        bytes.reserve(size);
+
+        for (size_t i = 0; i < size; i++) {
+            bytes.push_back(vec_bytes[i]);
+        }
+
         return { false, bytes };
     }
 
-    void write(ByteVector bytes) const
+    void write(ByteString bytes) const
     {
         ABORTIF(m_sock_fd == -1, "uninitialized socket");
 

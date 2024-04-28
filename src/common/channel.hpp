@@ -7,7 +7,6 @@
 #include <arpa/inet.h>
 
 // common
-#include "log.hpp"
 #include "network.hpp"
 #include "serial.hpp"
 
@@ -20,27 +19,14 @@ struct Header {
     [[nodiscard]] constexpr static std::size_t size()
     {
         return sizeof(decltype(Header::magic_bytes))
-               + sizeof(decltype(Header::payload_size));
+               + sizeof(decltype(Header::payload_size))
+               + 1; // to record the endianness (used cereal)
     }
 
-    [[nodiscard]] ByteVector serialize() const
+    template <class Archive>
+    void serialize(Archive& archive)
     {
-        FSerial fserial {};
-
-        fserial.write(magic_bytes);
-        fserial.write(payload_size);
-
-        return fserial.bytes();
-    }
-
-    [[nodiscard]] static Header deserialize(ByteVector bytes)
-    {
-        BSerial bserial { std::move(bytes) };
-
-        auto magic_bytes = bserial.read<decltype(Header::magic_bytes)>();
-        auto payload_size = bserial.read<decltype(Header::payload_size)>();
-
-        return { magic_bytes, payload_size };
+        archive(magic_bytes, payload_size);
     }
 };
 
@@ -48,6 +34,7 @@ enum class ChannelErrorCode {
     END_OF_FILE,
     ERRNO,
     HUNG_UP,
+    DESERIALIZATION_FAILED,
     INVALID_HEADER,
     OK,
     TIME_OUT,
@@ -81,6 +68,8 @@ struct ChannelError {
             return "end of file reached";
         case ChannelErrorCode::HUNG_UP:
             return "connection hung up";
+        case ChannelErrorCode::DESERIALIZATION_FAILED:
+            return "failed deserialization";
         case ChannelErrorCode::INVALID_HEADER:
             return "invalid header encountered";
         case ChannelErrorCode::TIME_OUT:
@@ -122,22 +111,22 @@ class Channel {
 
     Channel& operator=(const Channel& other) = default;
 
-    [[nodiscard]] std::pair<ByteVector, ChannelError> read(int time_out = -1)
+    [[nodiscard]] std::pair<ByteString, ChannelError> read(int time_out = -1)
     {
         PollResult poll_result {};
 
         try {
             poll_result = m_conn_sock.poll({ POLLIN }, time_out);
         } catch (std::runtime_error& error) {
-            return std::make_pair(ByteVector {}, error.what());
+            return std::make_pair(ByteString {}, error.what());
         }
 
         if (poll_result.has_timed_out()) {
-            return std::make_pair(ByteVector {}, ChannelErrorCode::TIME_OUT);
+            return std::make_pair(ByteString {}, ChannelErrorCode::TIME_OUT);
         }
 
         if (poll_result.is_hup()) {
-            return std::make_pair(ByteVector {}, ChannelErrorCode::HUNG_UP);
+            return std::make_pair(ByteString {}, ChannelErrorCode::HUNG_UP);
         }
 
         ReadResult read_result {};
@@ -145,18 +134,25 @@ class Channel {
         try {
             read_result = m_conn_sock.read(Header::size());
         } catch (std::runtime_error& error) {
-            return std::make_pair(ByteVector {}, error.what());
+            return std::make_pair(ByteString {}, error.what());
         }
 
         if (read_result.is_eof()) {
-            return std::make_pair(ByteVector {}, ChannelErrorCode::END_OF_FILE);
+            return std::make_pair(ByteString {}, ChannelErrorCode::END_OF_FILE);
         }
 
-        auto header = Header::deserialize(read_result.get_bytes());
+        auto [header, status] = deserialize<Header>(read_result.get_bytes());
+
+        if (status != DeserializeErrorCode::OK) {
+            return std::make_pair(
+                ByteString {},
+                ChannelErrorCode::DESERIALIZATION_FAILED
+            );
+        }
 
         if (header.magic_bytes != MAGIC_BYTES) {
             return std::make_pair(
-                ByteVector {},
+                ByteString {},
                 ChannelErrorCode::INVALID_HEADER
             );
         }
@@ -164,22 +160,21 @@ class Channel {
         try {
             read_result = m_conn_sock.read(header.payload_size);
         } catch (std::runtime_error& error) {
-            return std::make_pair(ByteVector {}, error.what());
+            return std::make_pair(ByteString {}, error.what());
         }
 
         if (read_result.is_eof()) {
-            return std::make_pair(ByteVector {}, ChannelErrorCode::END_OF_FILE);
+            return std::make_pair(ByteString {}, ChannelErrorCode::END_OF_FILE);
         }
 
         return std::make_pair(read_result.get_bytes(), ChannelErrorCode::OK);
     }
 
-    [[nodiscard]] ChannelError write(const ByteVector& payload)
+    [[nodiscard]] ChannelError write(const ByteString& payload)
     {
-        ByteVector header { Header { MAGIC_BYTES, payload.size() }.serialize(
-        ) };
+        ByteString header { serialize(Header { MAGIC_BYTES, payload.size() }) };
 
-        ByteVector packet {};
+        ByteString packet {};
 
         packet.reserve(header.size() + payload.size());
 

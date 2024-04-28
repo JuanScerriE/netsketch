@@ -31,9 +31,9 @@ class Updater {
                 share::payload_queue.pop();
             }
 
-            ByteVector bytes = Serialize { payload }.bytes();
+            ByteString bytes = serialize<Payload>(payload);
 
-            log.debug("sending: 0x{}", bytes_to_string(bytes));
+            // log.debug("sending: 0x{}", bytes_to_hex(bytes));
 
             {
                 threading::mutex_guard guard { share::connections_mutex };
@@ -44,7 +44,11 @@ class Updater {
                     auto status = channel.write(bytes);
 
                     if (status != ChannelErrorCode::OK) {
-                        log.error("[{}] writing failed, reason {}", fd, status.what());
+                        log.error(
+                            "[{}] writing failed, reason {}",
+                            fd,
+                            status.what()
+                        );
                     }
                 }
             }

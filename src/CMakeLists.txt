@@ -8,14 +8,8 @@ add_executable(netsketch_server
 target_link_libraries(netsketch_server PRIVATE
         CLI11::CLI11
         fmt::fmt
+        cereal::cereal
 )
-# target_include_directories(netsketch_server PRIVATE
-#         server
-#         log
-#         common
-#         threading
-#         network
-# )
 target_compile_options(netsketch_server PRIVATE -Werror -Wall -Wextra -Wpedantic -Weffc++ -Wconversion)
 
 #---------------------------------
@@ -41,12 +35,7 @@ endif ()
 target_link_libraries(netsketch_client PRIVATE
         CLI11::CLI11
         fmt::fmt
+        cereal::cereal
         raylib
 )
-# target_include_directories(netsketch_client PRIVATE
-#         client
-#         common
-#         log
-#         threading
-# )
 target_compile_options(netsketch_client PRIVATE -Werror -Wall -Wextra -Wpedantic -Weffc++ -Wconversion)

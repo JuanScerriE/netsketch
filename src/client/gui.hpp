@@ -3,17 +3,9 @@
 // raylib
 #include <raylib.h>
 
-// client
-#include "../common/log_file.hpp"
-
-// prot
-// #include <protocol.hpp>
-
 // common
-#include "../common/types.hpp"
-
-// logging
 #include "../common/log.hpp"
+#include "../common/types.hpp"
 
 namespace client {
 

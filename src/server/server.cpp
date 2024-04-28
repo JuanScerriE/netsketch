@@ -22,6 +22,7 @@
 #include "../common/channel.hpp"
 #include "../common/log.hpp"
 #include "../common/network.hpp"
+#include "../common/overload.hpp"
 #include "../common/serial.hpp"
 #include "../common/threading.hpp"
 
@@ -223,9 +224,7 @@ std::optional<std::string> Server::is_valid_username(Channel channel)
         return {};
     }
 
-    Deserialize deserialize { res };
-
-    auto [payload, deser_status] = deserialize.payload();
+    auto [payload, deser_status] = deserialize<Payload>(res);
 
     if (deser_status != DeserializeErrorCode::OK) {
         log.warn("deserialization error occurred, {}", deser_status.what());
@@ -253,10 +252,8 @@ std::optional<std::string> Server::is_valid_username(Channel channel)
     }
 
     if (is_valid) {
-        ByteVector req { Serialize {
-            Decline {
-                fmt::format("user with name {} already exists", username) } }
-                             .bytes() };
+        ByteString req { serialize<Payload>(Decline {
+            fmt::format("user with name {} already exists", username) }) };
 
         {
             auto status = channel.write(req);
@@ -274,7 +271,7 @@ std::optional<std::string> Server::is_valid_username(Channel channel)
         return {};
     }
 
-    ByteVector req { Serialize { Accept {} }.bytes() };
+    ByteString req { serialize<Payload>(Accept {}) };
 
     auto write_status = channel.write(req);
 
@@ -286,44 +283,6 @@ std::optional<std::string> Server::is_valid_username(Channel channel)
 
     return std::make_optional(username);
 }
-
-// void Server::dtor()
-// {
-//     if (m_current_conn_fd != -1) {
-//         threading::mutex_guard guard { share::e_connections_mutex };
-//
-//         if (shutdown(m_current_conn_fd, SHUT_WR) == -1) {
-//             log.error(
-//                 "connection shutdown failed, "
-//                 "reason: {}",
-//                 strerror(errno)
-//             );
-//         }
-//
-//         if (close(m_current_conn_fd) == -1) {
-//             log.error("closing connection failed, reason: {}",
-//             strerror(errno));
-//         }
-//
-//         share::e_connections.erase(m_current_conn_fd);
-//     }
-//
-//     for (auto& thread : share::e_threads) {
-//         thread.cancel();
-//
-//         thread.join();
-//     }
-//
-//     share::updater_thread.cancel();
-//
-//     if (close(m_socket_fd) == -1) {
-//         log.error("closing socket failed, reason: {}", strerror(errno));
-//     }
-//
-//     log.info("stopping server");
-//
-//     log.flush();
-// }
 
 logging::log Server::log {};
 

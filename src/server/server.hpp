@@ -2,7 +2,6 @@
 
 // std
 #include <optional>
-#include <unordered_set>
 
 // common
 #include "../common/channel.hpp"

@@ -31,11 +31,10 @@ void Writer::operator()()
             share::writer_queue.pop();
         }
 
-        Serialize serializer { TaggedAction { share::username, action } };
+        ByteString bytes { serialize<Payload>(TaggedAction { share::username, action }
+        ) };
 
-        ByteVector bytes = serializer.bytes();
-
-        log.debug("sending: 0x{}", bytes_to_string(bytes));
+        // log.debug("sending: 0x{}", bytes_to_hex(bytes));
 
         auto status = m_channel.write(bytes);
 

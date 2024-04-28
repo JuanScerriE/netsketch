@@ -109,10 +109,7 @@ bool ConnHandler::send_full_list()
         tagged_draw_vector = share::tagged_draw_vector;
     }
 
-    // serialize the list
-    Serialize serializer { tagged_draw_vector };
-
-    auto status = m_channel.write(serializer.bytes());
+    auto status = m_channel.write(serialize<Payload>(tagged_draw_vector));
 
     if (status != ChannelErrorCode::OK) {
         log.info("writing failed, reason: {}", status.what());
@@ -123,11 +120,9 @@ bool ConnHandler::send_full_list()
     return true;
 }
 
-void ConnHandler::handle_payload(const ByteVector& bytes)
+void ConnHandler::handle_payload(const ByteString& bytes)
 {
-    Deserialize deserializer { bytes };
-
-    auto [payload, status] = deserializer.payload();
+    auto [payload, status] = deserialize<Payload>(bytes);
 
     if (status != DeserializeErrorCode::OK) {
         log.warn("deserialization failed, reason {}", status.what());

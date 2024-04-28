@@ -68,7 +68,15 @@ class TaggedDrawVectorWrapper {
     }
     void handle(std::string, Delete arg)
     {
-        m_vector.erase(m_vector.begin() + arg.id);
+        if (m_vector.size() <= 0)
+            return;
+
+        long id = std::min(
+            std::max(arg.id, 0l),
+            static_cast<long>(m_vector.size()) - 1
+        );
+
+        m_vector.erase(m_vector.begin() + id);
     }
     void handle(std::string username, Undo)
     {

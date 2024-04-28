@@ -119,6 +119,8 @@ int main(int argc, char** argv)
 
     simulate_behaviour();
 
+    spdlog::info("Finished...");
+
     return 0;
 }
 
@@ -143,12 +145,12 @@ const int time_delta = 1;
 
 void simulate_behaviour()
 {
-    int max_iterations = 400;
+    int max_iterations = 100;
 
     srand(static_cast<uint32_t>(time(nullptr)));
 
     for (int i = 0; i < max_iterations; i++) {
-        sleep(1);
+        sleep(time_delta);
 
         int action = rand() % static_cast<int>(set_of_actions.size());
 

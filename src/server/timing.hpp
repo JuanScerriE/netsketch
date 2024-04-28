@@ -1,14 +1,16 @@
 // cstd
-#include <cerrno>
-#include <csignal>
 #include <ctime>
 
 // server
 #include "share.hpp"
 
+// common
 #include "../common/tagged_draw_vector_wrapper.hpp"
 #include "../common/threading.hpp"
 #include "../common/types.hpp"
+
+// spdlog
+#include <spdlog/spdlog.h>
 
 namespace server {
 
@@ -45,7 +47,7 @@ void handle_timer(union sigval val)
         }
     }
 
-    share::timing_log.info("adopted {}'s draws", username);
+    spdlog::info("adopted {}'s draws", username);
 }
 
 void create_client_timer(const std::string& user)

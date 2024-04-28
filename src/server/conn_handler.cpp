@@ -8,7 +8,6 @@
 #include <fmt/format.h>
 #include <netinet/in.h>
 #include <poll.h>
-#include <stdexcept>
 #include <unistd.h>
 
 // utils
@@ -16,8 +15,12 @@
 
 // common
 #include "../common/abort.hpp"
+#include "../common/bench.hpp"
 #include "../common/tagged_draw_vector_wrapper.hpp"
 #include "../common/threading.hpp"
+
+// spdlog
+#include <spdlog/spdlog.h>
 
 #define MINUTE (60000)
 
@@ -47,9 +50,7 @@ void ConnHandler::operator()()
 {
     setup_readable_net_info();
 
-    setup_logging(m_ipv4, m_port);
-
-    log.info("received a connection from {}:{}", m_ipv4, m_port);
+    spdlog::info("received a connection from {}:{}", m_ipv4, m_port);
 
     pthread_cleanup_push(
         [](void* untyped_self) {
@@ -72,29 +73,45 @@ void ConnHandler::operator()()
         this
     );
 
-    if (!send_full_list()) {
-        log.info("failed to send full list");
+    {
+        BENCH("sending the full list");
 
-        return;
+        if (!send_full_list()) {
+            spdlog::info("[{}:{}] failed to send full list", m_ipv4, m_port);
+
+            return;
+        }
     }
 
     for (;;) {
         auto [res, status] = m_channel.read(MINUTE * 10);
 
         if (status != ChannelErrorCode::OK) {
-            log.info("reading failed, reason: {}", status.what());
+            spdlog::info(
+                "[{}:{}] reading failed, reason: {}",
+                m_ipv4,
+                m_port,
+                status.what()
+            );
 
             break;
         }
 
-        log.debug("payload size {} bytes", res.size());
+        spdlog::debug(
+            "[{}:{}] payload size {} bytes",
+            m_ipv4,
+            m_port,
+            res.size()
+        );
 
-        handle_payload(res);
+        {
+            BENCH("handling payload");
 
-        log.flush();
+            handle_payload(res);
+        }
     }
 
-    log.info("closing connection handler");
+    spdlog::info("[{}:{}] closing connection handler", m_ipv4, m_port);
 
     pthread_cleanup_pop(1);
 }
@@ -112,7 +129,12 @@ bool ConnHandler::send_full_list()
     auto status = m_channel.write(serialize<Payload>(tagged_draw_vector));
 
     if (status != ChannelErrorCode::OK) {
-        log.info("writing failed, reason: {}", status.what());
+        spdlog::info(
+            "[{}:{}] writing failed, reason: {}",
+            m_ipv4,
+            m_port,
+            status.what()
+        );
 
         return false;
     }
@@ -125,12 +147,22 @@ void ConnHandler::handle_payload(const ByteString& bytes)
     auto [payload, status] = deserialize<Payload>(bytes);
 
     if (status != DeserializeErrorCode::OK) {
-        log.warn("deserialization failed, reason {}", status.what());
+        spdlog::warn(
+            "[{}:{}] deserialization failed, reason {}",
+            m_ipv4,
+            m_port,
+            status.what()
+        );
         return;
     }
 
     if (!std::holds_alternative<TaggedAction>(payload)) {
-        log.warn("unexpected payload type {}", var_type(payload).name());
+        spdlog::warn(
+            "[{}:{}] unexpected payload type {}",
+            m_ipv4,
+            m_port,
+            var_type(payload).name()
+        );
 
         return;
     }
@@ -152,17 +184,6 @@ void ConnHandler::handle_payload(const ByteString& bytes)
     }
 
     share::update_cond.notify_one();
-}
-
-logging::log ConnHandler::log {};
-
-void ConnHandler::setup_logging(std::string ipv4, std::string port)
-{
-    using namespace logging;
-
-    log.set_level(log::level::debug);
-
-    log.set_prefix(fmt::format("[{}:{}]", ipv4, port));
 }
 
 } // namespace server

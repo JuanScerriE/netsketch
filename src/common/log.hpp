@@ -1,10 +1,11 @@
 #pragma once
 
-// std
+// cstd
 #include <cstdarg>
+#include <cstdio>
 
 // fmt
-#include <cstdio>
+#include <fmt/chrono.h>
 #include <fmt/core.h>
 
 // logging
@@ -72,6 +73,8 @@ class log {
         write_level(log_level);
 
         fmt::println(m_file, fmt, args...);
+
+        fflush(m_file);
     }
 
     void c_write(level log_level, const char* fmt, va_list args)
@@ -89,6 +92,8 @@ class log {
         vfprintf(m_file, fmt, args);
 
         fprintf(m_file, "\n");
+
+        fflush(m_file);
     }
 
     void c_write(level log_level, const char* fmt, ...)
@@ -108,6 +113,8 @@ class log {
         va_end(args);
 
         fprintf(m_file, "\n");
+
+        fflush(m_file);
     }
 
     template <typename... T>

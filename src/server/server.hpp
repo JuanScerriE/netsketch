@@ -24,11 +24,6 @@ class Server {
     IPv4Socket m_sock {};
 
     uint16_t m_port {};
-
-    // logging
-    static logging::log log;
-
-    static void setup_logging();
 };
 
 } // namespace server

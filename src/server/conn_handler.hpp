@@ -32,11 +32,6 @@ class ConnHandler {
     std::string m_port {};
 
     std::string m_username {};
-
-    // logging
-    static logging::log log;
-
-    static void setup_logging(std::string ipv4, std::string port);
 };
 
 } // namespace server

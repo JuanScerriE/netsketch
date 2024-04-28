@@ -15,16 +15,16 @@
 // fmt
 #include <fmt/core.h>
 
-// cstd
-#include <cstdlib>
-
 // common
+#include "../common/bench.hpp"
 #include "../common/channel.hpp"
-#include "../common/log.hpp"
 #include "../common/network.hpp"
 #include "../common/overload.hpp"
 #include "../common/serial.hpp"
 #include "../common/threading.hpp"
+
+// spdlog
+#include <spdlog/spdlog.h>
 
 #define BACKLOG (16)
 
@@ -47,17 +47,17 @@ void Server::operator()()
 
         m_sock.bind(&server_addr);
 
-        // TODO: check if the backlog can fail us
+        // TODO: check if the backspdlog::can fail us
         m_sock.listen(BACKLOG);
     } catch (std::runtime_error& error) {
-        log.error(error.what());
+        spdlog::error(error.what());
 
         share::updater_thread.cancel();
 
         return;
     }
 
-    log.info("server listening on port {}", m_port);
+    spdlog::info("server listening on port {}", m_port);
 
     request_loop();
 }
@@ -70,10 +70,12 @@ void Server::request_loop()
         try {
             poll_result = m_sock.poll({ POLLIN });
         } catch (std::runtime_error& error) {
-            log.error(error.what());
+            spdlog::error(error.what());
 
             break;
         }
+
+        BENCH("handling incoming request");
 
         if (poll_result.has_timed_out()) {
             continue;
@@ -84,7 +86,7 @@ void Server::request_loop()
         try {
             conn_sock = m_sock.accept();
         } catch (std::runtime_error& error) {
-            log.warn(error.what());
+            spdlog::warn(error.what());
 
             continue;
         }
@@ -129,7 +131,7 @@ void Server::request_loop()
                 if (iter->get()->user == *username) {
                     share::timers.erase(iter);
 
-                    log.info("{} reconnected", *username);
+                    spdlog::info("{} reconnected", *username);
 
                     break;
                 }
@@ -209,8 +211,6 @@ void Server::request_loop()
                 share::threads.end()
             );
         }
-
-        log.flush();
     }
 }
 
@@ -219,7 +219,7 @@ std::optional<std::string> Server::is_valid_username(Channel channel)
     auto [res, read_status] = channel.read(60000);
 
     if (read_status != ChannelErrorCode::OK) {
-        log.warn("reading failed, reason {}", read_status.what());
+        spdlog::warn("reading failed, reason {}", read_status.what());
 
         return {};
     }
@@ -227,13 +227,13 @@ std::optional<std::string> Server::is_valid_username(Channel channel)
     auto [payload, deser_status] = deserialize<Payload>(res);
 
     if (deser_status != DeserializeErrorCode::OK) {
-        log.warn("deserialization error occurred, {}", deser_status.what());
+        spdlog::warn("deserialization error occurred, {}", deser_status.what());
 
         return {};
     }
 
     if (!std::holds_alternative<Username>(payload)) {
-        log.warn(
+        spdlog::warn(
             "expected username payload, instead got {}",
             var_type(payload).name()
         );
@@ -259,7 +259,7 @@ std::optional<std::string> Server::is_valid_username(Channel channel)
             auto status = channel.write(req);
 
             if (status != ChannelErrorCode::OK) {
-                log.warn(
+                spdlog::warn(
                     "responding failed reason {}",
                     var_type(payload).name()
                 );
@@ -276,7 +276,7 @@ std::optional<std::string> Server::is_valid_username(Channel channel)
     auto write_status = channel.write(req);
 
     if (write_status != ChannelErrorCode::OK) {
-        log.warn("writing failed, reason {}", write_status.what());
+        spdlog::warn("writing failed, reason {}", write_status.what());
 
         return {};
     }
@@ -284,13 +284,13 @@ std::optional<std::string> Server::is_valid_username(Channel channel)
     return std::make_optional(username);
 }
 
-logging::log Server::log {};
+// spdlog::ing::spdlog::Server::spdlog::{};
 
-void Server::setup_logging()
-{
-    using namespace logging;
-
-    log.set_level(log::level::debug);
-}
+// void Server::setup_spdlog::ing()
+// {
+//     using namespace spdlog::ing;
+//
+//     spdlog::set_level(spdlog:::level::debug);
+// }
 
 } // namespace server

@@ -9,6 +9,8 @@
 
 // unix
 #include <poll.h>
+#include <spdlog/common.h>
+#include <spdlog/spdlog.h>
 #include <unistd.h>
 
 // std
@@ -16,6 +18,10 @@
 
 // cli11
 #include <CLI/CLI.hpp>
+
+// spdlog
+#include <spdlog/async.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 #define SERVER_PORT (6666)
 
@@ -59,6 +65,18 @@ int main(int argc, char** argv)
             "reason: {}",
             strerror(errno)
         );
+    }
+
+    try {
+        auto logger = spdlog::stdout_color_mt("server");
+
+        spdlog::set_default_logger(logger);
+
+        spdlog::set_level(spdlog::level::debug);
+    } catch (const spdlog::spdlog_ex& ex) {
+        std::cout << "log init failed: " << ex.what() << std::endl;
+
+        return 0;
     }
 
     server::share::updater_thread = threading::thread { server::Updater {} };

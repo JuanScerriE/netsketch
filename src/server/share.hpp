@@ -11,6 +11,7 @@
 #include <list>
 #include <memory>
 #include <queue>
+#include <spdlog/logger.h>
 #include <unordered_map>
 #include <unordered_set>
 

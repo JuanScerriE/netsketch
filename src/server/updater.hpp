@@ -1,12 +1,15 @@
 #pragma once
 
 // common
+#include "../common/bench.hpp"
 #include "../common/channel.hpp"
-#include "../common/log.hpp"
 #include "../common/threading.hpp"
 
 // server
 #include "share.hpp"
+
+// spdlog
+#include <spdlog/spdlog.h>
 
 namespace server {
 
@@ -14,8 +17,6 @@ class Updater {
    public:
     [[noreturn]] void operator()()
     {
-        setup_logging();
-
         for (;;) {
             Payload payload {};
 
@@ -26,6 +27,8 @@ class Updater {
                     return share::payload_queue.empty();
                 });
 
+                BENCH("updater reading changes");
+
                 payload = share::payload_queue.back();
 
                 share::payload_queue.pop();
@@ -33,9 +36,9 @@ class Updater {
 
             ByteString bytes = serialize<Payload>(payload);
 
-            // log.debug("sending: 0x{}", bytes_to_hex(bytes));
-
             {
+                BENCH("updating all connected clients");
+
                 threading::mutex_guard guard { share::connections_mutex };
 
                 for (auto& [fd, conn] : share::connections) {
@@ -44,7 +47,7 @@ class Updater {
                     auto status = channel.write(bytes);
 
                     if (status != ChannelErrorCode::OK) {
-                        log.error(
+                        spdlog::error(
                             "[{}] writing failed, reason {}",
                             fd,
                             status.what()
@@ -53,18 +56,6 @@ class Updater {
                 }
             }
         }
-    }
-
-   private:
-    static inline logging::log log {};
-
-    static void setup_logging()
-    {
-        using namespace logging;
-
-        log.set_level(log::level::debug);
-
-        log.set_prefix("[updater]");
     }
 };
 

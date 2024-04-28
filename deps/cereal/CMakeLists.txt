@@ -2,6 +2,7 @@ message(STATUS "Fetching cereal...")
 
 set(BUILD_DOC OFF CACHE BOOL "" FORCE)
 set(BUILD_SANDBOX OFF CACHE BOOL "" FORCE)
+set(SKIP_PERFORMANCE_COMPARISON ON CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
         cereal

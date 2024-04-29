@@ -68,7 +68,7 @@ class TaggedDrawVectorWrapper {
     }
     void handle(std::string, Delete arg)
     {
-        if (m_vector.size() <= 0)
+        if (m_vector.empty())
             return;
 
         long id = std::min(
@@ -80,6 +80,9 @@ class TaggedDrawVectorWrapper {
     }
     void handle(std::string username, Undo)
     {
+        if (m_vector.empty())
+            return;
+
         for (auto iter = m_vector.rbegin(); iter != m_vector.rend(); iter++) {
             if (iter->username == username) {
                 m_vector.erase(iter.base());

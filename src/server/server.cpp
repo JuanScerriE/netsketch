@@ -64,6 +64,27 @@ void Server::operator()()
 
 void Server::request_loop()
 {
+    pthread_cleanup_push(
+        [](void*) {
+            {
+                threading::mutex_guard guard { share::threads_mutex };
+
+                for (auto& thread : share::threads) {
+                    if (thread.is_initialized()) {
+                        thread.join();
+                    }
+                }
+            }
+
+            {
+                threading::mutex_guard guard { server::share::timers_mutex };
+
+                server::share::timers.clear();
+            }
+        },
+        this
+    );
+
     while (share::run) {
         PollResult poll_result {};
 
@@ -212,6 +233,8 @@ void Server::request_loop()
             );
         }
     }
+
+    pthread_cleanup_pop(1);
 }
 
 std::optional<std::string> Server::is_valid_username(Channel channel)

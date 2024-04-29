@@ -56,8 +56,6 @@ void ConnHandler::operator()()
         [](void* untyped_self) {
             auto* self = static_cast<ConnHandler*>(untyped_self);
 
-            create_client_timer(self->m_username);
-
             {
                 threading::mutex_guard guard { share::connections_mutex };
 
@@ -110,6 +108,8 @@ void ConnHandler::operator()()
             handle_payload(res);
         }
     }
+
+    create_client_timer(m_username);
 
     spdlog::info("[{}:{}] closing connection handler", m_ipv4, m_port);
 

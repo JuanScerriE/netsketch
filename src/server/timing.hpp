@@ -77,7 +77,7 @@ void create_client_timer(const std::string& user)
 
         itimerspec its {};
         bzero(&its, sizeof(itimerspec));
-        its.it_value.tv_sec = 60 * 5; // 5 minutes;
+        its.it_value.tv_sec = 30; // 5 minutes;
         its.it_value.tv_nsec = 0;
 
         data_raw->timer.set(0, &its, nullptr);

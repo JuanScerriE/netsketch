@@ -8,6 +8,12 @@
 #include <variant>
 #include <vector>
 
+// The below is a list of all the types
+// which our client and server will
+// share with each other. They are all
+// augmented with the serialize template
+// method which Cereal expects.
+
 struct Colour {
     uint8_t r { 0 };
     uint8_t g { 0 };

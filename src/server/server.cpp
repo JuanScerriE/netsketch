@@ -174,48 +174,12 @@ void Server::request_loop()
                 = std::move(conn_sock);
         }
 
-        // Additionally, if we receive a SIGINT
-        // here we'd have an open connection
-        // but no conn_handler thread which will
-        // close the connection upon exit.
-        //
-        // The above is wrong we only stop
-        // at cancellation points if we receive a
-        // cancel which good.
-
         {
             threading::mutex_guard guard { share::threads_mutex };
 
-            // TODO: test whether this is necessary
+            // we do not want to create a thread if cancelation has occured
+            // as that thread would not be cancelled.
             threading::thread::test_cancel();
-
-            // So, what we'll do is we will test for
-            // cancellation after acquiring the lock. This
-            // ensures that if a cancellation happened
-            // we just unwind and we never start the thread
-            // and we never reset the m_current_conn_fd
-            // essentially allowing us to close it in the
-            // dtor of the server (this is fine since a
-            // server can only handle one connection at a
-            // time). We don't need to worry about it
-            // being already pushed on the e_connections
-            // list, since as far as I can tell it does
-            // not yield any effects.
-            //
-            // TODO: test this out a bit more since there
-            // is the possibility of more bugs
-            //
-            // Actually, all the above analysis is not
-            // need the program will only stop at specified
-            // cancellation points and because of this the
-            // thread will be started. The only issue I have
-            // with this approach is that it will go through
-            // all of this and if it receives a cancel it
-            // will open another thread which did not
-            // receive a cancellation yet. Hence we have to
-            // test for a cancellation before we actually
-            // start the thread cancelled if cancelling if
-            // properly done.
 
             share::threads.emplace_back(ConnHandler { conn_sock_ref, *username }
             );

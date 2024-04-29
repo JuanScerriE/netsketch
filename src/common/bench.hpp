@@ -6,6 +6,13 @@
 // spdlog
 #include <spdlog/spdlog.h>
 
+// The below class is small class which is starts a timer when
+// its created and closes a timer when it is destroyed.
+// The way in which this class is suppose
+// to be used is by creating a scope and constructing the
+// Bench object within that scope. This basically,
+// allows us to time particular scope.
+
 class Bench {
    public:
     explicit Bench(
@@ -67,6 +74,18 @@ class Bench {
     std::string m_line {};
     std::string m_name {};
 };
+
+// We are using the notion of a compile time string
+// because the compiler is capable of injecting
+// information about our source into the source code
+// itself with the __FILE__ and __LINE__ macros
+// along with the __func__ value. The only issue
+// is that __FILE__ provides an absolute path
+// which I think is a bit too clunky. So, instead
+// we'll use the comptime facilities provided to use
+// by constexpr and the CompTimeString below
+// to modify the result of __FILE__ at compile
+// time into just the file name.
 
 // ATTRIBUTION
 // https://stackoverflow.com/questions/77802986/compile-time-string-manipulation
@@ -147,6 +166,12 @@ constexpr CompTimeString<N> file_name(CompTimeString<N> file_path)
 #endif
 
 #ifdef BENCHMARK
+
+// This is the macro we use to instead of calling
+// Bench{} directly to automatically fill out
+// all the info relating to the file name,
+// function name and line number.
+
 #define BENCH(name)                                  \
     (Bench { file_name(CompTimeString { __FILE__ }), \
              __func__,                               \

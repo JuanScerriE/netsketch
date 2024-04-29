@@ -27,6 +27,9 @@
 #include "../common/abort.hpp"
 #include "../common/bytes.hpp"
 
+// This is a wrapper class around the return result of a
+// call to poll
+
 class PollResult {
    public:
     PollResult() = default;
@@ -82,6 +85,9 @@ class PollResult {
     int m_events {};
 };
 
+// This is a wrapper class around the return result of a
+// call to read
+
 class ReadResult {
    public:
     ReadResult() = default;
@@ -112,6 +118,14 @@ class ReadResult {
 
     ByteString m_bytes {};
 };
+
+// This class is a wrapper around a socket file
+// descriptor. This class helps us automatically
+// close the socket through RAII. Additionally,
+// it enforces a requirement for usage of IPv4
+//
+// A bunch of helper functions have been added
+// to facilitate easy of use.
 
 class IPv4Socket {
    public:
@@ -396,6 +410,24 @@ class IPv4Socket {
     int m_sock_fd { -1 };
 };
 
+// This class is also a wrapper around C sockets however, the main point of this
+// class is that it is a reference. So, it is capable of providing an interface
+// for interacting with the socket. However, it cannot create nor destroy a
+// socket. This class is meant to be easily copyable and hence it allows sharing
+// of socket through the program as a value. Of course, one might argue why not
+// just use a C++ reference Good point. However, in our situation we are keeping
+// track of the number of open sockets in a unordered_map or vector. The problem
+// with passing a reference to an object in vector especially to another thread,
+// is that you can end up with a dangling reference since there is nothing from
+// stopping the unordered_map or vector holding the actual object from
+// reshuffling the objects or moving the objects around. This essentially, means
+// that you'll be left with a dangling reference. Of course this is as bad a
+// dangling pointer. However, the socket file descriptor itself lives for as
+// long as the program decides to keep it open, is trivially copyable since it
+// is an integer and is unique upto closure. Hence, we have the necessary
+// guarantees for creating a reference object which will always reference what
+// its suppose to reference (hence, why we create the IPv4SocketRef class).
+
 class IPv4SocketRef {
    public:
     IPv4SocketRef() = default;
@@ -529,6 +561,12 @@ class IPv4SocketRef {
     socklen_t m_addr_size {};
     int m_sock_fd { -1 };
 };
+
+// Here we augment the standard std::hash to
+// include the above classes. We can use the native
+// handle (the file descriptor) since it is
+// guaranteed to be unique, for the running
+// process
 
 template <>
 struct std::hash<IPv4Socket> {

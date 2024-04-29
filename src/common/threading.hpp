@@ -15,6 +15,24 @@
 
 namespace threading {
 
+// The below is a list of C++ wrappers around the underlying POSIX mechanism.
+// The whole point of going through all of this trouble is guarantee
+// compatibility with all POSIX functions. In general using any of the
+// multi-threading primitives provided by the STL will limit. This is because
+// the C++ STL tries to generalize over a number of implementations for
+// threading/synchronization primitives which will all have their own quirks.
+// The problem with this is that the STL has skimped on a number of useful
+// features provided by the pthread POSIX API. Specifically, pthread_cancel.
+// This function is powerful because it is capable of waking up a thread even in
+// situations where the thread is blocking some resource, of course this
+// function employs the help of the kernel (please look at man pthread_cancel
+// and specifically cancellation points). Below attribution is made specifically
+// for the C++ wrapper of pthreads essentially providing the same interface as
+// std::thread. With all these helpers we can have albeit a very
+// rudimentary, version of the STL primitives which guarantee a
+// 100% compatibility with POSIX (in particular we can employ
+// pthread_cleanup handlers)
+
 // ATTRIBUTION:
 // https://codereview.stackexchange.com/questions/189089/simplified-stdthread-implementation-using-pthreads
 

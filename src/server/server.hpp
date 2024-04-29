@@ -5,7 +5,6 @@
 
 // common
 #include "../common/channel.hpp"
-#include "../common/log.hpp"
 #include "../common/network.hpp"
 
 namespace server {

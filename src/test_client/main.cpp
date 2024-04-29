@@ -22,9 +22,9 @@
 #include <fmt/format.h>
 
 // spdlog
-#include <spdlog/spdlog.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 
 struct IPv4Validator : public CLI::Validator {
     IPv4Validator()

@@ -2,7 +2,6 @@
 
 // common
 #include "../common/channel.hpp"
-#include "../common/log.hpp"
 #include "../common/network.hpp"
 
 namespace client {
@@ -31,11 +30,6 @@ class NetworkManager {
     IPv4Socket m_conn {};
 
     Channel m_channel {};
-
-    // logging
-    static logging::log log;
-
-    static void setup_logging();
 };
 
 } // namespace client

@@ -5,8 +5,13 @@
 #include "types.hpp"
 
 // std
+#include <algorithm>
 #include <string>
 #include <variant>
+
+// This is a very simple wrapper around
+// a tagged draw vector which implements
+// all the necessary mutations
 
 class TaggedDrawVectorWrapper {
    public:
@@ -55,30 +60,29 @@ class TaggedDrawVectorWrapper {
     }
 
    private:
-    void handle(std::string username, Draw arg)
+    void handle(const std::string& username, const Draw& arg)
     {
-        m_vector.push_back(
-            TaggedDraw { false, std::move(username), std::move(arg) }
-        );
+        m_vector.push_back(TaggedDraw { false, username, arg });
     }
-    void handle(std::string username, Select arg)
+    void handle(const std::string& username, const Select& arg)
     {
-        m_vector[static_cast<size_t>(arg.id)]
-            = { false, std::move(username), std::move(arg.draw) };
+        m_vector[static_cast<size_t>(arg.id)] = { false, username, arg.draw };
     }
-    void handle(std::string, Delete arg)
+    void handle(const std::string&, const Delete& arg)
     {
         if (m_vector.empty())
             return;
 
-        long id = std::min(
-            std::max(arg.id, 0l),
-            static_cast<long>(m_vector.size()) - 1
-        );
+        // NOTE: we have to be careful here since we can
+        // actually exceed the size of the vector and the server will then
+        // basically give up and crash
+
+        long id
+            = std::clamp(arg.id, 0l, static_cast<long>(m_vector.size() - 1));
 
         m_vector.erase(m_vector.begin() + id);
     }
-    void handle(std::string username, Undo)
+    void handle(const std::string& username, const Undo&)
     {
         if (m_vector.empty())
             return;
@@ -91,7 +95,7 @@ class TaggedDrawVectorWrapper {
             }
         }
     }
-    void handle(std::string username, Clear arg)
+    void handle(const std::string& username, const Clear& arg)
     {
         switch (arg.qualifier) {
         case Qualifier::ALL:

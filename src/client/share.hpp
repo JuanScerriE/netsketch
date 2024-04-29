@@ -1,7 +1,6 @@
 #pragma once
 
 // common
-#include "../common/log_file.hpp"
 #include "../common/threading.hpp"
 #include "../common/types.hpp"
 
@@ -15,8 +14,6 @@ extern threading::thread reader_thread;
 extern threading::thread writer_thread;
 extern threading::thread input_thread;
 
-extern logging::log_file log_file;
-
 extern std::string username;
 
 extern bool show_mine;
@@ -24,9 +21,7 @@ extern bool show_mine;
 extern bool run_gui;
 
 extern threading::mutex writer_mutex;
-
 extern threading::cond_var writer_cond;
-
 extern std::queue<Action> writer_queue;
 
 // double instance locking state

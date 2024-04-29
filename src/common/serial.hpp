@@ -9,6 +9,14 @@
 #include <cereal/types/variant.hpp>
 #include <cereal/types/vector.hpp>
 
+// We are wrapping everything in some
+// templated function to allow for serialization
+// and de-serialization of any object
+// which has the necessary serialize method required
+// by Cereal. In particular throughout the code we only
+// really use the Payload type so we have to be a bit careful
+// as this will result in the incorrect payload being sent.
+
 template <class T>
 ByteString serialize(T object)
 {
@@ -64,6 +72,28 @@ template <class T>
 std::pair<T, DeserializeError> deserialize(const ByteString& bytes) noexcept
 {
     T object {};
+
+    // NOTE: deserialization has to be wrapped in a general
+    // try-catch since Cereal (the library we are using for
+    // serializtion) does not perform any bounds checking
+    // i.e. if the server receives and almost correct
+    // packet which contains the length of a string, it is
+    // very likely that the length will be a very large number
+    // which the allocator cannot satisfy. If not handled
+    // properly this will kill the server. Of course
+    // we cannot have the server dying on such a request.
+    // Luckily for us in such a scenario an exception is raised
+    // either a std::length_error or an empty exception which
+    // we can catch.
+    //
+    // In particular this is what the STL (in gcc 13) has to say
+    // about the .reserve method for the std::vector container
+    // type
+    //
+    // @brief  Attempt to preallocate enough memory for specified number of
+    //         elements.
+    // @param  __n  Number of elements required.
+    // @throw  std::length_error  If @a n exceeds @c max_size().
 
     try {
         std::stringstream ss { bytes };

@@ -5,9 +5,8 @@
 #include "writer.hpp"
 
 // common
-#include "../common/log.hpp"
-#include "../common/serial.hpp"
 #include "../common/overload.hpp"
+#include "../common/serial.hpp"
 
 // unix (hopefully)
 #include <netinet/in.h>
@@ -19,12 +18,14 @@
 // std
 #include <variant>
 
+// spdlog
+#include <spdlog/spdlog.h>
+
 namespace client {
 
 NetworkManager::NetworkManager(uint32_t ipv4, uint16_t port)
     : m_ipv4(ipv4), m_port(port)
 {
-    setup_logging();
 }
 
 NetworkManager::~NetworkManager()
@@ -63,7 +64,7 @@ bool NetworkManager::open_socket()
 
         m_conn.connect(&addr);
     } catch (std::runtime_error& error) {
-        log.error(error.what());
+        spdlog::error(error.what());
 
         return false;
     }
@@ -85,7 +86,7 @@ bool NetworkManager::send_username()
     auto write_status = m_channel.write(req);
 
     if (write_status != ChannelErrorCode::OK) {
-        log.error("writing failed, reason {}", write_status.what());
+        spdlog::error("writing failed, reason {}", write_status.what());
 
         return false;
     }
@@ -93,7 +94,7 @@ bool NetworkManager::send_username()
     auto [res, read_status] = m_channel.read(60000);
 
     if (read_status != ChannelErrorCode::OK) {
-        log.error("reading failed, reason {}", read_status.what());
+        spdlog::error("reading failed, reason {}", read_status.what());
 
         return false;
     }
@@ -101,13 +102,13 @@ bool NetworkManager::send_username()
     auto [payload, status] = deserialize<Payload>(res);
 
     if (status != DeserializeErrorCode::OK) {
-        log.error("reading failed, reason {}", read_status.what());
+        spdlog::error("reading failed, reason {}", read_status.what());
 
         return false;
     }
 
     if (std::holds_alternative<Decline>(payload)) {
-        log.warn(
+        spdlog::warn(
             "connection declined, reason {}",
             std::get<Decline>(payload).reason
         );
@@ -119,7 +120,7 @@ bool NetworkManager::send_username()
         return true;
     }
 
-    log.error("unexpected payload type {}", var_type(payload).name());
+    spdlog::error("unexpected payload type {}", var_type(payload).name());
 
     return false;
 }
@@ -144,19 +145,6 @@ void NetworkManager::close_writer()
 {
     if (share::writer_thread.is_initialized())
         share::writer_thread.join();
-}
-
-logging::log NetworkManager::log {};
-
-void NetworkManager::setup_logging()
-{
-    using namespace logging;
-
-    log.set_level(log::level::debug);
-
-    log.set_prefix("[network_manager]");
-
-    log.set_file(share::log_file);
 }
 
 } // namespace client

@@ -12,6 +12,7 @@
 #include <vector>
 
 // common
+#include "../common/abort.hpp"
 #include "../common/overload.hpp"
 #include "../common/threading.hpp"
 #include "../common/types.hpp"

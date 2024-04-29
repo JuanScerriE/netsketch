@@ -8,12 +8,11 @@
 #include "../common/threading.hpp"
 
 // unix
+#include <cstdlib>
 #include <poll.h>
-#include <spdlog/common.h>
-#include <spdlog/spdlog.h>
 #include <unistd.h>
 
-// std
+// cstd
 #include <csignal>
 
 // cli11
@@ -21,9 +20,10 @@
 
 // spdlog
 #include <spdlog/async.h>
+#include <spdlog/common.h>
+#include <spdlog/fmt/chrono.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-
-#define SERVER_PORT (6666)
+#include <spdlog/spdlog.h>
 
 void sigint_handler(int)
 {
@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 {
     CLI::App app;
 
-    uint16_t port { SERVER_PORT };
+    uint16_t port { 6666 };
     app.add_option("--port", port, "The port number of the NetSketch server")
         ->capture_default_str();
 
@@ -74,9 +74,9 @@ int main(int argc, char** argv)
 
         spdlog::set_level(spdlog::level::debug);
     } catch (const spdlog::spdlog_ex& ex) {
-        std::cout << "log init failed: " << ex.what() << std::endl;
+        fmt::println("log init failed: {}", ex.what());
 
-        return 0;
+        return EXIT_FAILURE;
     }
 
     server::share::updater_thread = threading::thread { server::Updater {} };
@@ -90,6 +90,9 @@ int main(int argc, char** argv)
     {
         threading::mutex_guard guard { server::share::timers_mutex };
 
+        // NOTE: https://man.archlinux.org/man/timer_create.3p.en
+        // Threads allocated to timers cannot be reclaimed as
+        // described in the above man package
         server::share::timers.clear();
     }
 

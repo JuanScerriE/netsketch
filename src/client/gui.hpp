@@ -4,7 +4,6 @@
 #include <raylib.h>
 
 // common
-#include "../common/log.hpp"
 #include "../common/types.hpp"
 
 namespace client {
@@ -31,9 +30,7 @@ class Gui {
     const int m_screen_height { 450 };
 
     // logging
-    static logging::log log;
-
-    static void setup_logging();
+    static char s_log_message_buffer[1024];
 
     static void logger_wrapper(int msg_type, const char* fmt, va_list args);
 };

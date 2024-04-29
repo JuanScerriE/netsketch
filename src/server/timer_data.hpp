@@ -52,6 +52,7 @@ class Timer {
 
 struct TimerData {
     Timer timer {};
+
     std::string user {};
 };
 

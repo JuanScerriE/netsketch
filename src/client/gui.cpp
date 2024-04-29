@@ -8,21 +8,83 @@
 #include "../common/types.hpp"
 
 // raylib
+#include <cstdio>
 #include <raylib.h>
 #include <raymath.h>
 
+// spdlog
+#include <spdlog/spdlog.h>
+
 namespace client {
-
-void Gui::operator()()
-{
-    setup_logging();
-
-    game_loop();
-}
 
 [[nodiscard]] Color to_raylib_colour(Colour colour)
 {
     return { colour.r, colour.g, colour.b, 255 };
+}
+
+void Gui::operator()()
+{
+    SetTraceLogCallback(logger_wrapper);
+
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+
+    InitWindow(m_screen_width, m_screen_height, m_window_name.c_str());
+
+    SetTargetFPS(m_target_fps);
+
+    while (share::run_gui) {
+        if (IsKeyPressed(KEY_H)) {
+            m_camera = { { 0, 0 }, { 0, 0 }, 0, 1.0 };
+        }
+
+        // translate based on mouse left click
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            Vector2 delta = GetMouseDelta();
+            delta = Vector2Scale(delta, -1.0f / m_camera.zoom);
+
+            m_camera.target = Vector2Add(m_camera.target, delta);
+        }
+
+        // zoom based on mouse wheel
+        float wheel = GetMouseWheelMove();
+
+        if (wheel != 0) {
+            // get the world point that is under the
+            // mouse
+            Vector2 mouseWorldPos
+                = GetScreenToWorld2D(GetMousePosition(), m_camera);
+
+            // get the offset to where the mouse is
+            m_camera.offset = GetMousePosition();
+
+            // set the target to match, so that the
+            // m_camera maps the world space point under
+            // the cursor to the screen space point
+            // under the cursor at any zoom
+            m_camera.target = mouseWorldPos;
+
+            // Zoom increment
+            const float zoomIncrement = 0.125f;
+
+            m_camera.zoom += (wheel * zoomIncrement);
+
+            if (m_camera.zoom < zoomIncrement)
+                m_camera.zoom = zoomIncrement;
+        }
+
+        if (IsWindowResized()) {
+            TraceLog(
+                LOG_INFO,
+                "Width: %d, Height: %d",
+                GetScreenWidth(),
+                GetScreenHeight()
+            );
+        }
+
+        draw();
+    }
+
+    CloseWindow(); // Close window and OpenGL context
 }
 
 void Gui::process_draw(Draw& draw)
@@ -54,7 +116,7 @@ void Gui::process_draw(Draw& draw)
                 DrawLineEx(
                     { static_cast<float>(arg.x0), static_cast<float>(arg.y0) },
                     { static_cast<float>(arg.x1), static_cast<float>(arg.y1) },
-                    1.1f, // NOTE: maybe change this?
+                    1.2f, // NOTE: maybe change this?
                     to_raylib_colour(arg.colour)
                 );
             },
@@ -75,7 +137,8 @@ inline void Gui::draw_scene()
             if (guard.is_owning()) {
                 if (share::show_mine) {
                     for (auto& tagged_draw : share::vec1) {
-                        if (tagged_draw.username == share::username && !tagged_draw.adopted)
+                        if (tagged_draw.username == share::username
+                            && !tagged_draw.adopted)
                             process_draw(tagged_draw.draw);
                     }
                 } else {
@@ -97,7 +160,8 @@ inline void Gui::draw_scene()
             if (guard.is_owning()) {
                 if (share::show_mine) {
                     for (auto& tagged_draw : share::vec2) {
-                        if (tagged_draw.username == share::username && !tagged_draw.adopted)
+                        if (tagged_draw.username == share::username
+                            && !tagged_draw.adopted)
                             process_draw(tagged_draw.draw);
                     }
                 } else {
@@ -170,110 +234,47 @@ void Gui::draw()
     EndDrawing();
 }
 
-void Gui::game_loop()
-{
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-
-    InitWindow(m_screen_width, m_screen_height, m_window_name.c_str());
-
-    SetTargetFPS(m_target_fps);
-
-    while (share::run_gui) {
-        if (IsKeyPressed(KEY_H)) {
-            m_camera = { { 0, 0 }, { 0, 0 }, 0, 1.0 };
-        }
-
-        // translate based on mouse left click
-        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-            Vector2 delta = GetMouseDelta();
-            delta = Vector2Scale(delta, -1.0f / m_camera.zoom);
-
-            m_camera.target = Vector2Add(m_camera.target, delta);
-        }
-
-        // zoom based on mouse wheel
-        float wheel = GetMouseWheelMove();
-
-        if (wheel != 0) {
-            // get the world point that is under the
-            // mouse
-            Vector2 mouseWorldPos
-                = GetScreenToWorld2D(GetMousePosition(), m_camera);
-
-            // get the offset to where the mouse is
-            m_camera.offset = GetMousePosition();
-
-            // set the target to match, so that the
-            // m_camera maps the world space point under
-            // the cursor to the screen space point
-            // under the cursor at any zoom
-            m_camera.target = mouseWorldPos;
-
-            // Zoom increment
-            const float zoomIncrement = 0.125f;
-
-            m_camera.zoom += (wheel * zoomIncrement);
-
-            if (m_camera.zoom < zoomIncrement)
-                m_camera.zoom = zoomIncrement;
-        }
-
-        if (IsWindowResized()) {
-            TraceLog(
-                LOG_INFO,
-                "Width: %d, Height: %d",
-                GetScreenWidth(),
-                GetScreenHeight()
-            );
-        }
-
-        draw();
-    }
-
-    CloseWindow(); // Close window and OpenGL context
-}
-
-logging::log Gui::log {};
-
-void Gui::setup_logging()
-{
-    using namespace logging;
-
-    log.set_level(log::level::debug);
-
-    log.set_prefix("[raylib]");
-
-    log.set_file(share::log_file);
-
-    SetTraceLogCallback(logger_wrapper);
-}
+// NOTE: using a buffer is the simplest solution
+// to easily make use of spdlog and fmt
+// since parameter packing and va_lists
+// are two completely orthogonal constructs
+// i.e. they don't interact well. For
+// a fool proof solution you'd need to implement
+// a C-format string parser to calculate
+// how to read each element in the va_list
+// and then use spdlog and fmt. But that's an amount
+// of work I am not willing to take on and nor
+// do I want to scavenge for some implementation
+// which I'd then need to pull the parser out of.
+char Gui::s_log_message_buffer[1024] {};
 
 void Gui::logger_wrapper(int msg_type, const char* fmt, va_list args)
 {
-    using namespace logging;
-
-    log::level log_level { log::level::info };
+    // TODO: somehow figure out how to warn the user if
+    // the size is greater
+    std::vsnprintf(
+        s_log_message_buffer,
+        sizeof(s_log_message_buffer), // including the null byte
+        fmt,
+        args
+    );
 
     switch (msg_type) {
     case LOG_DEBUG:
-        log_level = log::level::debug;
+        spdlog::debug("[raylib] {}", s_log_message_buffer);
         break;
     case LOG_INFO:
-        log_level = log::level::info;
+        spdlog::info("[raylib] {}", s_log_message_buffer);
         break;
     case LOG_WARNING:
-        log_level = log::level::warn;
+        spdlog::warn("[raylib] {}", s_log_message_buffer);
         break;
     case LOG_ERROR:
-        log_level = log::level::error;
+        spdlog::error("[raylib] {}", s_log_message_buffer);
         break;
     default:
         break;
     }
-
-    log.c_write(log_level, fmt, args);
-
-    log.flush();
 }
 
 } // namespace client

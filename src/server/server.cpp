@@ -47,7 +47,7 @@ void Server::operator()()
 
         m_sock.bind(&server_addr);
 
-        // TODO: check if the backspdlog::can fail us
+        // TODO: check if the backlog can fail us
         m_sock.listen(BACKLOG);
     } catch (std::runtime_error& error) {
         spdlog::error(error.what());
@@ -85,7 +85,7 @@ void Server::request_loop()
         this
     );
 
-    while (share::run) {
+    for (;;) {
         PollResult poll_result {};
 
         try {
@@ -161,12 +161,12 @@ void Server::request_loop()
 
         IPv4SocketRef conn_sock_ref { conn_sock };
 
-        // beyond this point it should be taken up
-        // separately
+        // Handling the connection
 
         // NOTE: e_connection can be in the process
         // of being read from by the updater thread. So we
         // should lock
+
         {
             threading::mutex_guard guard { share::connections_mutex };
 
@@ -306,14 +306,5 @@ std::optional<std::string> Server::is_valid_username(Channel channel)
 
     return std::make_optional(username);
 }
-
-// spdlog::ing::spdlog::Server::spdlog::{};
-
-// void Server::setup_spdlog::ing()
-// {
-//     using namespace spdlog::ing;
-//
-//     spdlog::set_level(spdlog:::level::debug);
-// }
 
 } // namespace server

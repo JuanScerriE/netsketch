@@ -1,9 +1,5 @@
 message(STATUS "Fetching cereal...")
 
-set(BUILD_DOC OFF CACHE BOOL "" FORCE)
-set(BUILD_SANDBOX OFF CACHE BOOL "" FORCE)
-set(SKIP_PERFORMANCE_COMPARISON ON CACHE BOOL "" FORCE)
-
 FetchContent_Declare(
         cereal
         GIT_REPOSITORY https://github.com/USCiLab/cereal
@@ -11,5 +7,9 @@ FetchContent_Declare(
         GIT_PROGRESS true
         SYSTEM
 )
+
+set(BUILD_DOC OFF)
+set(BUILD_SANDBOX OFF)
+set(SKIP_PERFORMANCE_COMPARISON ON)
 
 FetchContent_MakeAvailable(cereal)

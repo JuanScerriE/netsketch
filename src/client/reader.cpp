@@ -3,7 +3,6 @@
 #include "share.hpp"
 
 // common
-#include "../common/log.hpp"
 #include "../common/serial.hpp"
 #include "../common/tagged_draw_vector_wrapper.hpp"
 #include "../common/threading.hpp"
@@ -19,6 +18,10 @@
 #include <unistd.h>
 #include <variant>
 
+// spdlog
+#include <spdlog/fmt/bin_to_hex.h>
+#include <spdlog/spdlog.h>
+
 namespace client {
 
 Reader::Reader(const Channel& channel)
@@ -28,25 +31,16 @@ Reader::Reader(const Channel& channel)
 
 void Reader::operator()()
 {
-    setup_logging();
-
-    read_loop();
-}
-
-void Reader::read_loop()
-{
     for (;;) {
         auto [res, status] = m_channel.read();
 
         if (status != ChannelErrorCode::OK) {
-            log.error("reading failed, reason {}", status.what());
+            spdlog::error("reading failed, reason {}", status.what());
 
             break;
         }
 
         handle_payload(res);
-
-        log.flush();
     }
 
     shutdown();
@@ -54,12 +48,12 @@ void Reader::read_loop()
 
 void Reader::handle_payload(ByteString& bytes)
 {
-    // log.debug("received: 0x{}", bytes_to_hex(bytes));
+    spdlog::debug("received: 0x{}", spdlog::to_hex(bytes));
 
     auto [payload, status] = deserialize<Payload>(bytes);
 
     if (status != DeserializeErrorCode::OK) {
-        log.warn("deserialization failed, reason {}", status.what());
+        spdlog::warn("deserialization failed, reason {}", status.what());
 
         return;
     }
@@ -118,7 +112,10 @@ void Reader::handle_payload(ByteString& bytes)
                 }
             },
             [](auto& object) {
-                log.warn("unexpected payload type {}", typeid(object).name());
+                spdlog::warn(
+                    "unexpected payload type {}",
+                    typeid(object).name()
+                );
             },
         },
         payload
@@ -134,19 +131,6 @@ void Reader::shutdown()
         share::input_thread.cancel();
 
     share::run_gui = false;
-}
-
-logging::log Reader::log {};
-
-void Reader::setup_logging()
-{
-    using namespace logging;
-
-    log.set_level(log::level::debug);
-
-    log.set_prefix("[reader]");
-
-    log.set_file(share::log_file);
 }
 
 } // namespace client

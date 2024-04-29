@@ -1,8 +1,15 @@
 #pragma once
 
 // std
-#include <variant>
 #include <typeinfo>
+#include <variant>
+
+// These are two helpers to make dealing with std::variant a bit
+// easier especially when pattern matching on the type that
+// std::variant holds
+
+// ATTRIBUTION
+// https://en.cppreference.com/w/cpp/utility/variant/visit
 
 template <typename... Types>
 struct overload : Types... {

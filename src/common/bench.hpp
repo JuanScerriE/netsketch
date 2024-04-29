@@ -147,8 +147,11 @@ constexpr CompTimeString<N> file_name(CompTimeString<N> file_path)
 #endif
 
 #ifdef BENCHMARK
-#define BENCH(name) \
-    (Bench { file_name(CompTimeString { __FILE__ }), __func__, LINE_STRING, name })
+#define BENCH(name)                                  \
+    (Bench { file_name(CompTimeString { __FILE__ }), \
+             __func__,                               \
+             LINE_STRING,                            \
+             name })
 #else
 #define BENCH(name)
 #endif

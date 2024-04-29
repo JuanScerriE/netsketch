@@ -41,6 +41,10 @@ enum class ChannelErrorCode {
 };
 
 struct ChannelError {
+    // NOTE: we are not marking these as explicit
+    // to reduce code clutter. Since having
+    // to write ChannelError{} for every time you
+    // want to  create an is a pain
     ChannelError(const char* what)
         : m_code(ChannelErrorCode::ERRNO), m_what(what)
     {
@@ -69,7 +73,7 @@ struct ChannelError {
         case ChannelErrorCode::HUNG_UP:
             return "connection hung up";
         case ChannelErrorCode::DESERIALIZATION_FAILED:
-            return "failed deserialization";
+            return "deserialization failed";
         case ChannelErrorCode::INVALID_HEADER:
             return "invalid header encountered";
         case ChannelErrorCode::TIME_OUT:
@@ -92,6 +96,14 @@ struct ChannelError {
 
     std::optional<std::string> m_what {};
 };
+
+// The basic premise of a channel is that it aggregates
+// all the necessary machinery to send and receive
+// over a socket. The main benefit of this
+// is that the caller does not need to worry about
+// having to figure how much it should read from the socket.
+// Since all of this is done in the channel class.
+// hence the Channel just returns a byte string.
 
 class Channel {
    public:
@@ -149,6 +161,12 @@ class Channel {
                 ChannelErrorCode::DESERIALIZATION_FAILED
             );
         }
+
+        // This is a minor sanity check before proceeding to
+        // ensure that the header is well-formed although
+        // ideally we'd use a checksum, but we already
+        // have a lot of guarantees since we are using
+        // TCP streams.
 
         if (header.magic_bytes != MAGIC_BYTES) {
             return std::make_pair(

@@ -10,7 +10,7 @@
 #include <poll.h>
 #include <unistd.h>
 
-// utils
+// std
 #include <variant>
 
 // common
@@ -171,7 +171,8 @@ void ConnHandler::handle_payload(const ByteString& bytes)
 
     // NOTE: if we block on the push queue we might actually
     // miss data or overflow data that is sent to us in
-    // buffer. That's what we are doing right now
+    // buffer the kernel has allocated for the socket.
+    // That's what we are doing right now
 
     {
         threading::unique_mutex_guard guard { share::update_mutex };

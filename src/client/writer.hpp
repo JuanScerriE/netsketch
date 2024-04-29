@@ -2,7 +2,6 @@
 
 // common
 #include "../common/channel.hpp"
-#include "../common/log.hpp"
 
 namespace client {
 
@@ -17,11 +16,6 @@ class Writer {
    private:
     // connection
     Channel m_channel {};
-
-    // logging
-    static logging::log log;
-
-    static void setup_logging();
 };
 
 } // namespace client

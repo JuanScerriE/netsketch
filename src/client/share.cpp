@@ -7,8 +7,6 @@ threading::thread reader_thread {};
 threading::thread writer_thread {};
 threading::thread input_thread {};
 
-logging::log_file log_file {};
-
 std::string username {};
 
 bool show_mine { false };
@@ -16,9 +14,7 @@ bool show_mine { false };
 bool run_gui { true };
 
 threading::mutex writer_mutex {};
-
 threading::cond_var writer_cond {};
-
 std::queue<Action> writer_queue {};
 
 // double instance locking state

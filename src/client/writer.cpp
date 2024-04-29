@@ -7,6 +7,10 @@
 #include "../common/threading.hpp"
 #include "../common/types.hpp"
 
+// spdlog
+#include <spdlog/fmt/bin_to_hex.h>
+#include <spdlog/spdlog.h>
+
 namespace client {
 
 Writer::Writer(Channel channel)
@@ -31,20 +35,18 @@ void Writer::operator()()
             share::writer_queue.pop();
         }
 
-        ByteString bytes { serialize<Payload>(TaggedAction { share::username, action }
-        ) };
+        ByteString bytes { serialize<Payload>(TaggedAction { share::username,
+                                                             action }) };
 
-        // log.debug("sending: 0x{}", bytes_to_hex(bytes));
+        spdlog::debug("sending: 0x{}", spdlog::to_hex(bytes));
 
         auto status = m_channel.write(bytes);
 
         if (status != ChannelErrorCode::OK) {
-            log.error("writing failed, reason {}", status.what());
+            spdlog::error("writing failed, reason {}", status.what());
 
             break;
         }
-
-        log.flush();
     }
 
     shutdown();
@@ -59,19 +61,6 @@ void Writer::shutdown()
         share::input_thread.cancel();
 
     share::run_gui = false;
-}
-
-logging::log Writer::log {};
-
-void Writer::setup_logging()
-{
-    using namespace logging;
-
-    log.set_level(log::level::debug);
-
-    log.set_prefix("[writer]");
-
-    log.set_file(share::log_file);
 }
 
 } // namespace client

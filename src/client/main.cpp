@@ -5,7 +5,6 @@
 #include "share.hpp"
 
 // common
-#include "../common/log_file.hpp"
 #include "../common/threading.hpp"
 
 // std
@@ -25,6 +24,13 @@
 // fmt
 #include <fmt/chrono.h>
 #include <fmt/format.h>
+
+// spdlog
+#include <spdlog/async.h>
+#include <spdlog/common.h>
+#include <spdlog/fmt/chrono.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/spdlog.h>
 
 struct IPv4Validator : public CLI::Validator {
     IPv4Validator()
@@ -95,23 +101,24 @@ int main(int argc, char** argv)
 
     auto now = std::chrono::system_clock::now();
 
-    client::share::log_file.open(
-        fmt::format("netsketch-client-log {:%Y-%m-%d %H:%M:%S}", now)
-    );
+    try {
+        auto logger = spdlog::basic_logger_mt(
+            "client",
+            fmt::format("netsketch-client-log {:%Y-%m-%d %H:%M:%S}", now)
+        );
 
-    ABORTIFV(
-        client::share::log_file.error(),
-        "opening a log file failed, reason: {}",
-        client::share::log_file.reason()
-    );
+        spdlog::set_default_logger(logger);
+
+        spdlog::set_level(spdlog::level::debug);
+    } catch (const spdlog::spdlog_ex& ex) {
+        fmt::println("log init failed: {}", ex.what());
+
+        return EXIT_FAILURE;
+    }
 
     client::NetworkManager manager { ipv4_addr, port };
 
     if (!manager.setup()) {
-        if (client::share::log_file.is_open()) {
-            client::share::log_file.close();
-        }
-
         fmt::println("error: failed to connect to server");
 
         return EXIT_FAILURE;
@@ -130,10 +137,6 @@ int main(int argc, char** argv)
     }
 
     client::share::input_thread.join();
-
-    if (client::share::log_file.is_open()) {
-        client::share::log_file.close();
-    }
 
     return 0;
 }

@@ -6,9 +6,13 @@
 
 namespace client {
 
-class input_parser_t {
+// The input parser has been stripped from the
+// lexer I had written for the Lox toy programming
+// language.
+
+class InputParser {
    public:
-    explicit input_parser_t(std::string_view source);
+    explicit InputParser(std::string_view source);
 
     void scan_tokens();
 

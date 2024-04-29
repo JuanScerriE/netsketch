@@ -53,7 +53,7 @@ static void print_draw(size_t index, Draw draw)
 {
     std::visit(
         overload {
-            [=](TextDraw& arg) {
+            [index](TextDraw& arg) {
                 fmt::println(
                     "[{}] => [text] [{} {} {}] [{} {} \"{}\"]",
                     index,
@@ -65,7 +65,7 @@ static void print_draw(size_t index, Draw draw)
                     arg.string
                 );
             },
-            [=](CircleDraw& arg) {
+            [index](CircleDraw& arg) {
                 fmt::println(
                     "[{}] => [circle] [{} {} {}] [{} {} {}]",
                     index,
@@ -77,7 +77,7 @@ static void print_draw(size_t index, Draw draw)
                     arg.r
                 );
             },
-            [=](RectangleDraw& arg) {
+            [index](RectangleDraw& arg) {
                 fmt::println(
                     "[{}] => [rectangle] [{} {} {}] [{} {} {} {}]",
                     index,
@@ -90,7 +90,7 @@ static void print_draw(size_t index, Draw draw)
                     arg.h
                 );
             },
-            [=](LineDraw& arg) {
+            [index](LineDraw& arg) {
                 fmt::println(
                     "[{}] => [line] [{} {} {}] [{} {} {} {}]",
                     index,
@@ -184,9 +184,15 @@ list_draws(Option tool_type, Option user_qual, TaggedDrawVector& draw_vector)
     }
 }
 
+// The process line function is just a massive function
+// for handling the users input. I decided to
+// keep like so instead of breaking it up into
+// separate functions so I can have more control
+// over the control flow using returns.
+
 void InputHandler::process_line(std::string_view line_view)
 {
-    input_parser_t parser { line_view };
+    InputParser parser { line_view };
 
     try {
         parser.scan_tokens();

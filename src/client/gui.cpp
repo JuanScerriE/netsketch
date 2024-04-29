@@ -127,6 +127,13 @@ void Gui::process_draw(Draw& draw)
 
 inline void Gui::draw_scene()
 {
+    // NOTE: please look at the separate note in
+    // client/share.hpp about double instance locking
+    // it is a technique which is a good middle ground
+    // between just a full mutex and a completely lock-free
+    // data structure (which is way harder in terms of code
+    // complexity).
+
     for (;;) {
         {
             threading::unique_rwlock_rdguard guard {
@@ -193,6 +200,10 @@ void Gui::draw()
         }
         EndMode2D();
 
+        // This section is used for drawing the rulers
+        // on the canvas to allow for a better user
+        // experience.
+
         int gap = static_cast<int>(50 * m_camera.zoom);
         int width = GetScreenWidth();
         float left = target_world_pos.x;
@@ -234,19 +245,14 @@ void Gui::draw()
     EndDrawing();
 }
 
-// NOTE: using a buffer is the simplest solution
-// to easily make use of spdlog and fmt
-// since parameter packing and va_lists
-// are two completely orthogonal constructs
-// i.e. they don't interact well. For
-// a fool proof solution you'd need to implement
-// a C-format string parser to calculate
-// how to read each element in the va_list
-// and then use spdlog and fmt. But that's an amount
-// of work I am not willing to take on and nor
-// do I want to scavenge for some implementation
-// which I'd then need to pull the parser out of.
-char Gui::s_log_message_buffer[1024] {};
+// NOTE: using a buffer is the simplest solution to easily make use of spdlog
+// and fmt since parameter packing and va_lists are two completely orthogonal
+// constructs  i.e. they don't interact well. For a fool proof solution you'd
+// need to implement a C-format string parser to calculate how to read each
+// element in the and then use spdlog and fmt. But that's an amount of work I am
+// not willing to take on and nor do I want to scavenge for some implementation
+// which I'd then need to pull the parser out of. char
+// Gui::s_log_message_buffer[1024] {};
 
 void Gui::logger_wrapper(int msg_type, const char* fmt, va_list args)
 {

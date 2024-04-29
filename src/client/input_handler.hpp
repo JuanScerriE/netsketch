@@ -28,6 +28,10 @@ class InputHandler {
    private:
     void process_line(std::string_view line_view);
 
+    // The InputHandler maintians some of the choices
+    // made by the user e.g. selecting a specific colour
+    // to use.
+
     // defaults
     std::optional<long> m_selected_id {};
 

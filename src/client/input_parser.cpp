@@ -10,12 +10,12 @@
 
 namespace client {
 
-input_parser_t::input_parser_t(std::string_view source)
+InputParser::InputParser(std::string_view source)
     : m_source(source)
 {
 }
 
-void input_parser_t::scan_tokens()
+void InputParser::scan_tokens()
 {
     while (!is_at_end()) {
         // we are at the beginning of the next lexeme
@@ -25,17 +25,17 @@ void input_parser_t::scan_tokens()
     }
 }
 
-std::vector<std::string> input_parser_t::get_tokens()
+std::vector<std::string> InputParser::get_tokens()
 {
     return std::move(m_tokens);
 }
 
-bool input_parser_t::is_at_end()
+bool InputParser::is_at_end()
 {
     return m_current >= m_source.length();
 }
 
-void input_parser_t::scan_token()
+void InputParser::scan_token()
 {
     char c = advance();
 
@@ -55,12 +55,12 @@ void input_parser_t::scan_token()
     }
 }
 
-char input_parser_t::advance()
+char InputParser::advance()
 {
     return m_source[m_current++];
 }
 
-bool input_parser_t::match(char expected)
+bool InputParser::match(char expected)
 {
     if (is_at_end()) {
         return false;
@@ -75,7 +75,7 @@ bool input_parser_t::match(char expected)
     return true;
 }
 
-char input_parser_t::peek()
+char InputParser::peek()
 {
     if (is_at_end()) {
         return '\0';
@@ -84,7 +84,7 @@ char input_parser_t::peek()
     return m_source[m_current];
 }
 
-void input_parser_t::string()
+void InputParser::string()
 {
     while (peek() != '"' && !is_at_end()) {
         advance();
@@ -103,7 +103,7 @@ void input_parser_t::string()
     m_tokens.push_back(value);
 }
 
-void input_parser_t::number()
+void InputParser::number()
 {
     while (is_digit(peek())) {
         advance();
@@ -121,7 +121,7 @@ void input_parser_t::number()
     m_tokens.push_back(m_source.substr(m_start, m_current - m_start));
 }
 
-char input_parser_t::peek_next()
+char InputParser::peek_next()
 {
     if (m_current + 1 >= m_source.length()) {
         return '\0';
@@ -130,7 +130,7 @@ char input_parser_t::peek_next()
     return m_source[m_current + 1];
 }
 
-void input_parser_t::identifier()
+void InputParser::identifier()
 {
     while (!is_at_end() && !is_space(peek())) {
         advance();
@@ -141,22 +141,22 @@ void input_parser_t::identifier()
     m_tokens.push_back(value);
 }
 
-bool input_parser_t::is_space(char c)
+bool InputParser::is_space(char c)
 {
     return c == ' ' || c == '\r' || c == '\t' || c == '\n';
 }
 
-bool input_parser_t::is_digit(char c)
+bool InputParser::is_digit(char c)
 {
     return c >= '0' && c <= '9';
 }
 
-bool input_parser_t::is_alpha(char c)
+bool InputParser::is_alpha(char c)
 {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
 }
 
-bool input_parser_t::is_alpha_numeric(char c)
+bool InputParser::is_alpha_numeric(char c)
 {
     return is_digit(c) || is_alpha(c);
 }

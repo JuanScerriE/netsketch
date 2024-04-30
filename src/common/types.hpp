@@ -42,15 +42,15 @@ struct LineDraw {
 
 struct RectangleDraw {
     Colour colour {};
-    int x { 0 };
-    int y { 0 };
-    int w { 0 };
-    int h { 0 };
+    int x0 { 0 };
+    int y0 { 0 };
+    int x1 { 0 };
+    int y1 { 0 };
 
     template <class Archive>
     void serialize(Archive& archive)
     {
-        archive(colour, x, y, w, h);
+        archive(colour, x0, y0, x1, y1);
     }
 };
 

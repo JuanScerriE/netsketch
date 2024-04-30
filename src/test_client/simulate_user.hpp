@@ -66,10 +66,10 @@ RectangleDraw random_rectangle_draw()
     RectangleDraw draw {};
 
     draw.colour = pick_random_colour();
-    draw.x = boundary_dist(mt);
-    draw.y = boundary_dist(mt);
-    draw.w = boundary_dist(mt);
-    draw.h = boundary_dist(mt);
+    draw.x0 = boundary_dist(mt);
+    draw.y0 = boundary_dist(mt);
+    draw.x1 = boundary_dist(mt);
+    draw.y1 = boundary_dist(mt);
 
     return draw;
 }

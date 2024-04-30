@@ -84,10 +84,10 @@ static void print_draw(size_t index, Draw draw)
                     arg.colour.r,
                     arg.colour.g,
                     arg.colour.b,
-                    arg.x,
-                    arg.y,
-                    arg.w,
-                    arg.h
+                    arg.x0,
+                    arg.y0,
+                    arg.x1,
+                    arg.y1
                 );
             },
             [index](LineDraw& arg) {
@@ -231,9 +231,9 @@ void InputHandler::process_line(std::string_view line_view)
             "tool and colour on the canvas"
             "\n    \twhen tool is 'line', draw {{X0}} {{Y0}} {{X1}} {{Y1}} - "
             "draw a line between the points (X0, Y0) to (X1, Y1)"
-            "\n    \twhen tool is 'rectangle', draw {{X}} {{Y}} {{WIDTH}} "
-            "{{HEIGHT}} - draw a rectangle starting at (X, Y) having width "
-            "WIDTH and height HEIGHT"
+            "\n    \twhen tool is 'rectangle', draw {{X0}} {{Y0}} {{X1}} "
+            "{{Y1}} - draw a rectangle having the top left corner at (X0, Y0) "
+            "and the bottom right corner at (X1, Y1)"
             "\n    \twhen tool is 'circle', draw {{X}} {{Y}} {{RADIUS}} - draw "
             "a circle at (X, Y) with radius RADIUS"
             "\n    \twhen tool is 'text', draw {{X}} {{Y}} {{STRING}} - draw a "
@@ -500,10 +500,10 @@ void InputHandler::process_line(std::string_view line_view)
                 return;
             }
 
-            int x {};
+            int x0 {};
 
             try {
-                x = std::stoi(tokens[1]);
+                x0 = std::stoi(tokens[1]);
             } catch (std::invalid_argument&) {
                 fmt::println(stderr, "warn: expected integer (32-bit) for x");
 
@@ -514,10 +514,10 @@ void InputHandler::process_line(std::string_view line_view)
                 return;
             }
 
-            int y {};
+            int y0 {};
 
             try {
-                y = std::stoi(tokens[2]);
+                y0 = std::stoi(tokens[2]);
             } catch (std::invalid_argument&) {
                 fmt::println(stderr, "warn: expected integer (32-bit) for y");
 
@@ -528,10 +528,10 @@ void InputHandler::process_line(std::string_view line_view)
                 return;
             }
 
-            int w {};
+            int x1 {};
 
             try {
-                w = std::stoi(tokens[3]);
+                x1 = std::stoi(tokens[3]);
             } catch (std::invalid_argument&) {
                 fmt::println(stderr, "warn: expected integer (32-bit) for w");
 
@@ -542,10 +542,10 @@ void InputHandler::process_line(std::string_view line_view)
                 return;
             }
 
-            int h {};
+            int y1 {};
 
             try {
-                h = std::stoi(tokens[4]);
+                y1 = std::stoi(tokens[4]);
             } catch (std::invalid_argument&) {
                 fmt::println(stderr, "warn: expected integer (32-bit) for h");
 
@@ -556,7 +556,7 @@ void InputHandler::process_line(std::string_view line_view)
                 return;
             }
 
-            RectangleDraw draw { m_colour, x, y, w, h };
+            RectangleDraw draw { m_colour, x0, y0, x1, y1 };
 
             Action action { draw };
 

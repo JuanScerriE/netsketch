@@ -105,10 +105,10 @@ void Gui::process_draw(Draw& draw)
             },
             [](RectangleDraw& arg) {
                 DrawRectangle(
-                    arg.x,
-                    arg.y,
-                    arg.w,
-                    arg.h,
+                    arg.x0,
+                    arg.y0,
+                    arg.x1 - arg.x0,
+                    arg.y1 - arg.y0,
                     to_raylib_colour(arg.colour)
                 );
             },

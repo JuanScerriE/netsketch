@@ -13,8 +13,8 @@ set(BUILD_GAMES OFF) # don't build the supplied example games
 
 if (DEFINED ENV{WAYLAND_DISPLAY})
     message("-- Using Wayland (and turning off X11)...")
-    set(GLFW_BUILD_X11 OFF) # don't use x11 please
-    set(GLFW_BUILD_WAYLAND ON) # use wayland please
+    set(GLFW_BUILD_X11 ON) # don't use x11 please
+    set(GLFW_BUILD_WAYLAND OFF) # use wayland please
 endif ()
 
 FetchContent_MakeAvailable(raylib)

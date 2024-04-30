@@ -509,7 +509,7 @@ class IPv4SocketRef {
 
         vec_bytes.reserve(size);
 
-        ssize_t read_size = ::read(m_sock_fd, vec_bytes.data(), size);
+        ssize_t read_size = ::recv(m_sock_fd, vec_bytes.data(), size, MSG_WAITALL);
 
         if (read_size < 0) {
             throw std::runtime_error {

@@ -32,6 +32,9 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 
+// bench
+#include "../bench/bench.hpp"
+
 struct IPv4Validator : public CLI::Validator {
     IPv4Validator()
     {
@@ -116,6 +119,8 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
+    START_BENCHMARK_THREAD;
+
     client::NetworkManager manager { ipv4_addr, port };
 
     if (!manager.setup()) {
@@ -137,6 +142,8 @@ int main(int argc, char** argv)
     }
 
     client::share::input_thread.join();
+
+    END_BENCHMARK_THREAD;
 
     return 0;
 }

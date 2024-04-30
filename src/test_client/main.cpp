@@ -27,6 +27,9 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+// bench
+#include "../bench/bench.hpp"
+
 struct IPv4Validator : public CLI::Validator {
     IPv4Validator()
     {
@@ -134,6 +137,10 @@ int main(int argc, char** argv)
         return 0;
     }
 
+    DISABLE_INDIVIDUAL_LOGS;
+
+    START_BENCHMARK_THREAD;
+
     test_client::NetworkManager manager { ipv4_addr, port };
 
     if (!manager.setup()) {
@@ -145,6 +152,8 @@ int main(int argc, char** argv)
     test_client::simulate_behaviour(iterations, interval);
 
     spdlog::info("Finished...");
+
+    END_BENCHMARK_THREAD;
 
     return 0;
 }

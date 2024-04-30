@@ -22,6 +22,9 @@
 #include <spdlog/fmt/bin_to_hex.h>
 #include <spdlog/spdlog.h>
 
+// bench
+#include "../bench/bench.hpp"
+
 namespace client {
 
 Reader::Reader(const Channel& channel)
@@ -32,6 +35,8 @@ Reader::Reader(const Channel& channel)
 void Reader::operator()()
 {
     for (;;) {
+        BENCH("reading input from network");
+
         // NOTE: that the m_channel.read() blocks
         auto [res, status] = m_channel.read();
 

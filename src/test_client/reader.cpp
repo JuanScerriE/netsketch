@@ -15,8 +15,14 @@
 #include <sys/poll.h>
 #include <unistd.h>
 
+// cstd
+#include <csignal>
+
 // spdlog
 #include <spdlog/spdlog.h>
+
+// bench
+#include "../bench/bench.hpp"
 
 namespace test_client {
 
@@ -33,7 +39,16 @@ void Reader::operator()()
 void Reader::read_loop()
 {
     for (;;) {
+        BENCH("reading network input");
+
         auto [_, status] = m_channel.read();
+
+        if (status == ChannelErrorCode::DESERIALIZATION_FAILED) {
+            spdlog::error("deserialization failed, reason {}", status.what());
+
+            // NOTE: we want to manually induce a coredump
+            std::raise(SIGABRT);
+        }
 
         if (status != ChannelErrorCode::OK) {
             spdlog::error("reading failed, reason {}", status.what());

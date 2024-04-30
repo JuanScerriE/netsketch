@@ -28,6 +28,8 @@ extern threading::cond_var benchmark_cond;
 extern std::queue<std::pair<std::string, std::chrono::nanoseconds>>
     benchmark_queue;
 
+extern bool disable_individual_logs;
+
 class MovingBenchmark {
    public:
     void operator()()
@@ -112,14 +114,16 @@ class Bench {
 
         benchmark_cond.notify_one();
 
-        spdlog::debug(
-            "[{}:{}:{}] \"{}\" Time Taken: {}",
-            m_file,
-            m_function_name,
-            m_line,
-            m_name,
-            time_taken
-        );
+        if (!disable_individual_logs) {
+            spdlog::debug(
+                "[{}:{}:{}] \"{}\" Time Taken: {}",
+                m_file,
+                m_function_name,
+                m_line,
+                m_name,
+                time_taken
+            );
+        }
     }
 
    private:
@@ -226,10 +230,10 @@ constexpr CompTimeString<N> file_name(CompTimeString<N> file_path)
 
 #ifdef BENCHMARK
 
-// This is the macro we use to instead of calling
-// Bench {} directly to automatically fill out
-// all the info relating to the file name,
-// function name and line number.
+#define DISABLE_INDIVIDUAL_LOGS                \
+    do {                                       \
+        bench::disable_individual_logs = true; \
+    } while (0)
 
 #define START_BENCHMARK_THREAD                                 \
     do {                                                       \
@@ -245,6 +249,11 @@ constexpr CompTimeString<N> file_name(CompTimeString<N> file_path)
         }                                               \
     } while (0)
 
+// This is the macro we use to instead of calling
+// Bench {} directly to automatically fill out
+// all the info relating to the file name,
+// function name and line number.
+
 #define BENCH(name)                                         \
     (bench::Bench { file_name(CompTimeString { __FILE__ }), \
                     __func__,                               \
@@ -253,6 +262,7 @@ constexpr CompTimeString<N> file_name(CompTimeString<N> file_path)
 
 #else
 
+#define DISABLE_INDIVIDUAL_LOGS
 #define START_BENCHMARK_THREAD
 #define END_BENCHMARK_THREAD
 #define BENCH(name)

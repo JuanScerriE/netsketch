@@ -32,6 +32,7 @@ Reader::Reader(const Channel& channel)
 void Reader::operator()()
 {
     for (;;) {
+        // NOTE: that the m_channel.read() blocks
         auto [res, status] = m_channel.read();
 
         if (status != ChannelErrorCode::OK) {
@@ -58,6 +59,9 @@ void Reader::handle_payload(ByteString& bytes)
         return;
     }
 
+    // NOTE: again please go look at client/share.hpp
+    // for a reason as to why we are updating two separate
+    // objects which contain the same things using a rwlock
     std::visit(
         overload {
             [](Adopt& arg) {
@@ -124,6 +128,11 @@ void Reader::handle_payload(ByteString& bytes)
 
 void Reader::shutdown()
 {
+    // The confiugration and setup is limited enough
+    // to allow us to stop things manually from each
+    // of the components. In particular the same
+    // few steps are being done in the writer and
+    // the input handler.
     if (share::writer_thread.is_initialized()
         && share::writer_thread.is_alive())
         share::writer_thread.cancel();

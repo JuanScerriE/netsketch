@@ -15,9 +15,11 @@
 
 // common
 #include "../common/abort.hpp"
-#include "../common/bench.hpp"
 #include "../common/tagged_draw_vector_wrapper.hpp"
 #include "../common/threading.hpp"
+
+// bench
+#include "../bench/bench.hpp"
 
 // spdlog
 #include <spdlog/spdlog.h>

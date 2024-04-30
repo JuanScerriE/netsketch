@@ -1,12 +1,14 @@
 #pragma once
 
 // common
-#include "../common/bench.hpp"
 #include "../common/channel.hpp"
 #include "../common/threading.hpp"
 
 // server
 #include "share.hpp"
+
+// bench
+#include "../bench/bench.hpp"
 
 // spdlog
 #include <spdlog/spdlog.h>

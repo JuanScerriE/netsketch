@@ -21,7 +21,7 @@
 // spdlog
 #include <spdlog/spdlog.h>
 
-namespace client {
+namespace test_client {
 
 NetworkManager::NetworkManager(uint32_t ipv4, uint16_t port)
     : m_ipv4(ipv4), m_port(port)
@@ -147,4 +147,4 @@ void NetworkManager::close_writer()
         share::writer_thread.join();
 }
 
-} // namespace client
+} // namespace test_client

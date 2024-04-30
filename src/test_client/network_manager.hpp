@@ -4,7 +4,7 @@
 #include "../common/channel.hpp"
 #include "../common/network.hpp"
 
-namespace client {
+namespace test_client {
 
 class NetworkManager {
    public:
@@ -32,4 +32,4 @@ class NetworkManager {
     Channel m_channel {};
 };
 
-} // namespace client
+} // namespace test_client

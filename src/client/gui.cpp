@@ -252,7 +252,8 @@ void Gui::draw()
 // element in the and then use spdlog and fmt. But that's an amount of work I am
 // not willing to take on and nor do I want to scavenge for some implementation
 // which I'd then need to pull the parser out of. char
-// Gui::s_log_message_buffer[1024] {};
+
+char Gui::s_log_message_buffer[1024] {};
 
 void Gui::logger_wrapper(int msg_type, const char* fmt, va_list args)
 {

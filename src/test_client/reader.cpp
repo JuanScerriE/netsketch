@@ -18,7 +18,7 @@
 // spdlog
 #include <spdlog/spdlog.h>
 
-namespace client {
+namespace test_client {
 
 Reader::Reader(const Channel& channel)
     : m_channel(channel)
@@ -52,4 +52,4 @@ void Reader::shutdown()
         share::writer_thread.cancel();
 }
 
-} // namespace client
+} // namespace test_client

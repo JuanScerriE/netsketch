@@ -10,7 +10,7 @@
 // spdlog
 #include <spdlog/spdlog.h>
 
-namespace client {
+namespace test_client {
 
 Writer::Writer(Channel channel)
     : m_channel(channel)
@@ -56,4 +56,4 @@ void Writer::shutdown()
         share::reader_thread.cancel();
 }
 
-} // namespace client
+} // namespace test_client

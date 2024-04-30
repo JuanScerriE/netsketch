@@ -16,12 +16,14 @@
 #include <fmt/core.h>
 
 // common
-#include "../common/bench.hpp"
 #include "../common/channel.hpp"
 #include "../common/network.hpp"
 #include "../common/overload.hpp"
 #include "../common/serial.hpp"
 #include "../common/threading.hpp"
+
+// bench
+#include "../bench/bench.hpp"
 
 // spdlog
 #include <spdlog/spdlog.h>

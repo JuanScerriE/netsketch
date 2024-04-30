@@ -28,12 +28,6 @@ NetworkManager::NetworkManager(uint32_t ipv4, uint16_t port)
 {
 }
 
-NetworkManager::~NetworkManager()
-{
-    close_reader();
-    close_writer();
-}
-
 bool NetworkManager::setup()
 {
     if (!open_socket()) {
@@ -50,6 +44,12 @@ bool NetworkManager::setup()
     start_writer();
 
     return true;
+}
+
+NetworkManager::~NetworkManager()
+{
+    close_reader();
+    close_writer();
 }
 
 bool NetworkManager::open_socket()
@@ -77,6 +77,9 @@ void NetworkManager::wrap_socket()
     m_channel = Channel { m_conn };
 }
 
+// The send username function is a quick test which sends over a Username
+// Payload which the server can then check to ensure that the username of a
+// client is unique
 bool NetworkManager::send_username()
 {
     Username username { share::username };

@@ -3,6 +3,7 @@ add_executable(netsketch_server
         server/share.cpp
         server/server.cpp
         server/conn_handler.cpp
+        bench/bench.cpp
 )
 
 if (BENCHMARK)
@@ -30,6 +31,7 @@ add_executable(netsketch_client
         client/network_manager.cpp
         client/reader.cpp
         client/writer.cpp
+        bench/bench.cpp
 )
 
 if (BENCHMARK)

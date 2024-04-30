@@ -2,9 +2,8 @@
 
 // common
 #include "../common/channel.hpp"
-#include "../common/log.hpp"
 
-namespace client {
+namespace test_client {
 
 class Writer {
    public:
@@ -19,4 +18,4 @@ class Writer {
     Channel m_channel {};
 };
 
-} // namespace client
+} // namespace test_client

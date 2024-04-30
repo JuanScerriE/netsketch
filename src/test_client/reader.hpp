@@ -3,7 +3,7 @@
 // common
 #include "../common/channel.hpp"
 
-namespace client {
+namespace test_client {
 
 class Reader {
    public:
@@ -19,4 +19,4 @@ class Reader {
     Channel m_channel;
 };
 
-} // namespace client
+} // namespace test_client

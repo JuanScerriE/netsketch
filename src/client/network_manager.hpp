@@ -6,6 +6,12 @@
 
 namespace client {
 
+// The NetworkManager (not to be confused
+// with the Linux utility NetworkManager) is
+// a simple class which provides the backbone
+// for setting up the expected networking configuration
+// for the client.
+
 class NetworkManager {
    public:
     explicit NetworkManager(uint32_t ipv4, uint16_t port);

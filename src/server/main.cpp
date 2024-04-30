@@ -7,6 +7,9 @@
 #include "../common/abort.hpp"
 #include "../common/threading.hpp"
 
+// bench
+#include "../bench/bench.hpp"
+
 // unix
 #include <cstdlib>
 #include <poll.h>
@@ -79,6 +82,8 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
+    START_BENCHMARK_THREAD;
+
     server::share::updater_thread = threading::thread { server::Updater {} };
 
     server::Server server { port };
@@ -95,6 +100,8 @@ int main(int argc, char** argv)
         // described in the above man package
         server::share::timers.clear();
     }
+
+    END_BENCHMARK_THREAD;
 
     return 0;
 }

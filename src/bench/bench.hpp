@@ -4,7 +4,14 @@
 #include <chrono>
 
 // spdlog
+#include <spdlog/fmt/chrono.h>
 #include <spdlog/spdlog.h>
+
+// common
+#include "../common/threading.hpp"
+
+// std
+#include <queue>
 
 // The below class is small class which is starts a timer when
 // its created and closes a timer when it is destroyed.
@@ -12,6 +19,48 @@
 // to be used is by creating a scope and constructing the
 // Bench object within that scope. This basically,
 // allows us to time particular scope.
+
+namespace bench {
+
+extern threading::thread benchmark_thread;
+extern threading::mutex benchmark_mutex;
+extern threading::cond_var benchmark_cond;
+extern std::queue<std::pair<std::string, std::chrono::nanoseconds>>
+    benchmark_queue;
+
+class MovingBenchmark {
+   public:
+    void operator()()
+    {
+        for (;;) {
+            threading::unique_mutex_guard guard { benchmark_mutex };
+
+            benchmark_cond.wait(guard, []() {
+                return benchmark_queue.empty();
+            });
+
+            auto [key, time_taken] = benchmark_queue.front();
+
+            benchmark_queue.pop();
+
+            m_moving_averages[key]
+                = (m_moving_averages.count(key) <= 0)
+                      ? time_taken
+                      : (m_moving_averages[key] + time_taken) / 2;
+        }
+    }
+
+    ~MovingBenchmark()
+    {
+        for (auto& [key, moving_average] : m_moving_averages) {
+            spdlog::debug("moving average of \"{}\": {}", key, moving_average);
+        }
+    }
+
+   private:
+    std::unordered_map<std::string, std::chrono::nanoseconds>
+        m_moving_averages {};
+};
 
 class Bench {
    public:
@@ -53,7 +102,15 @@ class Bench {
         auto end = std::chrono::time_point_cast<std::chrono::nanoseconds>(m_end)
                        .time_since_epoch();
 
-        auto time_taken = end - start;
+        std::chrono::nanoseconds time_taken = (end - start);
+
+        {
+            threading::mutex_guard guard { benchmark_mutex };
+
+            benchmark_queue.emplace(m_name, time_taken);
+        }
+
+        benchmark_cond.notify_one();
 
         spdlog::debug(
             "[{}:{}:{}] \"{}\" Time Taken: {}",
@@ -74,6 +131,8 @@ class Bench {
     std::string m_line {};
     std::string m_name {};
 };
+
+} // namespace bench
 
 // We are using the notion of a compile time string
 // because the compiler is capable of injecting
@@ -168,15 +227,34 @@ constexpr CompTimeString<N> file_name(CompTimeString<N> file_path)
 #ifdef BENCHMARK
 
 // This is the macro we use to instead of calling
-// Bench{} directly to automatically fill out
+// Bench {} directly to automatically fill out
 // all the info relating to the file name,
 // function name and line number.
 
-#define BENCH(name)                                  \
-    (Bench { file_name(CompTimeString { __FILE__ }), \
-             __func__,                               \
-             LINE_STRING,                            \
-             name })
+#define START_BENCHMARK_THREAD                                 \
+    do {                                                       \
+        bench::benchmark_thread                                \
+            = threading::thread { bench::MovingBenchmark {} }; \
+    } while (0)
+
+#define END_BENCHMARK_THREAD                            \
+    do {                                                \
+        if (bench::benchmark_thread.is_initialized()) { \
+            bench::benchmark_thread.cancel();           \
+            bench::benchmark_thread.join();             \
+        }                                               \
+    } while (0)
+
+#define BENCH(name)                                         \
+    (bench::Bench { file_name(CompTimeString { __FILE__ }), \
+                    __func__,                               \
+                    LINE_STRING,                            \
+                    name })
+
 #else
+
+#define START_BENCHMARK_THREAD
+#define END_BENCHMARK_THREAD
 #define BENCH(name)
+
 #endif

@@ -253,9 +253,11 @@ class IPv4Socket {
 
         IPv4Socket conn_sock {};
 
+        conn_sock.m_addr_size = sizeof(struct sockaddr_in);
+
         int conn_sock_fd = ::accept(
             m_sock_fd,
-            (struct sockaddr*)&conn_sock.m_sock_addr,
+            (struct sockaddr *)&conn_sock.m_sock_addr,
             &conn_sock.m_addr_size
         );
 

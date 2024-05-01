@@ -179,7 +179,7 @@ void Server::request_loop()
         {
             threading::mutex_guard guard { share::threads_mutex };
 
-            // we do not want to create a thread if cancelation has occured
+            // we do not want to create a thread if cancellation has occurred
             // as that thread would not be cancelled.
             threading::thread::test_cancel();
 

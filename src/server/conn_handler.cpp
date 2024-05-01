@@ -39,6 +39,8 @@ void ConnHandler::setup_readable_net_info()
 
     char ipv4[INET_ADDRSTRLEN + 1];
 
+    bzero(&ipv4, INET_ADDRSTRLEN + 1);
+
     if (inet_ntop(AF_INET, &addr.sin_addr, ipv4, INET_ADDRSTRLEN) == nullptr) {
         ABORTV("inet_ntop(...) failed, reason: {}", strerror(errno));
     }

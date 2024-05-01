@@ -29,8 +29,6 @@ void handle_timer(union sigval val)
         {
             threading::unique_mutex_guard guard { share::update_mutex };
 
-            TaggedDrawVectorWrapper { share::tagged_draw_vector }.adopt(adopt);
-
             share::payload_queue.emplace(adopt);
         }
 

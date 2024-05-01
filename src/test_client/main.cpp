@@ -4,6 +4,7 @@
 #include "simulate_user.hpp"
 
 // std
+#include <fstream>
 #include <regex>
 
 // cstd
@@ -29,6 +30,25 @@
 
 // bench
 #include "../bench/bench.hpp"
+
+// cereal
+#include <cereal/archives/json.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/variant.hpp>
+#include <cereal/types/vector.hpp>
+
+void output()
+{
+    std::ofstream of {
+        fmt::format("tagged_vector_{}.json", test_client::share::username)
+    };
+
+    {
+        cereal::JSONOutputArchive ar { of };
+
+        ar(test_client::share::tagged_draw_vector);
+    }
+}
 
 struct IPv4Validator : public CLI::Validator {
     IPv4Validator()
@@ -85,15 +105,6 @@ int main(int argc, char** argv)
     )
         ->capture_default_str();
 
-    uint32_t expected_responses {};
-    app.add_option(
-           "--expected-responses",
-           expected_responses,
-           "The number expected responses the Test Client should receive from "
-           "the NetSketch server"
-    )
-        ->required();
-
     std::string nickname {};
     app.add_option(
            "--nickname",
@@ -119,8 +130,6 @@ int main(int argc, char** argv)
 
     // set the other actions flag
     test_client::share::only_drawing = !other_actions;
-
-    test_client::share::expected_responses = expected_responses;
 
     in_addr addr {};
 
@@ -171,6 +180,8 @@ int main(int argc, char** argv)
     spdlog::info("Finished...");
 
     END_BENCHMARK_THREAD;
+
+    output();
 
     return 0;
 }

@@ -1,5 +1,4 @@
-option(BENCHMARK "Build the static library" ON)
-
+option(BENCHMARK "Enable benchmarking" ON)
 
 add_executable(netsketch_server
         server/main.cpp

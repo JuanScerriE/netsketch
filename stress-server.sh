@@ -2,12 +2,14 @@
 
 # set -x
 
+# --expected-responses $(($1*$2))
+
 max=$1
 
 echo "stress-server.sh: starting the test clients..."
 for i in `seq 0 $max`
 do
-    build/src/netsketch_test_client --nickname juan$i --iterations $2 --interval $3 --expected-responses $(($1*$2)) &
+    build/src/netsketch_test_client --nickname juan$i --iterations $2 --interval $3  &
 
     pids[$i]=$!
 done

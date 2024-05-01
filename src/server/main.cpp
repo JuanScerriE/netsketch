@@ -5,6 +5,7 @@
 
 // common
 #include "../common/abort.hpp"
+#include "../common/tagged_draw_vector_wrapper.hpp"
 #include "../common/threading.hpp"
 
 // bench
@@ -28,6 +29,12 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+// cereal
+#include <cereal/archives/json.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/variant.hpp>
+#include <cereal/types/vector.hpp>
+
 void sigint_handler(int)
 {
     // HACK or BAD: according to the standard
@@ -42,6 +49,17 @@ void sigint_handler(int)
     }
 
     server::share::updater_thread.cancel();
+}
+
+void output()
+{
+    std::ofstream of { fmt::format("tagged_vector_server.json") };
+
+    {
+        cereal::JSONOutputArchive ar { of };
+
+        ar(server::share::tagged_draw_vector);
+    }
 }
 
 int main(int argc, char** argv)
@@ -113,6 +131,13 @@ int main(int argc, char** argv)
     }
 
     END_BENCHMARK_THREAD;
+
+    spdlog::debug(
+        "hash of tagged draw vector: {}",
+        TaggedDrawVectorWrapper { server::share::tagged_draw_vector }.hash()
+    );
+
+    output();
 
     return 0;
 }

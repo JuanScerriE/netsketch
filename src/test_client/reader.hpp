@@ -2,6 +2,7 @@
 
 // common
 #include "../common/channel.hpp"
+#include "../common/types.hpp"
 
 namespace test_client {
 
@@ -14,9 +15,7 @@ class Reader {
     void shutdown();
 
    private:
-    uint32_t m_responses { 0 };
-
-    std::size_t m_hash { 0 };
+    void handle_payload(ByteString& bytes);
 
     Channel m_channel;
 };

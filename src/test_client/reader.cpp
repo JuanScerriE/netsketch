@@ -3,6 +3,8 @@
 #include "share.hpp"
 
 // common
+#include "../common/overload.hpp"
+#include "../common/tagged_draw_vector_wrapper.hpp"
 #include "../common/threading.hpp"
 
 // fmt
@@ -34,24 +36,14 @@ Reader::Reader(const Channel& channel)
 void Reader::operator()()
 {
     for (;;) {
-        if (m_responses >= share::expected_responses)
-            break;
-
         BENCH("reading network input");
 
-        auto [bytes, status] = m_channel.read();
+        auto [res, status] = m_channel.read();
 
         if (status == ChannelErrorCode::DESERIALIZATION_FAILED) {
             spdlog::error("deserialization failed, reason {}", status.what());
 
-            spdlog::debug(
-                "actual number of responses received: {}, with hash {}",
-                m_responses,
-                m_hash
-            );
-
-            // NOTE: we want to manually induce a coredump
-            std::raise(SIGABRT);
+            break;
         }
 
         if (status != ChannelErrorCode::OK) {
@@ -60,22 +52,48 @@ void Reader::operator()()
             break;
         }
 
-        m_hash = m_hash ^ (std::hash<ByteString> {}(bytes) << 1);
-
-        m_responses++;
+        handle_payload(res);
     }
 
     shutdown();
 }
 
+void Reader::handle_payload(ByteString& bytes)
+{
+    auto [payload, status] = deserialize<Payload>(bytes);
+
+    if (status != DeserializeErrorCode::OK) {
+        spdlog::warn("deserialization failed, reason {}", status.what());
+
+        return;
+    }
+
+    std::visit(
+        overload {
+            [](Adopt& arg) {
+                TaggedDrawVectorWrapper { share::tagged_draw_vector }.adopt(arg
+                );
+            },
+            [](TaggedDrawVector& arg) {
+                share::tagged_draw_vector = arg;
+            },
+            [](TaggedAction& arg) {
+                TaggedDrawVectorWrapper { share::tagged_draw_vector }.update(arg
+                );
+            },
+            [](auto& object) {
+                spdlog::warn(
+                    "unexpected payload type {}",
+                    typeid(object).name()
+                );
+            },
+        },
+        payload
+    );
+}
+
 void Reader::shutdown()
 {
-    spdlog::debug(
-        "actual number of responses received: {}, with hash {}",
-        m_responses,
-        m_hash
-    );
-
     if (share::writer_thread.is_initialized()
         && share::writer_thread.is_alive())
         share::writer_thread.cancel();

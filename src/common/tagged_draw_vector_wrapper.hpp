@@ -2,6 +2,7 @@
 
 // common
 #include "overload.hpp"
+#include "serial.hpp"
 #include "types.hpp"
 
 // std
@@ -23,6 +24,19 @@ class TaggedDrawVectorWrapper {
     TaggedDrawVectorWrapper(const TaggedDrawVectorWrapper&) = delete;
 
     TaggedDrawVectorWrapper& operator=(const TaggedDrawVectorWrapper&) = delete;
+
+    std::size_t hash()
+    {
+        std::size_t value { 0 };
+
+        for (auto& tagged_action : m_vector) {
+            ByteString bytes = serialize(tagged_action);
+
+            value = value ^ (std::hash<ByteString> {}(bytes) << 1);
+        }
+
+        return value;
+    }
 
     void adopt(const Adopt& adopt)
     {

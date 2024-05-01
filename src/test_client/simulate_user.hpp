@@ -95,7 +95,9 @@ std::string generate_random_string()
     string.reserve(static_cast<size_t>(length));
 
     for (int i = 0; i < length; i++) {
-        string.push_back(std::clamp(static_cast<char>(char_dist(mt)), '!', '~')
+        // NOTE: we are using 'a'-'z' as our list cause the
+        // olive.c supports a very limited character set
+        string.push_back(std::clamp(static_cast<char>(char_dist(mt)), 'a', 'z')
         );
     }
 

@@ -1,7 +1,0 @@
-stress-server.sh: starting the test clients...
-stress-server.sh: waiting for all test clients to finish...
-[2024-05-01 10:41:28.950] [test_client (juan0)] [error] connect(): Connection refused
-[2024-05-01 10:41:28.950] [test_client (juan1)] [error] connect(): Connection refused
-[2024-05-01 10:41:28.950] [test_client (juan3)] [error] connect(): Connection refused
-[2024-05-01 10:41:28.950] [test_client (juan2)] [error] connect(): Connection refused
-[2024-05-01 10:41:28.951] [test_client (juan4)] [error] connect(): Connection refused

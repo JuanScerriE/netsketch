@@ -30,7 +30,7 @@ do
     echo "  iterations=$iterations"
     echo "  interval=$interval"
 
-    ./build/src/netsketch_server 1> /dev/null 2> /dev/null &
+    ./build/src/netsketch_server --time-out 0.5 1> /dev/null 2> /dev/null &
 
     server_pid=$!
 

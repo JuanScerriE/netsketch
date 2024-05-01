@@ -142,13 +142,15 @@ bool ConnHandler::send_full_list()
 {
     TaggedDrawVector tagged_draw_vector {};
 
+    ChannelError status {};
+
     {
         threading::unique_mutex_guard guard { share::update_mutex };
 
         tagged_draw_vector = share::tagged_draw_vector;
-    }
 
-    auto status = m_channel.write(serialize<Payload>(tagged_draw_vector));
+        status = m_channel.write(serialize<Payload>(tagged_draw_vector));
+    }
 
     if (status != ChannelErrorCode::OK) {
         spdlog::info(
@@ -201,10 +203,6 @@ void ConnHandler::handle_payload(const ByteString& bytes)
 
     {
         threading::unique_mutex_guard guard { share::update_mutex };
-
-        TaggedDrawVectorWrapper { share::tagged_draw_vector }.update(
-            tagged_action
-        );
 
         share::payload_queue.emplace(tagged_action);
     }

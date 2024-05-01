@@ -41,6 +41,8 @@ enum class ChannelErrorCode {
 };
 
 struct ChannelError {
+    ChannelError() = default;
+
     // NOTE: we are not marking these as explicit
     // to reduce code clutter. Since having
     // to write ChannelError{} for every time you

@@ -1,0 +1,422 @@
+stress-server.sh: starting the test clients...
+stress-server.sh: waiting for all test clients to finish...
+[2024-05-01 18:30:47.159] [test_client (juan99)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.159] [test_client (juan100)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.159] [test_client (juan94)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.159] [test_client (juan95)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.159] [test_client (juan83)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.159] [test_client (juan93)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.159] [test_client (juan62)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.159] [test_client (juan94)] [info] Finished...
+[2024-05-01 18:30:47.159] [test_client (juan93)] [info] Finished...
+[2024-05-01 18:30:47.159] [test_client (juan95)] [info] Finished...
+[2024-05-01 18:30:47.159] [test_client (juan87)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.159] [test_client (juan62)] [info] Finished...
+[2024-05-01 18:30:47.159] [test_client (juan100)] [info] Finished...
+[2024-05-01 18:30:47.159] [test_client (juan63)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.159] [test_client (juan83)] [info] Finished...
+[2024-05-01 18:30:47.159] [test_client (juan62)] [debug] moving average of "reading network input": 64ns
+[2024-05-01 18:30:47.159] [test_client (juan95)] [debug] moving average of "reading network input": 53ns
+[2024-05-01 18:30:47.159] [test_client (juan94)] [debug] moving average of "reading network input": 39ns
+[2024-05-01 18:30:47.159] [test_client (juan99)] [info] Finished...
+[2024-05-01 18:30:47.159] [test_client (juan62)] [debug] moving average of "full test client run": 111ns
+[2024-05-01 18:30:47.159] [test_client (juan95)] [debug] moving average of "full test client run": 107ns
+[2024-05-01 18:30:47.159] [test_client (juan94)] [debug] moving average of "full test client run": 128ns
+[2024-05-01 18:30:47.159] [test_client (juan98)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.159] [test_client (juan83)] [debug] moving average of "reading network input": 42ns
+[2024-05-01 18:30:47.159] [test_client (juan83)] [debug] moving average of "full test client run": 121ns
+[2024-05-01 18:30:47.159] [test_client (juan87)] [info] Finished...
+[2024-05-01 18:30:47.159] [test_client (juan93)] [debug] moving average of "reading network input": 58ns
+[2024-05-01 18:30:47.159] [test_client (juan93)] [debug] moving average of "full test client run": 104ns
+[2024-05-01 18:30:47.159] [test_client (juan80)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.159] [test_client (juan87)] [debug] moving average of "reading network input": 72ns
+[2024-05-01 18:30:47.159] [test_client (juan87)] [debug] moving average of "full test client run": 75ns
+[2024-05-01 18:30:47.160] [test_client (juan100)] [debug] moving average of "reading network input": 57ns
+[2024-05-01 18:30:47.160] [test_client (juan100)] [debug] moving average of "full test client run": 124ns
+[2024-05-01 18:30:47.160] [test_client (juan78)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.160] [test_client (juan99)] [debug] moving average of "reading network input": 67ns
+[2024-05-01 18:30:47.160] [test_client (juan99)] [debug] moving average of "full test client run": 89ns
+[2024-05-01 18:30:47.160] [test_client (juan80)] [info] Finished...
+[2024-05-01 18:30:47.160] [test_client (juan88)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.160] [test_client (juan98)] [info] Finished...
+[2024-05-01 18:30:47.160] [test_client (juan63)] [info] Finished...
+[2024-05-01 18:30:47.160] [test_client (juan98)] [debug] moving average of "reading network input": 41ns
+[2024-05-01 18:30:47.160] [test_client (juan98)] [debug] moving average of "full test client run": 111ns
+[2024-05-01 18:30:47.160] [test_client (juan97)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.160] [test_client (juan63)] [debug] moving average of "reading network input": 55ns
+[2024-05-01 18:30:47.160] [test_client (juan88)] [info] Finished...
+[2024-05-01 18:30:47.160] [test_client (juan63)] [debug] moving average of "full test client run": 103ns
+[2024-05-01 18:30:47.160] [test_client (juan88)] [debug] moving average of "reading network input": 38ns
+[2024-05-01 18:30:47.160] [test_client (juan88)] [debug] moving average of "full test client run": 133ns
+[2024-05-01 18:30:47.160] [test_client (juan96)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.160] [test_client (juan80)] [debug] moving average of "reading network input": 63ns
+[2024-05-01 18:30:47.160] [test_client (juan80)] [debug] moving average of "full test client run": 100ns
+[2024-05-01 18:30:47.160] [test_client (juan44)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.160] [test_client (juan44)] [info] Finished...
+[2024-05-01 18:30:47.160] [test_client (juan92)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.160] [test_client (juan97)] [info] Finished...
+[2024-05-01 18:30:47.160] [test_client (juan44)] [debug] moving average of "reading network input": 52ns
+[2024-05-01 18:30:47.160] [test_client (juan44)] [debug] moving average of "full test client run": 119ns
+[2024-05-01 18:30:47.160] [test_client (juan82)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.160] [test_client (juan97)] [debug] moving average of "reading network input": 65ns
+[2024-05-01 18:30:47.160] [test_client (juan97)] [debug] moving average of "full test client run": 86ns
+[2024-05-01 18:30:47.160] [test_client (juan89)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan51)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan81)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan9)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan89)] [info] Finished...
+[2024-05-01 18:30:47.161] [test_client (juan42)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan79)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan22)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan52)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan16)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan0)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan17)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan20)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan51)] [info] Finished...
+[2024-05-01 18:30:47.161] [test_client (juan39)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan14)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan85)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan89)] [debug] moving average of "reading network input": 41ns
+[2024-05-01 18:30:47.161] [test_client (juan89)] [debug] moving average of "full test client run": 124ns
+[2024-05-01 18:30:47.161] [test_client (juan37)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan9)] [info] Finished...
+[2024-05-01 18:30:47.161] [test_client (juan10)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan92)] [info] Finished...
+[2024-05-01 18:30:47.161] [test_client (juan1)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan9)] [debug] moving average of "reading network input": 44ns
+[2024-05-01 18:30:47.161] [test_client (juan82)] [info] Finished...
+[2024-05-01 18:30:47.161] [test_client (juan9)] [debug] moving average of "full test client run": 82ns
+[2024-05-01 18:30:47.161] [test_client (juan19)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan18)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan24)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan15)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan6)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan34)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan16)] [info] Finished...
+[2024-05-01 18:30:47.161] [test_client (juan0)] [info] Finished...
+[2024-05-01 18:30:47.161] [test_client (juan41)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan23)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan5)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan22)] [info] Finished...
+[2024-05-01 18:30:47.161] [test_client (juan12)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.161] [test_client (juan69)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan54)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan11)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan51)] [debug] moving average of "reading network input": 46ns
+[2024-05-01 18:30:47.162] [test_client (juan1)] [info] Finished...
+[2024-05-01 18:30:47.162] [test_client (juan51)] [debug] moving average of "full test client run": 94ns
+[2024-05-01 18:30:47.162] [test_client (juan13)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan49)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan59)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan16)] [debug] moving average of "reading network input": 51ns
+[2024-05-01 18:30:47.162] [test_client (juan16)] [debug] moving average of "full test client run": 158ns
+[2024-05-01 18:30:47.162] [test_client (juan42)] [info] Finished...
+[2024-05-01 18:30:47.162] [test_client (juan21)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan48)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan64)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan20)] [info] Finished...
+[2024-05-01 18:30:47.162] [test_client (juan43)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan92)] [debug] moving average of "reading network input": 37ns
+[2024-05-01 18:30:47.162] [test_client (juan39)] [info] Finished...
+[2024-05-01 18:30:47.162] [test_client (juan92)] [debug] moving average of "full test client run": 121ns
+[2024-05-01 18:30:47.162] [test_client (juan7)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan68)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan90)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan82)] [debug] moving average of "reading network input": 57ns
+[2024-05-01 18:30:47.162] [test_client (juan60)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan82)] [debug] moving average of "full test client run": 169ns
+[2024-05-01 18:30:47.162] [test_client (juan18)] [info] Finished...
+[2024-05-01 18:30:47.162] [test_client (juan14)] [info] Finished...
+[2024-05-01 18:30:47.162] [test_client (juan30)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan54)] [info] Finished...
+[2024-05-01 18:30:47.162] [test_client (juan31)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan22)] [debug] moving average of "reading network input": 37ns
+[2024-05-01 18:30:47.162] [test_client (juan22)] [debug] moving average of "full test client run": 66ns
+[2024-05-01 18:30:47.162] [test_client (juan43)] [info] Finished...
+[2024-05-01 18:30:47.162] [test_client (juan33)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan18)] [debug] moving average of "reading network input": 43ns
+[2024-05-01 18:30:47.162] [test_client (juan18)] [debug] moving average of "full test client run": 144ns
+[2024-05-01 18:30:47.162] [test_client (juan34)] [info] Finished...
+[2024-05-01 18:30:47.162] [test_client (juan85)] [info] Finished...
+[2024-05-01 18:30:47.162] [test_client (juan56)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan37)] [info] Finished...
+[2024-05-01 18:30:47.162] [test_client (juan40)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan34)] [debug] moving average of "reading network input": 54ns
+[2024-05-01 18:30:47.162] [test_client (juan76)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan34)] [debug] moving average of "full test client run": 102ns
+[2024-05-01 18:30:47.162] [test_client (juan29)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan50)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan1)] [debug] moving average of "reading network input": 55ns
+[2024-05-01 18:30:47.162] [test_client (juan71)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan1)] [debug] moving average of "full test client run": 109ns
+[2024-05-01 18:30:47.162] [test_client (juan0)] [debug] moving average of "reading network input": 55ns
+[2024-05-01 18:30:47.162] [test_client (juan39)] [debug] moving average of "reading network input": 36ns
+[2024-05-01 18:30:47.162] [test_client (juan8)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan0)] [debug] moving average of "full test client run": 102ns
+[2024-05-01 18:30:47.162] [test_client (juan15)] [info] Finished...
+[2024-05-01 18:30:47.162] [test_client (juan6)] [info] Finished...
+[2024-05-01 18:30:47.162] [test_client (juan78)] [info] Finished...
+[2024-05-01 18:30:47.162] [test_client (juan26)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.162] [test_client (juan2)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.163] [test_client (juan96)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan75)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.163] [test_client (juan12)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan60)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan56)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan59)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan3)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.163] [test_client (juan68)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan47)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.163] [test_client (juan56)] [debug] moving average of "reading network input": 64ns
+[2024-05-01 18:30:47.163] [test_client (juan56)] [debug] moving average of "full test client run": 112ns
+[2024-05-01 18:30:47.163] [test_client (juan90)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan42)] [debug] moving average of "reading network input": 53ns
+[2024-05-01 18:30:47.163] [test_client (juan42)] [debug] moving average of "full test client run": 88ns
+[2024-05-01 18:30:47.163] [test_client (juan19)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan71)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan4)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.163] [test_client (juan33)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan67)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.163] [test_client (juan43)] [debug] moving average of "reading network input": 59ns
+[2024-05-01 18:30:47.163] [test_client (juan7)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan43)] [debug] moving average of "full test client run": 94ns
+[2024-05-01 18:30:47.163] [test_client (juan29)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan37)] [debug] moving average of "reading network input": 39ns
+[2024-05-01 18:30:47.163] [test_client (juan41)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan72)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.163] [test_client (juan37)] [debug] moving average of "full test client run": 86ns
+[2024-05-01 18:30:47.163] [test_client (juan31)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan60)] [debug] moving average of "reading network input": 63ns
+[2024-05-01 18:30:47.163] [test_client (juan60)] [debug] moving average of "full test client run": 119ns
+[2024-05-01 18:30:47.163] [test_client (juan53)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.163] [test_client (juan79)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan6)] [debug] moving average of "reading network input": 37ns
+[2024-05-01 18:30:47.163] [test_client (juan6)] [debug] moving average of "full test client run": 115ns
+[2024-05-01 18:30:47.163] [test_client (juan39)] [debug] moving average of "full test client run": 99ns
+[2024-05-01 18:30:47.163] [test_client (juan85)] [debug] moving average of "reading network input": 50ns
+[2024-05-01 18:30:47.163] [test_client (juan85)] [debug] moving average of "full test client run": 90ns
+[2024-05-01 18:30:47.163] [test_client (juan79)] [debug] moving average of "reading network input": 40ns
+[2024-05-01 18:30:47.163] [test_client (juan79)] [debug] moving average of "full test client run": 79ns
+[2024-05-01 18:30:47.163] [test_client (juan68)] [debug] moving average of "reading network input": 135ns
+[2024-05-01 18:30:47.163] [test_client (juan38)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.163] [test_client (juan68)] [debug] moving average of "full test client run": 109ns
+[2024-05-01 18:30:47.163] [test_client (juan81)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan76)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan49)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan90)] [debug] moving average of "reading network input": 42ns
+[2024-05-01 18:30:47.163] [test_client (juan90)] [debug] moving average of "full test client run": 65ns
+[2024-05-01 18:30:47.163] [test_client (juan36)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.163] [test_client (juan23)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan15)] [debug] moving average of "reading network input": 40ns
+[2024-05-01 18:30:47.163] [test_client (juan15)] [debug] moving average of "full test client run": 113ns
+[2024-05-01 18:30:47.163] [test_client (juan54)] [debug] moving average of "reading network input": 65ns
+[2024-05-01 18:30:47.163] [test_client (juan21)] [info] Finished...
+[2024-05-01 18:30:47.163] [test_client (juan33)] [debug] moving average of "reading network input": 38ns
+[2024-05-01 18:30:47.163] [test_client (juan54)] [debug] moving average of "full test client run": 105ns
+[2024-05-01 18:30:47.164] [test_client (juan33)] [debug] moving average of "full test client run": 129ns
+[2024-05-01 18:30:47.164] [test_client (juan8)] [info] Finished...
+[2024-05-01 18:30:47.164] [test_client (juan47)] [info] Finished...
+[2024-05-01 18:30:47.164] [test_client (juan2)] [info] Finished...
+[2024-05-01 18:30:47.164] [test_client (juan5)] [info] Finished...
+[2024-05-01 18:30:47.164] [test_client (juan78)] [debug] moving average of "reading network input": 49ns
+[2024-05-01 18:30:47.164] [test_client (juan12)] [debug] moving average of "reading network input": 40ns
+[2024-05-01 18:30:47.164] [test_client (juan78)] [debug] moving average of "full test client run": 120ns
+[2024-05-01 18:30:47.164] [test_client (juan72)] [info] Finished...
+[2024-05-01 18:30:47.164] [test_client (juan12)] [debug] moving average of "full test client run": 84ns
+[2024-05-01 18:30:47.164] [test_client (juan57)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.164] [test_client (juan21)] [debug] moving average of "reading network input": 49ns
+[2024-05-01 18:30:47.164] [test_client (juan21)] [debug] moving average of "full test client run": 88ns
+[2024-05-01 18:30:47.164] [test_client (juan71)] [debug] moving average of "reading network input": 44ns
+[2024-05-01 18:30:47.164] [test_client (juan71)] [debug] moving average of "full test client run": 97ns
+[2024-05-01 18:30:47.164] [test_client (juan5)] [debug] moving average of "reading network input": 58ns
+[2024-05-01 18:30:47.164] [test_client (juan11)] [info] Finished...
+[2024-05-01 18:30:47.164] [test_client (juan5)] [debug] moving average of "full test client run": 103ns
+[2024-05-01 18:30:47.164] [test_client (juan35)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.164] [test_client (juan96)] [debug] moving average of "reading network input": 53ns
+[2024-05-01 18:30:47.164] [test_client (juan96)] [debug] moving average of "full test client run": 92ns
+[2024-05-01 18:30:47.164] [test_client (juan11)] [debug] moving average of "reading network input": 39ns
+[2024-05-01 18:30:47.164] [test_client (juan11)] [debug] moving average of "full test client run": 124ns
+[2024-05-01 18:30:47.164] [test_client (juan50)] [info] Finished...
+[2024-05-01 18:30:47.164] [test_client (juan72)] [debug] moving average of "reading network input": 61ns
+[2024-05-01 18:30:47.164] [test_client (juan72)] [debug] moving average of "full test client run": 123ns
+[2024-05-01 18:30:47.164] [test_client (juan17)] [info] Finished...
+[2024-05-01 18:30:47.164] [test_client (juan58)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.164] [test_client (juan29)] [debug] moving average of "reading network input": 60ns
+[2024-05-01 18:30:47.164] [test_client (juan29)] [debug] moving average of "full test client run": 103ns
+[2024-05-01 18:30:47.164] [test_client (juan59)] [debug] moving average of "reading network input": 50ns
+[2024-05-01 18:30:47.164] [test_client (juan17)] [debug] moving average of "reading network input": 43ns
+[2024-05-01 18:30:47.164] [test_client (juan59)] [debug] moving average of "full test client run": 212ns
+[2024-05-01 18:30:47.164] [test_client (juan17)] [debug] moving average of "full test client run": 132ns
+[2024-05-01 18:30:47.164] [test_client (juan30)] [info] Finished...
+[2024-05-01 18:30:47.164] [test_client (juan73)] [debug] actual number of responses received: 2000, with a total hash 3265499294663649362 and a loast hash 1034181126872692200
+[2024-05-01 18:30:47.164] [test_client (juan52)] [info] Finished...
+[2024-05-01 18:30:47.164] [test_client (juan30)] [debug] moving average of "reading network input": 39ns
+[2024-05-01 18:30:47.164] [test_client (juan30)] [debug] moving average of "full test client run": 79ns
+[2024-05-01 18:30:47.164] [test_client (juan7)] [debug] moving average of "reading network input": 56ns
+[2024-05-01 18:30:47.164] [test_client (juan7)] [debug] moving average of "full test client run": 108ns
+[2024-05-01 18:30:47.164] [test_client (juan31)] [debug] moving average of "reading network input": 51ns
+[2024-05-01 18:30:47.164] [test_client (juan31)] [debug] moving average of "full test client run": 114ns
+[2024-05-01 18:30:47.164] [test_client (juan41)] [debug] moving average of "reading network input": 71ns
+[2024-05-01 18:30:47.164] [test_client (juan41)] [debug] moving average of "full test client run": 104ns
+[2024-05-01 18:30:47.164] [test_client (juan38)] [info] Finished...
+[2024-05-01 18:30:47.164] [test_client (juan48)] [info] Finished...
+[2024-05-01 18:30:47.164] [test_client (juan81)] [debug] moving average of "reading network input": 70ns
+[2024-05-01 18:30:47.164] [test_client (juan81)] [debug] moving average of "full test client run": 111ns
+[2024-05-01 18:30:47.164] [test_client (juan58)] [info] Finished...
+[2024-05-01 18:30:47.164] [test_client (juan76)] [debug] moving average of "reading network input": 54ns
+[2024-05-01 18:30:47.164] [test_client (juan76)] [debug] moving average of "full test client run": 133ns
+[2024-05-01 18:30:47.164] [test_client (juan49)] [debug] moving average of "reading network input": 41ns
+[2024-05-01 18:30:47.164] [test_client (juan75)] [info] Finished...
+[2024-05-01 18:30:47.165] [test_client (juan49)] [debug] moving average of "full test client run": 92ns
+[2024-05-01 18:30:47.165] [test_client (juan36)] [info] Finished...
+[2024-05-01 18:30:47.165] [test_client (juan10)] [info] Finished...
+[2024-05-01 18:30:47.165] [test_client (juan58)] [debug] moving average of "reading network input": 41ns
+[2024-05-01 18:30:47.165] [test_client (juan58)] [debug] moving average of "full test client run": 117ns
+[2024-05-01 18:30:47.165] [test_client (juan23)] [debug] moving average of "reading network input": 40ns
+[2024-05-01 18:30:47.165] [test_client (juan23)] [debug] moving average of "full test client run": 143ns
+[2024-05-01 18:30:47.165] [test_client (juan36)] [debug] moving average of "reading network input": 49ns
+[2024-05-01 18:30:47.165] [test_client (juan36)] [debug] moving average of "full test client run": 109ns
+[2024-05-01 18:30:47.165] [test_client (juan4)] [info] Finished...
+[2024-05-01 18:30:47.165] [test_client (juan24)] [info] Finished...
+[2024-05-01 18:30:47.165] [test_client (juan4)] [debug] moving average of "reading network input": 46ns
+[2024-05-01 18:30:47.165] [test_client (juan4)] [debug] moving average of "full test client run": 118ns
+[2024-05-01 18:30:47.165] [test_client (juan13)] [info] Finished...
+[2024-05-01 18:30:47.165] [test_client (juan24)] [debug] moving average of "reading network input": 48ns
+[2024-05-01 18:30:47.165] [test_client (juan24)] [debug] moving average of "full test client run": 101ns
+[2024-05-01 18:30:47.165] [test_client (juan20)] [debug] moving average of "reading network input": 56ns
+[2024-05-01 18:30:47.165] [test_client (juan20)] [debug] moving average of "full test client run": 116ns
+[2024-05-01 18:30:47.165] [test_client (juan75)] [debug] moving average of "reading network input": 45ns
+[2024-05-01 18:30:47.165] [test_client (juan75)] [debug] moving average of "full test client run": 103ns
+[2024-05-01 18:30:47.165] [test_client (juan64)] [info] Finished...
+[2024-05-01 18:30:47.165] [test_client (juan14)] [debug] moving average of "reading network input": 42ns
+[2024-05-01 18:30:47.165] [test_client (juan14)] [debug] moving average of "full test client run": 83ns
+[2024-05-01 18:30:47.165] [test_client (juan40)] [info] Finished...
+[2024-05-01 18:30:47.165] [test_client (juan35)] [info] Finished...
+[2024-05-01 18:30:47.165] [test_client (juan40)] [debug] moving average of "reading network input": 44ns
+[2024-05-01 18:30:47.165] [test_client (juan40)] [debug] moving average of "full test client run": 182ns
+[2024-05-01 18:30:47.165] [test_client (juan26)] [info] Finished...
+[2024-05-01 18:30:47.165] [test_client (juan8)] [debug] moving average of "reading network input": 69ns
+[2024-05-01 18:30:47.165] [test_client (juan8)] [debug] moving average of "full test client run": 110ns
+[2024-05-01 18:30:47.165] [test_client (juan26)] [debug] moving average of "reading network input": 51ns
+[2024-05-01 18:30:47.165] [test_client (juan26)] [debug] moving average of "full test client run": 130ns
+[2024-05-01 18:30:47.165] [test_client (juan3)] [info] Finished...
+[2024-05-01 18:30:47.165] [test_client (juan47)] [debug] moving average of "reading network input": 51ns
+[2024-05-01 18:30:47.165] [test_client (juan19)] [debug] moving average of "reading network input": 53ns
+[2024-05-01 18:30:47.165] [test_client (juan47)] [debug] moving average of "full test client run": 133ns
+[2024-05-01 18:30:47.165] [test_client (juan19)] [debug] moving average of "full test client run": 139ns
+[2024-05-01 18:30:47.165] [test_client (juan35)] [debug] moving average of "reading network input": 59ns
+[2024-05-01 18:30:47.165] [test_client (juan35)] [debug] moving average of "full test client run": 140ns
+[2024-05-01 18:30:47.165] [test_client (juan3)] [debug] moving average of "reading network input": 43ns
+[2024-05-01 18:30:47.166] [test_client (juan3)] [debug] moving average of "full test client run": 111ns
+[2024-05-01 18:30:47.166] [test_client (juan10)] [debug] moving average of "reading network input": 61ns
+[2024-05-01 18:30:47.166] [test_client (juan52)] [debug] moving average of "reading network input": 37ns
+[2024-05-01 18:30:47.166] [test_client (juan10)] [debug] moving average of "full test client run": 120ns
+[2024-05-01 18:30:47.166] [test_client (juan67)] [info] Finished...
+[2024-05-01 18:30:47.166] [test_client (juan52)] [debug] moving average of "full test client run": 103ns
+[2024-05-01 18:30:47.166] [test_client (juan50)] [debug] moving average of "reading network input": 52ns
+[2024-05-01 18:30:47.166] [test_client (juan50)] [debug] moving average of "full test client run": 431ns
+[2024-05-01 18:30:47.166] [test_client (juan53)] [info] Finished...
+[2024-05-01 18:30:47.166] [test_client (juan2)] [debug] moving average of "reading network input": 47ns
+[2024-05-01 18:30:47.166] [test_client (juan73)] [info] Finished...
+[2024-05-01 18:30:47.166] [test_client (juan2)] [debug] moving average of "full test client run": 128ns
+[2024-05-01 18:30:47.166] [test_client (juan73)] [debug] moving average of "reading network input": 51ns
+[2024-05-01 18:30:47.166] [test_client (juan38)] [debug] moving average of "reading network input": 48ns
+[2024-05-01 18:30:47.166] [test_client (juan73)] [debug] moving average of "full test client run": 86ns
+[2024-05-01 18:30:47.166] [test_client (juan38)] [debug] moving average of "full test client run": 184ns
+[2024-05-01 18:30:47.166] [test_client (juan57)] [info] Finished...
+[2024-05-01 18:30:47.166] [test_client (juan69)] [info] Finished...
+[2024-05-01 18:30:47.166] [test_client (juan67)] [debug] moving average of "reading network input": 48ns
+[2024-05-01 18:30:47.166] [test_client (juan69)] [debug] moving average of "reading network input": 56ns
+[2024-05-01 18:30:47.166] [test_client (juan67)] [debug] moving average of "full test client run": 84ns
+[2024-05-01 18:30:47.166] [test_client (juan69)] [debug] moving average of "full test client run": 160ns
+[2024-05-01 18:30:47.166] [test_client (juan48)] [debug] moving average of "reading network input": 41ns
+[2024-05-01 18:30:47.166] [test_client (juan48)] [debug] moving average of "full test client run": 118ns
+[2024-05-01 18:30:47.166] [test_client (juan13)] [debug] moving average of "reading network input": 47ns
+[2024-05-01 18:30:47.166] [test_client (juan13)] [debug] moving average of "full test client run": 163ns
+[2024-05-01 18:30:47.166] [test_client (juan64)] [debug] moving average of "reading network input": 56ns
+[2024-05-01 18:30:47.166] [test_client (juan64)] [debug] moving average of "full test client run": 136ns
+[2024-05-01 18:30:47.167] [test_client (juan57)] [debug] moving average of "reading network input": 61ns
+[2024-05-01 18:30:47.167] [test_client (juan57)] [debug] moving average of "full test client run": 162ns
+[2024-05-01 18:30:47.167] [test_client (juan53)] [debug] moving average of "reading network input": 39ns
+[2024-05-01 18:30:47.167] [test_client (juan53)] [debug] moving average of "full test client run": 100ns
+[2024-05-01 18:31:17.655] [test_client (juan32)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.655] [test_client (juan25)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.655] [test_client (juan32)] [debug] actual number of responses received: 1920, with a total hash 11933205641861678194 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.655] [test_client (juan25)] [debug] actual number of responses received: 1917, with a total hash 9354896449812549502 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.655] [test_client (juan28)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.655] [test_client (juan27)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.655] [test_client (juan28)] [debug] actual number of responses received: 1919, with a total hash 9354896449812549502 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.655] [test_client (juan27)] [debug] actual number of responses received: 1916, with a total hash 7735230967204365030 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.655] [test_client (juan32)] [info] Finished...
+[2024-05-01 18:31:17.655] [test_client (juan25)] [info] Finished...
+[2024-05-01 18:31:17.655] [test_client (juan28)] [info] Finished...
+[2024-05-01 18:31:17.655] [test_client (juan27)] [info] Finished...
+[2024-05-01 18:31:17.655] [test_client (juan32)] [debug] moving average of "reading network input": 57ns
+[2024-05-01 18:31:17.655] [test_client (juan25)] [debug] moving average of "reading network input": 44ns
+[2024-05-01 18:31:17.655] [test_client (juan32)] [debug] moving average of "full test client run": 81ns
+[2024-05-01 18:31:17.655] [test_client (juan28)] [debug] moving average of "reading network input": 38ns
+[2024-05-01 18:31:17.655] [test_client (juan25)] [debug] moving average of "full test client run": 121ns
+[2024-05-01 18:31:17.655] [test_client (juan27)] [debug] moving average of "reading network input": 35ns
+[2024-05-01 18:31:17.656] [test_client (juan28)] [debug] moving average of "full test client run": 75ns
+[2024-05-01 18:31:17.656] [test_client (juan27)] [debug] moving average of "full test client run": 106ns
+[2024-05-01 18:31:17.656] [test_client (juan55)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.656] [test_client (juan55)] [debug] actual number of responses received: 1918, with a total hash 11933205641861678194 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.656] [test_client (juan55)] [info] Finished...
+[2024-05-01 18:31:17.656] [test_client (juan55)] [debug] moving average of "reading network input": 26ns
+[2024-05-01 18:31:17.656] [test_client (juan55)] [debug] moving average of "full test client run": 103ns
+[2024-05-01 18:31:17.679] [test_client (juan74)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.679] [test_client (juan74)] [debug] actual number of responses received: 1890, with a total hash 12289376642632799870 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.679] [test_client (juan77)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.679] [test_client (juan77)] [debug] actual number of responses received: 1891, with a total hash 10511197107723416708 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.679] [test_client (juan74)] [info] Finished...
+[2024-05-01 18:31:17.680] [test_client (juan77)] [info] Finished...
+[2024-05-01 18:31:17.680] [test_client (juan74)] [debug] moving average of "reading network input": 26ns
+[2024-05-01 18:31:17.680] [test_client (juan74)] [debug] moving average of "full test client run": 86ns
+[2024-05-01 18:31:17.680] [test_client (juan77)] [debug] moving average of "reading network input": 51ns
+[2024-05-01 18:31:17.680] [test_client (juan77)] [debug] moving average of "full test client run": 130ns
+[2024-05-01 18:31:17.682] [test_client (juan84)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.683] [test_client (juan91)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.683] [test_client (juan84)] [debug] actual number of responses received: 1888, with a total hash 12289376642632799870 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.683] [test_client (juan65)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.683] [test_client (juan91)] [debug] actual number of responses received: 1885, with a total hash 10511197107723416708 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.683] [test_client (juan86)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.683] [test_client (juan65)] [debug] actual number of responses received: 1889, with a total hash 10511197107723416708 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.683] [test_client (juan86)] [debug] actual number of responses received: 1887, with a total hash 10511197107723416708 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.683] [test_client (juan84)] [info] Finished...
+[2024-05-01 18:31:17.683] [test_client (juan65)] [info] Finished...
+[2024-05-01 18:31:17.683] [test_client (juan91)] [info] Finished...
+[2024-05-01 18:31:17.683] [test_client (juan84)] [debug] moving average of "reading network input": 50ns
+[2024-05-01 18:31:17.683] [test_client (juan84)] [debug] moving average of "full test client run": 114ns
+[2024-05-01 18:31:17.683] [test_client (juan86)] [info] Finished...
+[2024-05-01 18:31:17.683] [test_client (juan65)] [debug] moving average of "reading network input": 30ns
+[2024-05-01 18:31:17.683] [test_client (juan91)] [debug] moving average of "reading network input": 52ns
+[2024-05-01 18:31:17.683] [test_client (juan65)] [debug] moving average of "full test client run": 140ns
+[2024-05-01 18:31:17.683] [test_client (juan91)] [debug] moving average of "full test client run": 93ns
+[2024-05-01 18:31:17.683] [test_client (juan86)] [debug] moving average of "reading network input": 41ns
+[2024-05-01 18:31:17.683] [test_client (juan86)] [debug] moving average of "full test client run": 158ns
+[2024-05-01 18:31:17.686] [test_client (juan45)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.686] [test_client (juan45)] [debug] actual number of responses received: 1884, with a total hash 12289376642632799870 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.686] [test_client (juan61)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.686] [test_client (juan61)] [debug] actual number of responses received: 1882, with a total hash 12289376642632799870 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.686] [test_client (juan45)] [info] Finished...
+[2024-05-01 18:31:17.686] [test_client (juan45)] [debug] moving average of "reading network input": 23ns
+[2024-05-01 18:31:17.686] [test_client (juan61)] [info] Finished...
+[2024-05-01 18:31:17.686] [test_client (juan45)] [debug] moving average of "full test client run": 102ns
+[2024-05-01 18:31:17.686] [test_client (juan61)] [debug] moving average of "reading network input": 56ns
+[2024-05-01 18:31:17.686] [test_client (juan61)] [debug] moving average of "full test client run": 121ns
+[2024-05-01 18:31:17.688] [test_client (juan46)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.689] [test_client (juan46)] [debug] actual number of responses received: 1883, with a total hash 10511197107723416708 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.689] [test_client (juan46)] [info] Finished...
+[2024-05-01 18:31:17.689] [test_client (juan46)] [debug] moving average of "reading network input": 59ns
+[2024-05-01 18:31:17.689] [test_client (juan46)] [debug] moving average of "full test client run": 98ns
+[2024-05-01 18:31:17.689] [test_client (juan70)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.689] [test_client (juan70)] [debug] actual number of responses received: 1881, with a total hash 10511197107723416708 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.689] [test_client (juan66)] [error] reading failed, reason end of file reached
+[2024-05-01 18:31:17.689] [test_client (juan66)] [debug] actual number of responses received: 1880, with a total hash 12289376642632799870 and a loast hash 6431702866946622030
+[2024-05-01 18:31:17.689] [test_client (juan70)] [info] Finished...
+[2024-05-01 18:31:17.689] [test_client (juan70)] [debug] moving average of "reading network input": 57ns
+[2024-05-01 18:31:17.689] [test_client (juan70)] [debug] moving average of "full test client run": 92ns
+[2024-05-01 18:31:17.689] [test_client (juan66)] [info] Finished...
+[2024-05-01 18:31:17.689] [test_client (juan66)] [debug] moving average of "reading network input": 50ns
+[2024-05-01 18:31:17.689] [test_client (juan66)] [debug] moving average of "full test client run": 139ns

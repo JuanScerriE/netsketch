@@ -1,0 +1,117 @@
+==================
+WARNING: ThreadSanitizer: data race (pid=144219)
+  Write of size 1 at 0x7b04000000b0 by thread T4:
+    #0 threading::details::thread_wrapper<server::ConnHandler>::die() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/../common/threading.hpp:86:23 (netsketch_server+0x20ba29) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #1 void threading::details::del_target<threading::details::thread_wrapper<server::ConnHandler>>(void*) /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/../common/threading.hpp:45:21 (netsketch_server+0x20b95d) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #2 __pthread_cleanup_class::~__pthread_cleanup_class() /usr/include/pthread.h:578:46 (netsketch_server+0x1b0d66) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #3 void* threading::details::call_target<threading::details::thread_wrapper<server::ConnHandler>>(void*) /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/../common/threading.hpp:59:9 (netsketch_server+0x20b7ea) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+
+  Previous read of size 1 at 0x7b04000000b0 by main thread (mutexes: write M0):
+    #0 threading::thread::is_alive() const /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/../common/threading.hpp:224:20 (netsketch_server+0x20bce0) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #1 auto server::Server::request_loop()::$_1::operator()<threading::thread>(threading::thread&) const /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:195:40 (netsketch_server+0x1f4091) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #2 bool __gnu_cxx::__ops::_Iter_pred<server::Server::request_loop()::$_1>::operator()<std::_List_iterator<threading::thread>>(std::_List_iterator<threading::thread>) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/predefined_ops.h:318:16 (netsketch_server+0x1f3ed2) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #3 std::_List_iterator<threading::thread> std::__find_if<std::_List_iterator<threading::thread>, __gnu_cxx::__ops::_Iter_pred<server::Server::request_loop()::$_1>>(std::_List_iterator<threading::thread>, std::_List_iterator<threading::thread>, __gnu_cxx::__ops::_Iter_pred<server::Server::request_loop()::$_1>, std::input_iterator_tag) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/stl_algobase.h:2055:36 (netsketch_server+0x1f3fb6) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #4 std::_List_iterator<threading::thread> std::__find_if<std::_List_iterator<threading::thread>, __gnu_cxx::__ops::_Iter_pred<server::Server::request_loop()::$_1>>(std::_List_iterator<threading::thread>, std::_List_iterator<threading::thread>, __gnu_cxx::__ops::_Iter_pred<server::Server::request_loop()::$_1>) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/stl_algobase.h:2117:14 (netsketch_server+0x1f3dfa) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #5 std::_List_iterator<threading::thread> std::__remove_if<std::_List_iterator<threading::thread>, __gnu_cxx::__ops::_Iter_pred<server::Server::request_loop()::$_1>>(std::_List_iterator<threading::thread>, std::_List_iterator<threading::thread>, __gnu_cxx::__ops::_Iter_pred<server::Server::request_loop()::$_1>) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/stl_algobase.h:2139:17 (netsketch_server+0x1f3b9e) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #6 std::_List_iterator<threading::thread> std::remove_if<std::_List_iterator<threading::thread>, server::Server::request_loop()::$_1>(std::_List_iterator<threading::thread>, std::_List_iterator<threading::thread>, server::Server::request_loop()::$_1) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/stl_algo.h:880:14 (netsketch_server+0x1f3843) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #7 server::Server::request_loop() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:191:17 (netsketch_server+0x1f2723) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #8 server::Server::operator()() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:64:5 (netsketch_server+0x1f1da1) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #9 main /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/main.cpp:102:5 (netsketch_server+0x10a474) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+
+  Location is heap block of size 1 at 0x7b04000000b0 allocated by main thread:
+    #0 operator new(unsigned long) <null> (netsketch_server+0x108859) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #1 threading::thread::thread<server::ConnHandler>(server::ConnHandler&&) /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/../common/threading.hpp:111:22 (netsketch_server+0x20b573) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #2 void std::__new_allocator<std::_List_node<threading::thread>>::construct<threading::thread, server::ConnHandler>(threading::thread*, server::ConnHandler&&) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/new_allocator.h:191:23 (netsketch_server+0x20b0f9) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #3 void std::allocator_traits<std::allocator<std::_List_node<threading::thread>>>::construct<threading::thread, server::ConnHandler>(std::allocator<std::_List_node<threading::thread>>&, threading::thread*, server::ConnHandler&&) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/alloc_traits.h:538:8 (netsketch_server+0x20b0f9)
+    #4 std::_List_node<threading::thread>* std::__cxx11::list<threading::thread, std::allocator<threading::thread>>::_M_create_node<server::ConnHandler>(server::ConnHandler&&) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/stl_list.h:713:4 (netsketch_server+0x20b0f9)
+    #5 void std::__cxx11::list<threading::thread, std::allocator<threading::thread>>::_M_insert<server::ConnHandler>(std::_List_iterator<threading::thread>, server::ConnHandler&&) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/stl_list.h:2005:18 (netsketch_server+0x20af55) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #6 threading::thread& std::__cxx11::list<threading::thread, std::allocator<threading::thread>>::emplace_back<server::ConnHandler>(server::ConnHandler&&) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/stl_list.h:1321:10 (netsketch_server+0x1facaa) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #7 server::Server::request_loop() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:186:28 (netsketch_server+0x1f26c6) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #8 server::Server::operator()() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:64:5 (netsketch_server+0x1f1da1) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #9 main /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/main.cpp:102:5 (netsketch_server+0x10a474) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+
+  Mutex M0 (0x55b43a7e85e0) created at:
+    #0 pthread_mutex_init <null> (netsketch_server+0x8f6b8) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #1 threading::mutex::mutex() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/../common/threading.hpp:265:20 (netsketch_server+0x1eea91) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #2 __cxx_global_var_init.2 /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/share.cpp:9:18 (netsketch_server+0x3e93c) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #3 _GLOBAL__sub_I_share.cpp /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/share.cpp (netsketch_server+0x3ece9) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+
+  Thread T4 (tid=144328, running) created by main thread at:
+    #0 pthread_create <null> (netsketch_server+0x845f6) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #1 threading::thread::thread<server::ConnHandler>(server::ConnHandler&&) /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/../common/threading.hpp:121:32 (netsketch_server+0x20b5f9) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #2 void std::__new_allocator<std::_List_node<threading::thread>>::construct<threading::thread, server::ConnHandler>(threading::thread*, server::ConnHandler&&) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/new_allocator.h:191:23 (netsketch_server+0x20b0f9) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #3 void std::allocator_traits<std::allocator<std::_List_node<threading::thread>>>::construct<threading::thread, server::ConnHandler>(std::allocator<std::_List_node<threading::thread>>&, threading::thread*, server::ConnHandler&&) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/alloc_traits.h:538:8 (netsketch_server+0x20b0f9)
+    #4 std::_List_node<threading::thread>* std::__cxx11::list<threading::thread, std::allocator<threading::thread>>::_M_create_node<server::ConnHandler>(server::ConnHandler&&) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/stl_list.h:713:4 (netsketch_server+0x20b0f9)
+    #5 void std::__cxx11::list<threading::thread, std::allocator<threading::thread>>::_M_insert<server::ConnHandler>(std::_List_iterator<threading::thread>, server::ConnHandler&&) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/stl_list.h:2005:18 (netsketch_server+0x20af55) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #6 threading::thread& std::__cxx11::list<threading::thread, std::allocator<threading::thread>>::emplace_back<server::ConnHandler>(server::ConnHandler&&) /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/13.2.1/../../../../include/c++/13.2.1/bits/stl_list.h:1321:10 (netsketch_server+0x1facaa) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #7 server::Server::request_loop() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:186:28 (netsketch_server+0x1f26c6) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #8 server::Server::operator()() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:64:5 (netsketch_server+0x1f1da1) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #9 main /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/main.cpp:102:5 (netsketch_server+0x10a474) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+
+SUMMARY: ThreadSanitizer: data race /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/../common/threading.hpp:86:23 in threading::details::thread_wrapper<server::ConnHandler>::die()
+==================
+==144219==WARNING: Can't read from symbolizer at fd 5
+==144219==WARNING: Can't write to symbolizer at fd 107
+==================
+WARNING: ThreadSanitizer: signal-unsafe call inside of a signal (pid=144219)
+    #0 malloc <null> (netsketch_server+0x888a3) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #1 <null> <null> (ld-linux-x86-64.so.2+0x3036) (BuildId: bdc2187bf16957b7c9cbbe74970e27bdb9065fcf)
+    #2 sigint_handler(int) /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/main.cpp:44:35 (netsketch_server+0x108d24) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #3 __tsan::CallUserSignalHandler(__tsan::ThreadState*, bool, bool, int, __sanitizer::__sanitizer_siginfo*, void*) tsan_interceptors_posix.cpp.o (netsketch_server+0x82171) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #4 IPv4Socket::poll(std::initializer_list<short>, int) /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/../common/network.hpp:316:19 (netsketch_server+0x1f73e7) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #5 server::Server::request_loop() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:94:34 (netsketch_server+0x1f1f1c) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #6 server::Server::operator()() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:64:5 (netsketch_server+0x1f1da1) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #7 main /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/main.cpp:102:5 (netsketch_server+0x10a474) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+
+SUMMARY: ThreadSanitizer: signal-unsafe call inside of a signal (/home/juan/Desktop/uni/compsci/os2project/netsketch/build/src/netsketch_server+0x888a3) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03) in malloc
+==================
+==================
+WARNING: ThreadSanitizer: signal-unsafe call inside of a signal (pid=144219)
+    #0 malloc <null> (netsketch_server+0x888a3) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #1 <null> <null> (ld-linux-x86-64.so.2+0x4851) (BuildId: bdc2187bf16957b7c9cbbe74970e27bdb9065fcf)
+    #2 sigint_handler(int) /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/main.cpp:44:35 (netsketch_server+0x108d24) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #3 __tsan::CallUserSignalHandler(__tsan::ThreadState*, bool, bool, int, __sanitizer::__sanitizer_siginfo*, void*) tsan_interceptors_posix.cpp.o (netsketch_server+0x82171) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #4 IPv4Socket::poll(std::initializer_list<short>, int) /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/../common/network.hpp:316:19 (netsketch_server+0x1f73e7) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #5 server::Server::request_loop() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:94:34 (netsketch_server+0x1f1f1c) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #6 server::Server::operator()() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:64:5 (netsketch_server+0x1f1da1) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #7 main /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/main.cpp:102:5 (netsketch_server+0x10a474) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+
+SUMMARY: ThreadSanitizer: signal-unsafe call inside of a signal (/home/juan/Desktop/uni/compsci/os2project/netsketch/build/src/netsketch_server+0x888a3) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03) in malloc
+==================
+==================
+WARNING: ThreadSanitizer: signal-unsafe call inside of a signal (pid=144219)
+    #0 malloc <null> (netsketch_server+0x888a3) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #1 <null> <null> (ld-linux-x86-64.so.2+0x49db) (BuildId: bdc2187bf16957b7c9cbbe74970e27bdb9065fcf)
+    #2 sigint_handler(int) /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/main.cpp:44:35 (netsketch_server+0x108d24) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #3 __tsan::CallUserSignalHandler(__tsan::ThreadState*, bool, bool, int, __sanitizer::__sanitizer_siginfo*, void*) tsan_interceptors_posix.cpp.o (netsketch_server+0x82171) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #4 IPv4Socket::poll(std::initializer_list<short>, int) /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/../common/network.hpp:316:19 (netsketch_server+0x1f73e7) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #5 server::Server::request_loop() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:94:34 (netsketch_server+0x1f1f1c) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #6 server::Server::operator()() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:64:5 (netsketch_server+0x1f1da1) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #7 main /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/main.cpp:102:5 (netsketch_server+0x10a474) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+
+SUMMARY: ThreadSanitizer: signal-unsafe call inside of a signal (/home/juan/Desktop/uni/compsci/os2project/netsketch/build/src/netsketch_server+0x888a3) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03) in malloc
+==================
+==================
+WARNING: ThreadSanitizer: signal-unsafe call inside of a signal (pid=144219)
+    #0 free <null> (netsketch_server+0x84368) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #1 <null> <null> (ld-linux-x86-64.so.2+0x4be1) (BuildId: bdc2187bf16957b7c9cbbe74970e27bdb9065fcf)
+    #2 sigint_handler(int) /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/main.cpp:44:35 (netsketch_server+0x108d24) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #3 __tsan::CallUserSignalHandler(__tsan::ThreadState*, bool, bool, int, __sanitizer::__sanitizer_siginfo*, void*) tsan_interceptors_posix.cpp.o (netsketch_server+0x82171) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #4 IPv4Socket::poll(std::initializer_list<short>, int) /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/../common/network.hpp:316:19 (netsketch_server+0x1f73e7) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #5 server::Server::request_loop() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:94:34 (netsketch_server+0x1f1f1c) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #6 server::Server::operator()() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:64:5 (netsketch_server+0x1f1da1) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #7 main /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/main.cpp:102:5 (netsketch_server+0x10a474) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+
+SUMMARY: ThreadSanitizer: signal-unsafe call inside of a signal (/home/juan/Desktop/uni/compsci/os2project/netsketch/build/src/netsketch_server+0x84368) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03) in free
+==================
+==================
+WARNING: ThreadSanitizer: signal handler spoils errno (pid=144219)
+  Signal 2 handler invoked at:
+    #0 sigint_handler(int) /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/main.cpp:32 (netsketch_server+0x108c50) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #1 IPv4Socket::poll(std::initializer_list<short>, int) /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/../common/network.hpp:316:19 (netsketch_server+0x1f73e7) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #2 server::Server::request_loop() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:94:34 (netsketch_server+0x1f1f1c) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #3 server::Server::operator()() /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/server.cpp:64:5 (netsketch_server+0x1f1da1) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+    #4 main /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/main.cpp:102:5 (netsketch_server+0x10a474) (BuildId: 544a3e3f30c7b8201b6d49729a1074b8967ebe03)
+
+SUMMARY: ThreadSanitizer: signal handler spoils errno /home/juan/Desktop/uni/compsci/os2project/netsketch/src/server/main.cpp:32 in sigint_handler(int)
+==================

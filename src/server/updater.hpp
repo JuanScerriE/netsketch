@@ -2,6 +2,7 @@
 
 // common
 #include "../common/channel.hpp"
+#include "../common/tagged_draw_vector_wrapper.hpp"
 #include "../common/threading.hpp"
 
 // server
@@ -12,6 +13,7 @@
 
 // spdlog
 #include <spdlog/spdlog.h>
+#include <variant>
 
 namespace server {
 
@@ -44,6 +46,17 @@ class Updater {
                 payload = share::payload_queue.back();
 
                 share::payload_queue.pop();
+
+                if (std::holds_alternative<Adopt>(payload)) {
+                    TaggedDrawVectorWrapper { share::tagged_draw_vector }.adopt(
+                        std::get<Adopt>(payload)
+                    );
+                } else if (std::holds_alternative<TaggedAction>(payload)) {
+                    TaggedDrawVectorWrapper { share::tagged_draw_vector }
+                        .update(std::get<TaggedAction>(payload));
+                } else {
+                    ABORT("unreachable");
+                }
             }
 
             ByteString bytes = serialize<Payload>(payload);

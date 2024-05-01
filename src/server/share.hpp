@@ -44,4 +44,6 @@ extern threading::cond_var update_cond;
 extern TaggedDrawVector tagged_draw_vector;
 extern std::queue<Payload> payload_queue;
 
+extern float time_out;
+
 } // namespace server::share

@@ -6,6 +6,12 @@ compulsory unit at the University of Malta which has to be taken
 by third year Computer Science and Mathematics undergraduates
 during the second semester.
 
+## Dependencies
+
+Please ensure that the following are installed:
+
+- pgkconfig ^0.29.2
+- cmake ^0.22.1
 
 ## Build Instructions
 

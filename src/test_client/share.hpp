@@ -21,4 +21,6 @@ extern threading::mutex writer_mutex;
 extern threading::cond_var writer_cond;
 extern std::queue<Action> writer_queue;
 
+extern uint32_t expected_responses;
+
 } // namespace test_client::share

@@ -11,6 +11,7 @@ class NetworkManager {
     explicit NetworkManager(uint32_t ipv4, uint16_t port);
 
     bool setup();
+    void close();
 
     ~NetworkManager();
 

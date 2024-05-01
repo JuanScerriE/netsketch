@@ -85,14 +85,14 @@ int main(int argc, char** argv)
     )
         ->capture_default_str();
 
-    bool other_actions { false };
-    app.add_flag(
-           "--other-actions, !--other-actions",
-           other_actions,
-           "Enable generating other actions apart from drawing (e.g. Undo, "
-           "Clear & Delete)"
+    uint32_t expected_responses {};
+    app.add_option(
+           "--expected-responses",
+           expected_responses,
+           "The number expected responses the Test Client should receive from "
+           "the NetSketch server"
     )
-        ->capture_default_str();
+        ->required();
 
     std::string nickname {};
     app.add_option(
@@ -103,6 +103,15 @@ int main(int argc, char** argv)
     )
         ->required();
 
+    bool other_actions { false };
+    app.add_flag(
+           "--other-actions, !--other-actions",
+           other_actions,
+           "Enable generating other actions apart from drawing (e.g. Undo, "
+           "Clear & Delete)"
+    )
+        ->capture_default_str();
+
     CLI11_PARSE(app, argc, argv);
 
     // set the nickname of the user
@@ -110,6 +119,8 @@ int main(int argc, char** argv)
 
     // set the other actions flag
     test_client::share::only_drawing = !other_actions;
+
+    test_client::share::expected_responses = expected_responses;
 
     in_addr addr {};
 
@@ -141,15 +152,21 @@ int main(int argc, char** argv)
 
     START_BENCHMARK_THREAD;
 
-    test_client::NetworkManager manager { ipv4_addr, port };
+    {
+        BENCH("full test client run");
 
-    if (!manager.setup()) {
-        fmt::println("error: failed to connect to server");
+        test_client::NetworkManager manager { ipv4_addr, port };
 
-        return EXIT_FAILURE;
+        if (!manager.setup()) {
+            fmt::println("error: failed to connect to server");
+
+            END_BENCHMARK_THREAD;
+
+            return EXIT_FAILURE;
+        }
+
+        test_client::simulate_behaviour(iterations, interval);
     }
-
-    test_client::simulate_behaviour(iterations, interval);
 
     spdlog::info("Finished...");
 

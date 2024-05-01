@@ -52,7 +52,18 @@ int main(int argc, char** argv)
     app.add_option("--port", port, "The port number of the NetSketch server")
         ->capture_default_str();
 
+    float time_out { 10 };
+    app.add_option(
+           "--time-out",
+           time_out,
+           "The time out (in minutes) for an inactive client"
+    )
+        ->capture_default_str();
+
     CLI11_PARSE(app, argc, argv);
+
+    // set timeout
+    server::share::time_out = time_out;
 
     // NOTE: are using sigaction because the man page for
     // signal says so

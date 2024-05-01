@@ -21,4 +21,6 @@ threading::cond_var update_cond {};
 TaggedDrawVector tagged_draw_vector {};
 std::queue<Payload> payload_queue {};
 
+float time_out { 10 };
+
 } // namespace server::share

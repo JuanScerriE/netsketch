@@ -1,3 +1,6 @@
+option(BENCHMARK "Build the static library" ON)
+
+
 add_executable(netsketch_server
         server/main.cpp
         server/share.cpp
@@ -6,11 +9,7 @@ add_executable(netsketch_server
         bench/bench.cpp
 )
 
-if (BENCHMARK)
-    message("-- Adding timers...")
-
-    target_compile_definitions(netsketch_server PRIVATE BENCHMARK)
-endif ()
+target_compile_definitions(netsketch_server PRIVATE $<$<CONFIG:Debug>:BENCHMARK>)
 
 target_link_libraries(netsketch_server PRIVATE
         CLI11::CLI11
@@ -34,11 +33,7 @@ add_executable(netsketch_client
         bench/bench.cpp
 )
 
-if (BENCHMARK)
-    message("-- Adding timers...")
-
-    target_compile_definitions(netsketch_client PRIVATE BENCHMARK)
-endif ()
+target_compile_definitions(netsketch_client PRIVATE $<$<CONFIG:Debug>:BENCHMARK>)
 
 # Checks if OSX and links appropriate frameworks (only required on MacOS)
 if (APPLE)
@@ -67,11 +62,7 @@ add_executable(netsketch_test_client
         bench/bench.cpp
 )
 
-if (BENCHMARK)
-    message("-- Adding timers...")
-
-    target_compile_definitions(netsketch_test_client PRIVATE BENCHMARK)
-endif ()
+target_compile_definitions(netsketch_test_client PRIVATE $<$<CONFIG:Debug>:BENCHMARK>)
 
 target_link_libraries(netsketch_test_client PRIVATE
         CLI11::CLI11

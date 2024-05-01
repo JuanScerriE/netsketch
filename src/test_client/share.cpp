@@ -15,4 +15,6 @@ threading::mutex writer_mutex {};
 threading::cond_var writer_cond {};
 std::queue<Action> writer_queue {};
 
+uint32_t expected_responses {};
+
 } // namespace test_client::share

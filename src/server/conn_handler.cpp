@@ -52,7 +52,7 @@ void ConnHandler::operator()()
 {
     setup_readable_net_info();
 
-    spdlog::info("received a connection from {}:{}", m_ipv4, m_port);
+    spdlog::info("received a connection from {}:{} ({})", m_ipv4, m_port, m_username);
 
     pthread_cleanup_push(
         [](void* untyped_self) {
@@ -77,20 +77,21 @@ void ConnHandler::operator()()
         BENCH("sending the full list");
 
         if (!send_full_list()) {
-            spdlog::info("[{}:{}] failed to send full list", m_ipv4, m_port);
+            spdlog::info("[{}:{} ({})] failed to send full list", m_ipv4, m_port, m_username);
 
             return;
         }
     }
 
     for (;;) {
-        auto [res, status] = m_channel.read(MINUTE * 10);
+        auto [res, status] = m_channel.read(static_cast<int>(MINUTE * share::time_out));
 
         if (status != ChannelErrorCode::OK) {
             spdlog::info(
-                "[{}:{}] reading failed, reason: {}",
+                "[{}:{} ({})] reading failed, reason: {}",
                 m_ipv4,
                 m_port,
+                m_username,
                 status.what()
             );
 
@@ -98,9 +99,10 @@ void ConnHandler::operator()()
         }
 
         spdlog::debug(
-            "[{}:{}] payload size {} bytes",
+            "[{}:{} ({})] payload size {} bytes",
             m_ipv4,
             m_port,
+            m_username,
             res.size()
         );
 
@@ -113,7 +115,7 @@ void ConnHandler::operator()()
 
     create_client_timer(m_username);
 
-    spdlog::info("[{}:{}] closing connection handler", m_ipv4, m_port);
+    spdlog::info("[{}:{} ({})] closing connection handler", m_ipv4, m_port, m_username);
 
     pthread_cleanup_pop(1);
 }
@@ -132,9 +134,10 @@ bool ConnHandler::send_full_list()
 
     if (status != ChannelErrorCode::OK) {
         spdlog::info(
-            "[{}:{}] writing failed, reason: {}",
+            "[{}:{} ({})] writing failed, reason: {}",
             m_ipv4,
             m_port,
+            m_username,
             status.what()
         );
 
@@ -150,9 +153,10 @@ void ConnHandler::handle_payload(const ByteString& bytes)
 
     if (status != DeserializeErrorCode::OK) {
         spdlog::warn(
-            "[{}:{}] deserialization failed, reason {}",
+            "[{}:{} ({})] deserialization failed, reason {}",
             m_ipv4,
             m_port,
+            m_username,
             status.what()
         );
         return;
@@ -160,9 +164,10 @@ void ConnHandler::handle_payload(const ByteString& bytes)
 
     if (!std::holds_alternative<TaggedAction>(payload)) {
         spdlog::warn(
-            "[{}:{}] unexpected payload type {}",
+            "[{}:{} ({})] unexpected payload type {}",
             m_ipv4,
             m_port,
+            m_username,
             var_type(payload).name()
         );
 

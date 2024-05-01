@@ -161,13 +161,22 @@ class thread {
         return thread_handle;
     }
 
-    void join() const
+    void join()
     {
-        auto ret = pthread_join(thread_handle, nullptr);
+        if (!m_has_joined) {
+            auto ret = pthread_join(thread_handle, nullptr);
 
-        if (ret != 0) {
-            throw std::runtime_error { strerror(ret) };
+            if (ret != 0) {
+                throw std::runtime_error { strerror(ret) };
+            }
         }
+
+        m_has_joined = true;
+    }
+
+    [[nodiscard]] bool has_joined() const
+    {
+        return m_has_joined;
     }
 
     void detach() const
@@ -224,6 +233,8 @@ class thread {
 
    private:
     bool* m_is_alive { nullptr };
+
+    bool m_has_joined { false };
 
     pthread_t thread_handle { static_cast<pthread_t>(-1) };
 };

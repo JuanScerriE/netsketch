@@ -30,8 +30,20 @@ NetworkManager::NetworkManager(uint32_t ipv4, uint16_t port)
 
 NetworkManager::~NetworkManager()
 {
-    close_reader();
-    close_writer();
+    close();
+}
+
+void NetworkManager::close()
+{
+    if (share::reader_thread.is_initialized()
+        && !share::reader_thread.has_joined()) {
+        share::reader_thread.join();
+    }
+
+    if (share::writer_thread.is_initialized()
+        && !share::writer_thread.has_joined()) {
+        share::writer_thread.join();
+    }
 }
 
 bool NetworkManager::setup()

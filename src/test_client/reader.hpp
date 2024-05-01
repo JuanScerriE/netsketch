@@ -14,7 +14,9 @@ class Reader {
     void shutdown();
 
    private:
-    void read_loop();
+    uint32_t m_responses{0};
+
+    std::size_t m_hash{0};
 
     Channel m_channel;
 };

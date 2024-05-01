@@ -126,6 +126,8 @@ int main(int argc, char** argv)
     if (!manager.setup()) {
         fmt::println("error: failed to connect to server");
 
+        END_BENCHMARK_THREAD;
+
         return EXIT_FAILURE;
     }
 

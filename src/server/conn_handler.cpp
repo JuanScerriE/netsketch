@@ -54,7 +54,12 @@ void ConnHandler::operator()()
 {
     setup_readable_net_info();
 
-    spdlog::info("received a connection from {}:{} ({})", m_ipv4, m_port, m_username);
+    spdlog::info(
+        "received a connection from {}:{} ({})",
+        m_ipv4,
+        m_port,
+        m_username
+    );
 
     pthread_cleanup_push(
         [](void* untyped_self) {
@@ -79,14 +84,20 @@ void ConnHandler::operator()()
         BENCH("sending the full list");
 
         if (!send_full_list()) {
-            spdlog::info("[{}:{} ({})] failed to send full list", m_ipv4, m_port, m_username);
+            spdlog::info(
+                "[{}:{} ({})] failed to send full list",
+                m_ipv4,
+                m_port,
+                m_username
+            );
 
             return;
         }
     }
 
     for (;;) {
-        auto [res, status] = m_channel.read(static_cast<int>(MINUTE * share::time_out));
+        auto [res, status]
+            = m_channel.read(static_cast<int>(MINUTE * share::time_out));
 
         if (status != ChannelErrorCode::OK) {
             spdlog::info(
@@ -117,7 +128,12 @@ void ConnHandler::operator()()
 
     create_client_timer(m_username);
 
-    spdlog::info("[{}:{} ({})] closing connection handler", m_ipv4, m_port, m_username);
+    spdlog::info(
+        "[{}:{} ({})] closing connection handler",
+        m_ipv4,
+        m_port,
+        m_username
+    );
 
     pthread_cleanup_pop(1);
 }

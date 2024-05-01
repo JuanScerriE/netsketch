@@ -257,7 +257,7 @@ class IPv4Socket {
 
         int conn_sock_fd = ::accept(
             m_sock_fd,
-            (struct sockaddr *)&conn_sock.m_sock_addr,
+            (struct sockaddr*)&conn_sock.m_sock_addr,
             &conn_sock.m_addr_size
         );
 
@@ -511,7 +511,8 @@ class IPv4SocketRef {
 
         vec_bytes.reserve(size);
 
-        ssize_t read_size = ::recv(m_sock_fd, vec_bytes.data(), size, MSG_WAITALL);
+        ssize_t read_size
+            = ::recv(m_sock_fd, vec_bytes.data(), size, MSG_WAITALL);
 
         if (read_size < 0) {
             throw std::runtime_error {

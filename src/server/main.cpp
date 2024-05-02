@@ -1,68 +1,8 @@
 // server
-#include "server.hpp"
-#include "share.hpp"
-#include "updater.hpp"
-
-// common
-#include "../common/abort.hpp"
-#include "../common/tagged_draw_vector_wrapper.hpp"
-#include "../common/threading.hpp"
-
-// bench
-#include "../bench/bench.hpp"
-
-// unix
-#include <cstdlib>
-#include <poll.h>
-#include <unistd.h>
-
-// cstd
-#include <csignal>
+#include "runner.hpp"
 
 // cli11
 #include <CLI/CLI.hpp>
-
-// spdlog
-#include <spdlog/async.h>
-#include <spdlog/common.h>
-#include <spdlog/fmt/chrono.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
-
-// cereal
-#include <cereal/archives/json.hpp>
-#include <cereal/types/string.hpp>
-#include <cereal/types/variant.hpp>
-#include <cereal/types/vector.hpp>
-
-void sigint_handler(int)
-{
-    // HACK or BAD: according to the standard
-    // mutexes which in out case make use of
-    // pthread_mutex_lock and _unlock are not
-    // signal safe. Woops (seems to working
-    // though)
-    threading::mutex_guard guard { server::share::threads_mutex };
-
-    for (auto& thread : server::share::threads) {
-        thread.cancel();
-    }
-
-    server::share::updater_thread.cancel();
-}
-
-void output()
-{
-#ifdef NETSKETCH_DUMPJSON
-    std::ofstream of { fmt::format("tagged_vector_server.json") };
-
-    {
-        cereal::JSONOutputArchive ar { of };
-
-        ar(server::share::tagged_draw_vector);
-    }
-#endif
-}
 
 int main(int argc, char** argv)
 {
@@ -82,67 +22,15 @@ int main(int argc, char** argv)
 
     CLI11_PARSE(app, argc, argv);
 
-    // set timeout
-    server::share::time_out = time_out;
+    server::Runner runner {};
 
-    // NOTE: are using sigaction because the man page for
-    // signal says so
-    struct sigaction act { };
-
-    bzero(&act, sizeof(act));
-
-    act.sa_handler = sigint_handler;
-
-    if (sigaction(SIGINT, &act, nullptr) == -1) {
-        ABORTV(
-            "failed to create sigint handler, "
-            "reason: {}",
-            strerror(errno)
-        );
-    }
-
-    try {
-        auto logger = spdlog::stdout_color_mt("server");
-
-        spdlog::set_default_logger(logger);
-
-        spdlog::set_level(spdlog::level::debug);
-    } catch (const spdlog::spdlog_ex& ex) {
-        fmt::println("log init failed: {}", ex.what());
-
+    if (!runner.setup(port, time_out)) {
         return EXIT_FAILURE;
     }
 
-    START_BENCHMARK_THREAD;
-
-    server::share::updater_thread = threading::thread { server::Updater {} };
-
-    server::Server server { port };
-
-    server();
-
-    server::share::updater_thread.join();
-
-    {
-        threading::mutex_guard guard { server::share::timers_mutex };
-
-        // NOTE: https://man.archlinux.org/man/timer_create.3p.en
-        // Threads allocated to timers cannot be reclaimed as
-        // described in the above man package
-        server::share::timers.clear();
+    if (!runner.run()) {
+        return EXIT_FAILURE;
     }
 
-    END_BENCHMARK_THREAD;
-
-#ifdef NETSKETCH_DUMPHASH
-    spdlog::debug(
-        "hash of tagged draw vector: {}, size of tagged draw vector {}",
-        TaggedDrawVectorWrapper { server::share::tagged_draw_vector }.hash(),
-        server::share::tagged_draw_vector.size()
-    );
-#endif
-
-    output();
-
-    return 0;
+    return EXIT_SUCCESS;
 }

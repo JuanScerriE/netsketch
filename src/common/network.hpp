@@ -2,14 +2,10 @@
 
 // unix
 #include <fcntl.h>
-#include <poll.h>
-#include <unistd.h>
-
-// sys
-#include <sys/socket.h>
-
-// netinet
 #include <netinet/in.h>
+#include <poll.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 // std
 #include <stdexcept>
@@ -23,9 +19,9 @@
 // fmt
 #include <fmt/core.h>
 
-// netsketch
-#include "../common/abort.hpp"
-#include "../common/bytes.hpp"
+// common
+#include "abort.hpp"
+#include "bytes.hpp"
 
 // This is a wrapper class around the return result of a
 // call to poll

@@ -15,7 +15,6 @@
 
 // common
 #include "../common/abort.hpp"
-#include "../common/tagged_draw_vector_wrapper.hpp"
 #include "../common/threading.hpp"
 
 // bench

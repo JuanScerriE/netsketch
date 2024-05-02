@@ -50,10 +50,10 @@ class Timer {
     timer_t m_timer {};
 };
 
-struct TimerData {
-    Timer timer {};
-
-    std::string user {};
-};
+// struct TimerData {
+//     Timer timer {};
+//
+//     std::string user {};
+// };
 
 } // namespace server

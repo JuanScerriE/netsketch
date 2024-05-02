@@ -7,7 +7,6 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
-#include <optional>
 #include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -21,6 +20,9 @@
 #include "../common/overload.hpp"
 #include "../common/serial.hpp"
 #include "../common/threading.hpp"
+
+// std
+#include <optional>
 
 // bench
 #include "../bench/bench.hpp"
@@ -151,7 +153,7 @@ void Server::request_loop()
             for (auto iter = share::timers.cbegin();
                  iter != share::timers.cend();
                  iter++) {
-                if (iter->get()->user == *username) {
+                if (iter->get()->username == *username) {
                     share::timers.erase(iter);
 
                     spdlog::info("{} reconnected", *username);

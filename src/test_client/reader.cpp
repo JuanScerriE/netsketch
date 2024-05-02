@@ -103,14 +103,10 @@ void Reader::handle_payload(ByteString& bytes)
         },
         payload
     );
-
-    // m_responses++;
 }
 
 void Reader::shutdown()
 {
-    // spdlog::debug("number of received responses: {}", m_responses);
-
     if (share::writer_thread.is_initialized()
         && share::writer_thread.is_alive())
         share::writer_thread.cancel();

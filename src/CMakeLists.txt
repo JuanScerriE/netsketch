@@ -73,10 +73,12 @@ add_executable(netsketch_test_client
         bench/bench.cpp
 )
 
+# NOTE: for the test client we want the benchmarking and
+# dumping of the hash to always be active
 target_compile_definitions(netsketch_test_client PRIVATE
-    $<$<BOOL:${BENCHMARK}>:NETSKETCH_BENCHMARK>
+    NETSKETCH_BENCHMARK
+    NETSKETCH_DUMPHASH
     $<$<BOOL:${DUMPJSON}>:NETSKETCH_DUMPJSON>
-    $<$<BOOL:${DUMPHASH}>:NETSKETCH_DUMPHASH>
 )
 
 target_link_libraries(netsketch_test_client PRIVATE

@@ -5,7 +5,7 @@ namespace test_client::share {
 
 bool only_drawing { true };
 std::string username {};
-std::atomic_uint32_t expected_responses {};
+uint32_t expected_responses {};
 
 threading::thread reader_thread {};
 threading::thread writer_thread {};

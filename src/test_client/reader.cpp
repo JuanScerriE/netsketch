@@ -36,12 +36,23 @@ Reader::Reader(const Channel& channel)
 void Reader::operator()()
 {
     for (;;) {
-        BENCH("reading network input");
+        if (share::tagged_draw_vector.size() >= share::expected_responses)
+            break;
 
-        auto [res, status] = m_channel.read();
+        std::pair<ByteString, ChannelError> res {};
+
+        {
+            BENCH("reading input from network");
+            // NOTE: that the m_channel.read() blocks
+            res = m_channel.read();
+        }
+
+        auto [bytes, status] = res;
 
         if (status == ChannelErrorCode::DESERIALIZATION_FAILED) {
             spdlog::error("deserialization failed, reason {}", status.what());
+
+            // spdlog::debug("number of received responses: {}", m_responses);
 
             break;
         }
@@ -52,7 +63,7 @@ void Reader::operator()()
             break;
         }
 
-        handle_payload(res);
+        handle_payload(bytes);
     }
 
     shutdown();
@@ -60,6 +71,8 @@ void Reader::operator()()
 
 void Reader::handle_payload(ByteString& bytes)
 {
+    BENCH("handling payload");
+
     auto [payload, status] = deserialize<Payload>(bytes);
 
     if (status != DeserializeErrorCode::OK) {
@@ -90,10 +103,14 @@ void Reader::handle_payload(ByteString& bytes)
         },
         payload
     );
+
+    // m_responses++;
 }
 
 void Reader::shutdown()
 {
+    // spdlog::debug("number of received responses: {}", m_responses);
+
     if (share::writer_thread.is_initialized()
         && share::writer_thread.is_alive())
         share::writer_thread.cancel();

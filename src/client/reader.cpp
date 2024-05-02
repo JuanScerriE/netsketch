@@ -35,10 +35,15 @@ Reader::Reader(const Channel& channel)
 void Reader::operator()()
 {
     for (;;) {
-        BENCH("reading input from network");
+        std::pair<ByteString, ChannelError> res {};
 
-        // NOTE: that the m_channel.read() blocks
-        auto [res, status] = m_channel.read();
+        {
+            BENCH("reading input from network");
+            // NOTE: that the m_channel.read() blocks
+            res = m_channel.read();
+        }
+
+        auto [bytes, status] = res;
 
         if (status != ChannelErrorCode::OK) {
             spdlog::error("reading failed, reason {}", status.what());
@@ -46,7 +51,7 @@ void Reader::operator()()
             break;
         }
 
-        handle_payload(res);
+        handle_payload(bytes);
     }
 
     shutdown();
@@ -54,7 +59,7 @@ void Reader::operator()()
 
 void Reader::handle_payload(ByteString& bytes)
 {
-    spdlog::debug("received: 0x{}", spdlog::to_hex(bytes));
+    BENCH("handling payload");
 
     auto [payload, status] = deserialize<Payload>(bytes);
 

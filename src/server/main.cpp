@@ -53,6 +53,7 @@ void sigint_handler(int)
 
 void output()
 {
+#ifdef NETSKETCH_DUMPJSON
     std::ofstream of { fmt::format("tagged_vector_server.json") };
 
     {
@@ -60,6 +61,7 @@ void output()
 
         ar(server::share::tagged_draw_vector);
     }
+#endif
 }
 
 int main(int argc, char** argv)
@@ -132,10 +134,13 @@ int main(int argc, char** argv)
 
     END_BENCHMARK_THREAD;
 
+#ifdef NETSKETCH_DUMPHASH
     spdlog::debug(
-        "hash of tagged draw vector: {}",
-        TaggedDrawVectorWrapper { server::share::tagged_draw_vector }.hash()
+        "hash of tagged draw vector: {}, size of tagged draw vector {}",
+        TaggedDrawVectorWrapper { server::share::tagged_draw_vector }.hash(),
+        server::share::tagged_draw_vector.size()
     );
+#endif
 
     output();
 

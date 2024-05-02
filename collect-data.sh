@@ -36,7 +36,7 @@ do
 
     echo "server_pid=$server_pid"
 
-    times=$(./stress-server.sh $clients $iterations $interval | grep "full test client run" | sed 's/.*"full test client run": //g' | sed 's/ns//g')
+    times=$(./stress-server.sh $clients $iterations $interval | grep "full test client run" | sed 's/.*"full test client run": //g' | sed 's/µs//g')
 
     kill -INT $server_pid
 

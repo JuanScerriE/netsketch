@@ -3,6 +3,9 @@
 #include "share.hpp"
 #include "simulate_user.hpp"
 
+// common
+#include "../common/tagged_draw_vector_wrapper.hpp"
+
 // std
 #include <fstream>
 #include <regex>
@@ -39,6 +42,7 @@
 
 void output()
 {
+#ifdef NETSKETCH_DUMPJSON
     std::ofstream of {
         fmt::format("tagged_vector_{}.json", test_client::share::username)
     };
@@ -48,6 +52,7 @@ void output()
 
         ar(test_client::share::tagged_draw_vector);
     }
+#endif
 }
 
 struct IPv4Validator : public CLI::Validator {
@@ -105,6 +110,14 @@ int main(int argc, char** argv)
     )
         ->capture_default_str();
 
+    uint32_t expected_responses { 0 };
+    app.add_option(
+           "--expected-responses",
+           expected_responses,
+           "The number of expected responses from the NetSketch Server"
+    )
+        ->required();
+
     std::string nickname {};
     app.add_option(
            "--nickname",
@@ -127,6 +140,9 @@ int main(int argc, char** argv)
 
     // set the nickname of the user
     test_client::share::username = nickname;
+
+    // set the number of expected responses
+    test_client::share::expected_responses = expected_responses;
 
     // set the other actions flag
     test_client::share::only_drawing = !other_actions;
@@ -180,6 +196,16 @@ int main(int argc, char** argv)
     spdlog::info("Finished...");
 
     END_BENCHMARK_THREAD;
+
+#ifdef NETSKETCH_DUMPHASH
+    spdlog::debug(
+        "hash of tagged draw vector: {}, size of tagged draw vector {}",
+        TaggedDrawVectorWrapper { test_client::share::tagged_draw_vector }.hash(
+        ),
+        test_client::share::tagged_draw_vector.size()
+
+    );
+#endif
 
     output();
 

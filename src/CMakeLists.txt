@@ -1,4 +1,6 @@
-option(BENCHMARK "Enable benchmarking" ON)
+option(BENCHMARK "Enable benchmarking" OFF)
+option(DUMPJSON "Enable dumping canvas as JSON" OFF)
+option(DUMPHASH "Enable dumping canvas hash" OFF)
 
 add_executable(netsketch_server
         server/main.cpp
@@ -8,7 +10,11 @@ add_executable(netsketch_server
         bench/bench.cpp
 )
 
-target_compile_definitions(netsketch_server PRIVATE $<$<CONFIG:Debug>:BENCHMARK>)
+target_compile_definitions(netsketch_server PRIVATE
+    $<$<BOOL:${BENCHMARK}>:NETSKETCH_BENCHMARK>
+    $<$<BOOL:${DUMPJSON}>:NETSKETCH_DUMPJSON>
+    $<$<BOOL:${DUMPHASH}>:NETSKETCH_DUMPHASH>
+)
 
 target_link_libraries(netsketch_server PRIVATE
         CLI11::CLI11
@@ -33,6 +39,12 @@ add_executable(netsketch_client
 )
 
 target_compile_definitions(netsketch_client PRIVATE $<$<CONFIG:Debug>:BENCHMARK>)
+
+target_compile_definitions(netsketch_client PRIVATE
+    $<$<BOOL:${BENCHMARK}>:NETSKETCH_BENCHMARK>
+    $<$<BOOL:${DUMPJSON}>:NETSKETCH_DUMPJSON>
+    $<$<BOOL:${DUMPHASH}>:NETSKETCH_DUMPHASH>
+)
 
 # Checks if OSX and links appropriate frameworks (only required on MacOS)
 if (APPLE)
@@ -61,7 +73,11 @@ add_executable(netsketch_test_client
         bench/bench.cpp
 )
 
-target_compile_definitions(netsketch_test_client PRIVATE $<$<CONFIG:Debug>:BENCHMARK>)
+target_compile_definitions(netsketch_test_client PRIVATE
+    $<$<BOOL:${BENCHMARK}>:NETSKETCH_BENCHMARK>
+    $<$<BOOL:${DUMPJSON}>:NETSKETCH_DUMPJSON>
+    $<$<BOOL:${DUMPHASH}>:NETSKETCH_DUMPHASH>
+)
 
 target_link_libraries(netsketch_test_client PRIVATE
         CLI11::CLI11

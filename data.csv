@@ -1,0 +1,4 @@
+num_of_clients, iterations, interval_sec, average_for_completion_nanosec
+4, 10, 0.5, 5001068
+10, 20, 1, 40003121
+30, 20, 1, 70036683

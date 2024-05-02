@@ -25,7 +25,7 @@ namespace bench {
 extern threading::thread benchmark_thread;
 extern threading::mutex benchmark_mutex;
 extern threading::cond_var benchmark_cond;
-extern std::queue<std::pair<std::string, std::chrono::nanoseconds>>
+extern std::queue<std::pair<std::string, std::chrono::microseconds>>
     benchmark_queue;
 
 extern bool disable_individual_logs;
@@ -60,7 +60,7 @@ class MovingBenchmark {
     }
 
    private:
-    std::unordered_map<std::string, std::chrono::nanoseconds>
+    std::unordered_map<std::string, std::chrono::microseconds>
         m_moving_averages {};
 };
 
@@ -99,12 +99,13 @@ class Bench {
         m_end = std::chrono::high_resolution_clock::now();
 
         auto start
-            = std::chrono::time_point_cast<std::chrono::nanoseconds>(m_start)
+            = std::chrono::time_point_cast<std::chrono::microseconds>(m_start)
                   .time_since_epoch();
-        auto end = std::chrono::time_point_cast<std::chrono::nanoseconds>(m_end)
-                       .time_since_epoch();
+        auto end
+            = std::chrono::time_point_cast<std::chrono::microseconds>(m_end)
+                  .time_since_epoch();
 
-        std::chrono::nanoseconds time_taken = (end - start);
+        std::chrono::microseconds time_taken = (end - start);
 
         {
             threading::mutex_guard guard { benchmark_mutex };
@@ -228,7 +229,7 @@ constexpr CompTimeString<N> file_name(CompTimeString<N> file_path)
 #define LINE_STRING STRINGIFY(__LINE__)
 #endif
 
-#ifdef BENCHMARK
+#ifdef NETSKETCH_BENCHMARK
 
 #define DISABLE_INDIVIDUAL_LOGS                \
     do {                                       \
@@ -254,11 +255,11 @@ constexpr CompTimeString<N> file_name(CompTimeString<N> file_path)
 // all the info relating to the file name,
 // function name and line number.
 
-#define BENCH(name)                                         \
-    (bench::Bench { file_name(CompTimeString { __FILE__ }), \
-                    __func__,                               \
-                    LINE_STRING,                            \
-                    name })
+#define BENCH(name)                                                         \
+    bench::Bench netsketch_server_internal_bench                            \
+    {                                                                       \
+        file_name(CompTimeString { __FILE__ }), __func__, LINE_STRING, name \
+    }
 
 #else
 

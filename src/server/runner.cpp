@@ -32,6 +32,9 @@
 
 #ifdef NETSKETCH_DUMPJSON
 
+// std
+#include <fstream>
+
 // cereal
 #include <cereal/archives/json.hpp>
 #include <cereal/types/string.hpp>

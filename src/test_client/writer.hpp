@@ -14,7 +14,6 @@ class Writer {
     void shutdown();
 
    private:
-    // connection
     Channel m_channel {};
 };
 

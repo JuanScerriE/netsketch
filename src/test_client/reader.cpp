@@ -1,4 +1,4 @@
-// client
+// client_test
 #include "reader.hpp"
 #include "share.hpp"
 
@@ -51,8 +51,6 @@ void Reader::operator()()
 
         if (status == ChannelErrorCode::DESERIALIZATION_FAILED) {
             spdlog::error("deserialization failed, reason {}", status.what());
-
-            // spdlog::debug("number of received responses: {}", m_responses);
 
             break;
         }

@@ -2,10 +2,6 @@
 
 // common
 #include "../common/channel.hpp"
-#include "../common/types.hpp"
-
-// std
-// #include <atomic>
 
 namespace test_client {
 

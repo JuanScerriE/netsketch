@@ -69,9 +69,10 @@ target_compile_options(netsketch_client PRIVATE -Wall -Wextra -Wpedantic -Weffc+
 
 add_executable(netsketch_test_client
         test_client/main.cpp
-        test_client/network_manager.cpp
         test_client/reader.cpp
+        test_client/runner.cpp
         test_client/share.cpp
+        test_client/simulate_user.cpp
         test_client/writer.cpp
         bench/bench.cpp
 )

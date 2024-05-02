@@ -46,33 +46,44 @@ void Reader::operator()()
         auto [bytes, status] = res;
 
         if (status != ChannelErrorCode::OK) {
-            spdlog::error("reading failed, reason {}", status.what());
+            // HACK: to solve the problem of printing in an concurrent
+            // application we'd need to use linenoise with its async mode
+            fmt::println(
+                stderr,
+                "\nerror: reading failed, reason {}",
+                status.what()
+            );
 
             break;
         }
 
-        handle_payload(bytes);
+        if (!handle_payload(bytes))
+            break;
     }
 
     shutdown();
 }
 
-void Reader::handle_payload(ByteString& bytes)
+bool Reader::handle_payload(ByteString& bytes)
 {
     BENCH("handling payload");
 
     auto [payload, status] = deserialize<Payload>(bytes);
 
     if (status != DeserializeErrorCode::OK) {
-        spdlog::warn("deserialization failed, reason {}", status.what());
+        fmt::println(
+            stderr,
+            "\nerror: deserialization failed, reason {}",
+            status.what()
+        );
 
-        return;
+        return false;
     }
 
     // NOTE: again please go look at client/share.hpp
     // for a reason as to why we are updating two separate
     // objects which contain the same things using a rwlock
-    std::visit(
+    return std::visit(
         overload {
             [](Adopt& arg) {
                 threading::mutex_guard guard {
@@ -90,6 +101,8 @@ void Reader::handle_payload(ByteString& bytes)
 
                     TaggedDrawVectorWrapper { share::vec2 }.adopt(arg);
                 }
+
+                return true;
             },
             [](TaggedDrawVector& arg) {
                 threading::mutex_guard guard {
@@ -107,6 +120,8 @@ void Reader::handle_payload(ByteString& bytes)
 
                     share::vec2 = arg;
                 }
+
+                return true;
             },
             [](TaggedAction& arg) {
                 threading::mutex_guard guard {
@@ -124,12 +139,17 @@ void Reader::handle_payload(ByteString& bytes)
 
                     TaggedDrawVectorWrapper { share::vec2 }.update(arg);
                 }
+
+                return true;
             },
             [](auto& object) {
-                spdlog::warn(
-                    "unexpected payload type {}",
+                fmt::println(
+                    stderr,
+                    "\nerror: unexpected payload type {}",
                     typeid(object).name()
                 );
+
+                return false;
             },
         },
         payload

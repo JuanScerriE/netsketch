@@ -231,10 +231,11 @@ void Gui::draw()
 
         DrawText(
             TextFormat(
-                "X:%f, Y:%f, ZOOM:%f",
+                "X:%f, Y:%f, ZOOM:%f FPS:%d",
                 mouse_world_pos.x,
                 mouse_world_pos.y,
-                m_camera.zoom
+                m_camera.zoom,
+                GetFPS()
             ),
             30,
             height - 25,
@@ -286,16 +287,19 @@ void Gui::logger_wrapper(int msg_type, const char* fmt, va_list args)
 
 } // namespace client
 
+// ATTRIBUTION this has been left here to properly attribute the
+// above (although heavily modified) to the original author.
+
 /*******************************************************************************************
  *
  *   raylib [core] example - 2d camera mouse zoom
  *
- *   Example originally created with raylib 4.2, last time
- *updated with raylib 4.2
+ *   Example originally created with raylib 4.2, last time updated with
+ *raylib 4.2
  *
- *   Example licensed under an unmodified zlib/libpng
- *license, which is an OSI-certified, BSD-like license that
- *allows static linking with closed source software
+ *   Example licensed under an unmodified zlib/libpng license, which is an
+ *OSI-certified, BSD-like license that allows static linking with closed source
+ *software
  *
  *   Copyright (c) 2022-2024 Jeffery Myers (@JeffM2501)
  *

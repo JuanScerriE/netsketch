@@ -15,7 +15,7 @@ class Reader {
     void shutdown();
 
    private:
-    void handle_payload(ByteString& payload);
+    bool handle_payload(ByteString& payload);
 
     void update_list(TaggedAction& tagged_command);
 

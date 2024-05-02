@@ -43,7 +43,11 @@ void Writer::operator()()
         auto status = m_channel.write(bytes);
 
         if (status != ChannelErrorCode::OK) {
-            spdlog::error("writing failed, reason {}", status.what());
+            fmt::println(
+                stderr,
+                "\nerror: writing failed, reason {}",
+                status.what()
+            );
 
             break;
         }

@@ -32,7 +32,7 @@ add_executable(netsketch_client
         client/gui.cpp
         client/input_handler.cpp
         client/input_parser.cpp
-        client/network_manager.cpp
+        client/runner.cpp
         client/reader.cpp
         client/writer.cpp
         bench/bench.cpp

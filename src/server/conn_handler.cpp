@@ -16,6 +16,7 @@
 // common
 #include "../common/abort.hpp"
 #include "../common/threading.hpp"
+#include "../common/overload.hpp"
 
 // bench
 #include "../bench/bench.hpp"

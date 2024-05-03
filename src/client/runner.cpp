@@ -191,7 +191,7 @@ bool Runner::setup(
         gui();
     }
 
-    return EXIT_SUCCESS;
+    return true;
 }
 
 Runner::~Runner()

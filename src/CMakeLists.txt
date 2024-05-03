@@ -41,8 +41,6 @@ add_executable(netsketch_client
         bench/bench.cpp
 )
 
-target_compile_definitions(netsketch_client PRIVATE $<$<CONFIG:Debug>:BENCHMARK>)
-
 target_compile_definitions(netsketch_client PRIVATE
     $<$<BOOL:${BENCHMARK}>:NETSKETCH_BENCHMARK>
     $<$<BOOL:${DUMPJSON}>:NETSKETCH_DUMPJSON>
@@ -92,3 +90,27 @@ target_link_libraries(netsketch_test_client PRIVATE
         spdlog::spdlog
 )
 target_compile_options(netsketch_test_client PRIVATE -Wall -Wextra -Wpedantic -Weffc++ -Wconversion)
+
+#---------------------------------
+
+add_executable(netsketch_exporter
+        exporter/main.cpp
+        exporter/runner.cpp
+)
+
+# Checks if OSX and links appropriate frameworks (only required on MacOS)
+if (APPLE)
+    target_link_libraries(netsketch_exporter PRIVATE "-framework IOKit")
+    target_link_libraries(netsketch_exporter PRIVATE "-framework Cocoa")
+    target_link_libraries(netsketch_exporter PRIVATE "-framework OpenGL")
+endif ()
+
+target_link_libraries(netsketch_exporter PRIVATE
+        CLI11::CLI11
+        cereal::cereal
+        fmt::fmt
+        raylib
+        spdlog::spdlog
+)
+target_compile_options(netsketch_exporter PRIVATE -Wall -Wextra -Wpedantic -Weffc++ -Wconversion)
+

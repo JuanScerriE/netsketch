@@ -24,7 +24,8 @@ static std::mt19937 mt { rd() };
 
 static std::uniform_int_distribution<> char_dist { 0, 255 };
 
-static std::uniform_int_distribution<> boundary_dist { -2000, 2000 };
+static std::uniform_int_distribution<> x_boundary_dist { -2000, 2000 };
+static std::uniform_int_distribution<> y_boundary_dist { -2000, 2000 };
 
 static std::uniform_int_distribution<> length_dist { 1, 64 };
 
@@ -44,10 +45,10 @@ LineDraw random_line_draw()
     LineDraw draw {};
 
     draw.colour = pick_random_colour();
-    draw.x0 = boundary_dist(mt);
-    draw.y0 = boundary_dist(mt);
-    draw.x1 = boundary_dist(mt);
-    draw.y1 = boundary_dist(mt);
+    draw.x0 = x_boundary_dist(mt);
+    draw.y0 = y_boundary_dist(mt);
+    draw.x1 = x_boundary_dist(mt);
+    draw.y1 = y_boundary_dist(mt);
 
     return draw;
 }
@@ -57,10 +58,10 @@ RectangleDraw random_rectangle_draw()
     RectangleDraw draw {};
 
     draw.colour = pick_random_colour();
-    draw.x0 = boundary_dist(mt);
-    draw.y0 = boundary_dist(mt);
-    draw.x1 = boundary_dist(mt);
-    draw.y1 = boundary_dist(mt);
+    draw.x0 = x_boundary_dist(mt);
+    draw.y0 = y_boundary_dist(mt);
+    draw.x1 = x_boundary_dist(mt);
+    draw.y1 = y_boundary_dist(mt);
 
     return draw;
 }
@@ -70,8 +71,8 @@ CircleDraw random_circle_draw()
     CircleDraw draw {};
 
     draw.colour = pick_random_colour();
-    draw.x = boundary_dist(mt);
-    draw.y = boundary_dist(mt);
+    draw.x = x_boundary_dist(mt);
+    draw.y = y_boundary_dist(mt);
     draw.r = static_cast<float>(char_dist(mt));
 
     return draw;
@@ -100,8 +101,8 @@ TextDraw random_text_draw()
     TextDraw draw {};
 
     draw.colour = pick_random_colour();
-    draw.x = boundary_dist(mt);
-    draw.y = boundary_dist(mt);
+    draw.x = x_boundary_dist(mt);
+    draw.y = y_boundary_dist(mt);
     draw.string = generate_random_string();
 
     return draw;

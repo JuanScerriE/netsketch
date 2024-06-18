@@ -15,8 +15,8 @@
 
 // common
 #include "../common/abort.hpp"
-#include "../common/threading.hpp"
 #include "../common/overload.hpp"
+#include "../common/threading.hpp"
 
 // bench
 #include "../bench/bench.hpp"
@@ -107,6 +107,21 @@ void ConnHandler::operator()()
                 m_username,
                 status.what()
             );
+
+            // NOTE: even when failing with END_OF_FILE, it
+            // is marked as a failure in reading. However,
+            // it is implicitly assumed that the user
+            // disconnected.
+
+            if (status == ChannelErrorCode::END_OF_FILE) {
+                spdlog::info(
+                    "[{}:{} ({})] assuming user disconnected",
+                    m_ipv4,
+                    m_port,
+                    m_username,
+                    status.what()
+                );
+            }
 
             break;
         }

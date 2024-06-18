@@ -14,6 +14,7 @@
 #include "../common/types.hpp"
 
 // std
+#include <algorithm>
 #include <random>
 
 namespace test_client {

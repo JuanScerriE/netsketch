@@ -80,7 +80,12 @@ struct TextDraw {
     }
 };
 
-using Draw = std::variant<LineDraw, RectangleDraw, CircleDraw, TextDraw>;
+using Draw = std::variant<
+    LineDraw,
+    RectangleDraw,
+    CircleDraw,
+    TextDraw
+>;
 
 struct Select {
     long id {};

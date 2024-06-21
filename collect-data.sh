@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "num_of_clients, iterations, interval_sec, average_of_completion_times_microsec, average_of_average_network_input_times" >data.csv
+echo "num_of_clients, iterations, interval_sec, average_of_completion_times_microsec, average_of_average_network_input_times_mircosec" >data.csv
 
 configs=(
 	"5 10 0.125"

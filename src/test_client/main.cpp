@@ -1,6 +1,9 @@
 // client_test
 #include "runner.hpp"
 
+// bench
+#include "../bench/bench.hpp"
+
 // std
 #include <regex>
 
@@ -106,8 +109,12 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    if (!runner.run()) {
-        return EXIT_FAILURE;
+    {
+        BENCH("full test client run");
+
+        if (!runner.run()) {
+            return EXIT_FAILURE;
+        }
     }
 
     return EXIT_SUCCESS;

@@ -103,7 +103,7 @@ class TaggedDrawVectorWrapper {
 
         for (auto iter = m_vector.rbegin(); iter != m_vector.rend(); iter++) {
             if (iter->username == username) {
-                m_vector.erase(iter.base());
+                m_vector.erase(iter.base() - 1);
 
                 break;
             }

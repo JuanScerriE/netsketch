@@ -247,7 +247,7 @@ void InputHandler::process_line(std::string_view line_view)
             "command"
             "\n 7. delete {{ID}} - deletes the draw command with the specified "
             "id ID"
-            "\n 8. undo - revert the last action"
+            "\n 8. undo - remove the last draw command"
             "\n 9. clear {{all | mine}} - clears the canvas"
             "\n    \tusing 'all' clears all draw commands"
             "\n    \tusing 'mine' clears only draw commands issued by the "

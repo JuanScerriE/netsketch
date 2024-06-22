@@ -1,0 +1,82 @@
+@startuml
+struct Colour {}
+
+struct LineDraw {}
+struct RectangleDraw {}
+struct CircleDraw {}
+struct TextDraw {}
+
+struct Draw {}
+note left: Variant
+
+hide Draw circle
+
+LineDraw *-- Colour
+RectangleDraw *-- Colour
+CircleDraw *-- Colour
+TextDraw *-- Colour
+
+Draw <|-- LineDraw
+Draw <|-- RectangleDraw
+Draw <|-- CircleDraw
+Draw <|-- TextDraw
+
+struct Select {}
+
+Select *-- Draw
+
+struct Select {}
+struct Delete {}
+struct Undo {}
+
+enum Qualifier {}
+
+struct Clear {}
+
+Clear *-- Qualifier
+
+struct Action {}
+note left: Variant
+
+hide Action circle
+
+Action <|-- Draw
+Action <|-- Select
+Action <|-- Delete
+Action <|-- Undo
+Action <|-- Clear
+
+struct TaggedAction {}
+
+TaggedAction *-- Action
+
+struct TaggedDraw {}
+
+TaggedDraw *-- Draw
+
+struct TaggedDrawVector {}
+note bottom: Vector
+
+hide TaggedDrawVector circle
+
+TaggedDrawVector *-- TaggedDraw
+
+struct Username {}
+struct Accept {}
+struct Decline {}
+struct Adopt {}
+
+struct Payload {}
+note left: Variant
+
+Payload <|-- TaggedAction
+Payload <|-- TaggedDrawVector
+Payload <|-- Username
+Payload <|-- Accept
+Payload <|-- Decline
+Payload <|-- Adopt
+
+hide Payload circle
+
+hide members
+@enduml

@@ -197,14 +197,14 @@ arrows.meta}
 % Biblography
 % \addbibresource{dsa.bib}
 
-\title{Compiler Theory and Practice}
+\title{Operating Systems and \\ Systems Programming 2}
 \tagline{Coursework}
 \author{Juan Scerri}
 \authorid{123456A}
 \courseworkname{Some Degree}
 \doctype{coursework}
 \courseworkdate{\monthyeardate\today}
-\subjectcode{CPS2000}
+\subjectcode{CPS2008}
 
 
 \begin{document}
@@ -221,6 +221,21 @@ arrows.meta}
 
 \maketitle % Print the title page
 
+\clearpage
+
+\thispagestyle{empty}
+\vspace*{9em}
+\begin{center}
+\includegraphics[width=\linewidth]{abstract-art}
+\end{center}
+
+\vspace*{2em}
+\begin{center}
+    Dedicated to my mother, my poor spine and my old computer.
+\end{center}
+
+\clearpage
+
 \tableofcontents % Print the table of contents
 
 \clearpage
@@ -235,12 +250,900 @@ arrows.meta}
 \label{chap:report}
 \addcontentsline{toc}{chapter}{\nameref{chap:report}}
 
-\input{section1.tex}
-\input{section2.tex}
-\input{section3.tex}
-\input{section4.tex}
-\input{section5.tex}
-\input{section6.tex}
-\input{section7.tex}
+\section{Introduction}
+
+The following is a report detailing the most prevalent
+aspects of the coursework. In particular, the following
+sections were deemed to be of significant importance for
+the proper treatment of the generate artefact i.e. the
+NetSketch application.
+
+\section{Project Dependencies, Structure and Scripts}
+
+\subsection{Dependencies}
+
+The dependencies of the project evolved as the
+development progressed. In particular, the
+initial list of dependencies was:
+
+\begin{itemize}
+    \item \href{https://github.com/CLIUtils/CLI11}{cli11} -- a command line parser for \CC{}11
+    \item \href{https://github.com/fmtlib/fmt}{fmt} -- a modern formatting library
+    \item \href{https://github.com/raysan5/raylib}{raylib} -- a simple library for game development
+\end{itemize}
+
+cli11 was immediately co-opted as a dependency after a extensive
+search for easier methods to implement command line parsing
+instead of the standard \texttt{getopt}.
+
+fmt is `considered' a must have because it provides a much
+needed modernisation of string manipulation and formatting. In
+fact, much of the work by the author of this library has been
+co-opted into the STL as of \CC{}20.
+
+raylib was chosen due to previous positive experiences with the
+library and due to its simplicity. Because of this it allows for
+quick and relatively painless setup of basic windows, mouse
+events, 2D drawing etc.
+
+Later on during development it was realised that
+(de)serialisation from scratch was going to be a problem. This
+is because it increases maintenance costs and comes with healthy
+serving of endianness related bugs which further slow down
+development.
+
+A number of possible off-the-shelf solutions where considered.
+Specifically, \href{https://protobuf.dev/}{protobuf},
+\href{https://capnproto.org/}{Cap'n Proto} and
+\href{https://uscilab.github.io/cereal/}{cereal}. The problem
+with protobuf and Cap'n Proto is the fact that they both use a
+scheme language to generate source code which can then be
+embedded in the project which requires it. This in effect allows
+you to have serialisation-friendly structures which are language
+agnostic. However, `feeled' a bit too much for the scale of
+project. Hence, cereal was chosen.
+
+However, cereal does provide some additional benefits. It is
+simple to get started without requiring the installation of a
+separate command line tool, it supports serialising STL
+containers and it supports a portable binary format. This makes
+it easy to integrate since relevant data structures do not need
+to be changed heavily and it abstracts away endianness.
+
+Finally, \href{https://github.com/gabime/spdlog}{spdlog} was the
+last dependency to be added. From the very early stages of
+development it was realised that logging is very important.
+However, the rudimentary implementation was not ideal for
+multithreaded programs. This is because printing would often be
+incorrect or completely halt due to multiple threads trying to
+print at the same time. Most of these issues arise due to
+\texttt{stdout} being buffered. Instead of continuing
+to develop a custom solution it was replaced with spdlog.
+
+spdlog solves all the above mentioned issues whilst maintaining
+its own threads allowing for a much smoother experience.
+
+\subsection{Structure}
+
+The source code of our project is split into five subfolders:
+\texttt{bench} (short for benchmarking), \texttt{test\_client},
+\texttt{server}, \texttt{client} and \texttt{common}.
+After numerous changes to the code and its structure the
+above five compartmentalisations where reached.
+
+\begin{figure}[H]
+\centering
+\begin{mdframed}[backgroundcolor=OffWhite]
+\includegraphics[width=\linewidth]{structure.pdf}
+\end{mdframed}
+\caption{\texttt{test\_client}, \texttt{server} and
+\texttt{client} use the headers in \texttt{common} and
+\texttt{bench}.}
+\label{fig:folderdeps}
+\end{figure}
+
+Now \texttt{test\_client}, \texttt{server} and \texttt{client}
+all contain source code which builds into their respective
+binary, those being the test client, the server and the client
+respectively.
+
+The \texttt{bench} folder contains all the necessary code to
+facilitate benchmarking throughout the code to ensure adequate
+performance. More on this later.
+
+And finally, the \texttt{common} folder contains a number of
+header files with code which was either immediately realised to
+be common to all three binaries or it was duplicated and later
+refactored into \texttt{common}.
+
+\subsection{Scripts}
+
+Through out development a number of configurations were setup
+and a number of scripts were written both for both using said
+configurations and running more complicated tasks.
+
+In particular four different builds where created:
+
+\begin{itemize}
+    \item \texttt{build-json.sh}
+    \item \texttt{build-rel.sh}
+    \item \texttt{build-tsan.sh}
+    \item \texttt{build.sh}
+\end{itemize}
+
+So, in particular \texttt{build.sh} and \texttt{build-rel.sh}
+are default builds, but the first does not optimise and includes
+debug information whilst the other optimises and includes debug
+information. Of course, in the event of an actual deployment
+\texttt{build-rel.sh} should be used. And stripping out debug
+information should also be considered.
+
+\texttt{build-json.sh} is a debug build which enables the server
+and any test client to dump there final draw vector before
+exiting. This is of course useful to ensure that proper
+synchronisation is indeed taking place among the clients and the
+servers.
+
+Finally, \texttt{build-tsan.sh} is again a debug build which
+incorporates a thread sanitizer into our program to ensure that
+basic multithreading mistakes are being avoided.
+
+The next set of scripts is the following:
+
+\begin{itemize}
+    \item \texttt{client.sh}
+    \item \texttt{client-debug.sh}
+    \item \texttt{server.sh}
+    \item \texttt{server-debug.sh}
+\end{itemize}
+
+The above are all convenience scripts, they allow running the
+binaries which are placed in the \texttt{build/} directory from
+the root directory. Additionally, those which have the
+\texttt{-debug} suffix run the binary inside \texttt{gdb} to
+allow for debugging.
+
+The more interesting scripts are \texttt{stress-server.sh} and
+\texttt{collect-data.sh}. They facilitate stress testing the
+server and collecting data about how the server performed. For
+more information see Section \ref{sec:stresstesting}.
+
+\section{Benchmarking}
+
+A basic mechanism for benchmarking was developed. It is a single
+header and single source file component. And it manages a single
+thread and queue.
+
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{startingbenchmarkthread}
+\caption{Starting the benchmark thread in
+\texttt{src/server/runner.cpp} at line 108.}
+\label{fig:startingbenchmarkthread}
+\end{figure}
+
+During initialisation the \texttt{Runner} class will start the
+benchmark thread. Then in different areas of the code which need
+to be tested the macro \texttt{BENCH("benchmark name")} can be
+used. The scope of the benchmark is defined by RAII.
+\texttt{BENCH} keeps track of the time at construction and at
+destruction it calculates a time delta.
+
+\begin{attrib}
+    The usage of RAII for the creation of scoped timers was
+    heavily inspired by Yan Chernikov's guide to simple
+    benchmarking, titled:
+    \href{https://www.youtube.com/watch?v=YG4jexlSAjc}{BENCHMARKING
+    in C++ (how to measure performance)} on YouTube.
+\end{attrib}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{example-benchmark}
+\caption{Example usage of the \texttt{BENCH} macro in the file
+\texttt{src/server/server.cpp} at line 103.}
+\label{fig:examplebenchmark}
+\end{figure}
+
+Now calling \texttt{BENCH("benchmark name")} by default will log
+the result of the benchmark to the console. However, it will
+also enqueue the result as a pair \texttt{<"benchmark name",
+\{Time Taken\}>} on a message queue to the benchmark thread,
+which it then notifies.
+
+\begin{note}
+    The string used as a parameter to the \texttt{BENCH} macro
+    uniquely identifies a specific benchmark. Additionally, when
+    calling \texttt{BENCH} multiple times with the same name the
+    benchmarking thread will construct a moving average of the
+    multiple readings (see Figure \ref{fig:serversidebenching}).
+\end{note}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{moving-average-example}
+\caption{Example of server-side benchmarking (with logging).}
+\label{fig:serversidebenching}
+\end{figure}
+
+Of course at the end of the programs life-time the benchmark
+thread is stopped with the macro
+\texttt{END\_BENCHMARK\_THREAD}.
+
+This part of the project is the backbone which facilitates the
+work done in Section \ref{sec:stresstesting}.
+
+\section{Common Headers}
+
+\begin{figure}[H]
+\centering
+\begin{mdframed}[backgroundcolor=OffWhite]
+\includegraphics[width=\linewidth]{common-groupings}
+\end{mdframed}
+\caption{Logical groupings of the files in the common folder.}
+\label{fig:commongroups}
+\end{figure}
+
+There are a number of logical groupings in in the common folder
+(see Figure \ref{fig:commongroups}). The smallest of which are
+\texttt{abort.hpp} and \texttt{bytes.hpp}. \texttt{bytes.hpp}
+only contains an alias to \texttt{std::string} called
+\texttt{ByteString}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{abort-usage}
+\caption{Usage of the \texttt{ABORTIF} and \texttt{ABORTIFV}
+(variadic variant) macros in \texttt{src/common/network.hpp} at line
+195.}
+\label{fig:abortusage}
+\end{figure}
+
+\subsection{Abort}
+
+\texttt{abort.hpp} provides some crucial functionality. In
+particular it provides use with mechanisms for abruptly
+terminating the program. This is useful because there are states
+that the program should never reach, it should not even be
+allowed to be an error state. If such states are indeed reached
+the program should abort (see Figure \ref{fig:abortusage}).
+
+\subsection{Relevant Data Structures}
+
+\begin{figure}[H]
+\centering
+\begin{mdframed}[backgroundcolor=OffWhite]
+\includegraphics[width=\linewidth]{types.pdf}
+\end{mdframed}
+\caption{A hierarchy of all the types relevant to the
+functionality of the whiteboard in the
+\texttt{src/common/types.hpp} file.}
+\label{fig:typetree}
+\end{figure}
+
+The \texttt{types.hpp} file contains all the relevant data types
+which the server, test client and client use (see Figure
+\ref{fig:typetree}). The \texttt{overload.hpp} file contains
+some helpers which facilitate more concise and functional syntax
+for dealing with \texttt{std::variant} types (for an example see
+\texttt{src/client/gui.cpp}, line 93).
+
+\begin{note}
+    The \texttt{Payload} type can be a \texttt{TaggedAction}.
+    This allows the system to send over deltas or partials
+    instead of sending the full modified state every time the
+    server receives an updated.
+\end{note}
+
+The \texttt{tagged\_draw\_vector\_wrapper.hpp} contains a
+wrapper class which wraps a tagged draw vector allowing for the
+manipulations the specification requires e.g. the ability to
+delete a specific draw command.
+
+\subsection{Networking}
+
+The \texttt{serial.hpp} file contains easier interfaces for
+serialising and de-serialising than those provided by cereal.
+
+The \texttt{network.hpp} file contains abstractions around the
+C's networking primitives to allow for safer code by taking
+advantage of RAII. In particular, the most important part of the
+file is the \texttt{IPv4Socket} class. It creates a significantly
+easier interface for interacting with C sockets.
+
+Additionally, the comment above the \texttt{IPv4SocketRef}
+class is important because it validates the need for a
+shell class of \texttt{IPv4Socket}. In summary, it allows
+use to copy and pass the socket without destroying
+it because of RAII.
+
+The \texttt{channel.hpp} file contains the main Channel class.
+The class wraps around an socket reference and it allows for a
+simpler approach to over-the-network communication since the
+Channel class automatically wraps any binary string into a
+packet which is comprised of a header and a payload. The header
+contains a few initial bytes which are checked when receiving a
+message to ensure correctness and then it contains an  8-byte
+integer which indicates how many more bytes should be read from
+the socket to receive the full message.
+
+Of course this approach needs to be used since information about
+how much needs to be read from a socket is not available
+automatically since internally the C networking primitives are
+being used.
+
+Additionally, the methods within the Channel class always return
+a \texttt{ChannelErrorCode} as part of there return type. This
+forces the users of channels to properly handle errors and do so
+in a neater way instead of using \texttt{errno} and everything
+related to it directly.
+
+\subsection{\CC{} POSIX/Linux C Wrappers}\label{sec:posixwrappers}
+
+The \texttt{threading.hpp} file is a large collection of \CC{}
+wrappers around the threading primitives provided by POSIX. The
+reason for this is detailed in the beginning of the file.
+However, the key tack away is that the STL does not provide
+first class support for all the features provided by the POSIX
+standard. In particular, the most important feature is
+cancelability (the ability to direct the kernel to stop a
+thread). Although \texttt{std::thread} does use the underlying
+primitive of its platform abusing this fact and mixing POSIX
+threads and STL threads seemed inapt. Hence, an effort was made
+to copy the parts of the STL necessary for work whilst at the
+same time ensuring 100\% compatibility with POSIX.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{timer-leak}
+\caption{Running \texttt{valgrind} on the server binary to test
+for memory leaks.}
+\label{fig:timerleak}
+\end{figure}
+
+Finally, the \texttt{timer.hpp} file similarly wraps around the
+timer mechanisms provided by \texttt{glibc} providing a \CC{}
+interface which makes use of RAII.
+
+\begin{note}
+    Linux timers are being used instead of a custom solution to
+    reduce code complexity and reduce the need for managing
+    additional threads which are used as timers. Instead
+    \texttt{glibc} manages these automatically. However, the
+    only downside to this approach is the fact \texttt{glibc}
+    always leaks a single allocation (see Figure
+    \ref{fig:timerleak}).
+\end{note}
+
+\section{The Client}
+
+\begin{note}
+    A demonstration of the client can be seen in the video
+    presentation hosted here: \url{placeholderurl}.
+\end{note}
+
+\subsection{Shared State}
+
+The approach used for cross-thread communication was shared
+state. To achieve this a \texttt{share.hpp} file was used to
+contain all the variables which needed to exist outside and
+hence between threads. This includes a majority of the
+synchronisation primitives such as mutexes, condition variables,
+thread handles, read-write locks and any queues and vectors
+which need to be global or are used for communication between
+one thread and another.
+
+\subsection{Client Thread Structure}
+
+\begin{figure}[H]
+\centering
+\begin{mdframed}[backgroundcolor=OffWhite]
+\includegraphics[width=\linewidth]{client-thread-structure}
+\end{mdframed}
+\caption{A drawing of the threads and their interactions in the
+client binary.}
+\label{fig:clientthreads}
+\end{figure}
+
+The above Figure \ref{fig:clientthreads}, gives an adequate
+depiction of the thread interaction in the client. Expanding a
+bit, the input thread generally, interacts with the writer
+thread using the writer queue and, its associated mutex and
+condition variables (see \texttt{src/client/share.hpp} lines
+23-25).
+
+The Reader-GUI communication is the more complicated of the two.
+This is because the camera of the GUI can be managed
+independently from the client command line interface. This
+imposes the following restriction: \emph{the canvas should allow
+for a smooth user experience even if an whiteboard update is
+incoming}.
+
+This means that the canvas or GUI should never freeze until an
+update it completely it should always be responsive to the users
+changes.
+
+\begin{figure}[H]
+\centering
+\begin{mdframed}[backgroundcolor=OffWhite]
+\includegraphics[width=\linewidth]{reader-gui-comms}
+\end{mdframed}
+\caption{A drawing of initial double-buffering technique
+employed to ensure GUI responsiveness. }
+\label{fig:readerguicomms}
+\end{figure}
+
+The main approach for tackling this problem is to use a
+technique knowing as double buffering. This is most commonly
+used in graphics related scenarios. The simplest approach to
+implement such a solution is to have two vectors which are
+maintained independently. Whilst A pointer called current is
+used to indicate which of the vectors the GUI thread should read
+from. At the same time the reader thread can update the unused
+vector. Then after finishing the current pointer is updated by
+the reader and the other vector is also updated at which point
+the current pointer is swapped again. However, this approach and
+specifically trying to avoid the use of synchronisation
+primitives as they are very expensive operations led to a race
+condition.
+
+\subsection{Reader-GUI Race Condition (+ Solution)}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{original-data-race}
+\caption{An abnormal exit of the program caused by an unknown
+type, later verified to be caused by a data race.}
+\label{fig:originaldatarace}
+\end{figure}
+
+After some digging and research it was later verified to be an
+issue caused by as indicated by Figure \ref{fig:readerguicomms}.
+The issue was appearing irregularly since it is not very common
+for the GUI thread to be slower than the reader thread. However,
+to confirm the issue the GUI was artificially slowed downed
+using a sleep. This confirmed the issue and that it was caused
+due a timing issue between the reader and GUI threads.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{artificial-data-race}
+\caption{Artificially inducing the data race exhibited in Figure
+\ref{fig:originaldatarace} using a sleep functions.}
+\label{fig:artificialdatarace}
+\end{figure}
+
+After some research the following article was found:
+\url{http://concurrencyfreaks.blogspot.com/2013/11/double-instance-locking.html}.
+The author(s) claim that it is ``lock-free'' for, in our case
+the GUI thread, which is exactly what was needed to still ensure
+responsiveness. Implementing there described approach solved the
+issue.
+
+\begin{marker}
+    Performance before and after the change was not measured.
+    This was because of a number of reasons. In particular, the
+    infrastructure for benchmarking was not present at this
+    point in the project and correctness takes precedence over
+    speed.
+\end{marker}
+
+\section{The Server}
+
+\subsection{Shared State}
+
+With regards to the sharing of state between threads a similar
+approach to what was used within the client is also being used
+within the server. The only difference is that within the server
+there are more globally shared variables due to the server being
+overall more complex.
+
+\subsection{Server Thread Structure}
+
+\begin{figure}[H]
+\centering
+\begin{mdframed}[backgroundcolor=OffWhite]
+\includegraphics[width=\linewidth]{threadinteractions-server.pdf}
+\end{mdframed}
+\caption{A depiction of all the thread interactions in the
+server.}
+\label{fig:serverthreads}
+\end{figure}
+
+The threads present within the server are the server thread, the
+updater thread the connection handler threads and the timer
+threads.
+
+In particular, the server sets up the necessary networking and handles
+new incoming connections. When a new connection arrives a
+connection handler thread is created to handle that specific
+user. Further communications from the client and handled by its
+respective connection handler.
+
+Each connection handler then interacts with the updater thread
+which updates the local state and sends the same update to all
+the connected clients.
+
+The timer threads are managed by \texttt{glibc} and there main
+purpose is to give a disconnected user a time gap before his
+draw commands are adopted by the server.
+
+\subsection{Limitations of the Updater Model}
+
+The main problem with the current updater model is that the
+updater thread is a bottleneck. If sufficiently many clients are
+connected to the server, the more time it will take the updater
+thread to actually send an update to each client and this cost
+is always going to be incurred for every single update.
+
+However, solving this problem is not easy. Using a
+Publisher-Subscriber model seems adequate however, it will still
+have the same bottleneck as the current updater model if
+internally somewhere a for-loop is notifying each thread. To
+solve a problem like this a design which inverts the
+responsibility of staying notified is required. However, this
+also has its own drawbacks. Will the threads all continuously
+poll to check if an update is present? Unfortunately, there does
+not seem to be an elegant solution which maintains code
+complexity a minimum. Because of this fact the initial simple
+solution was kept.
+
+\section{The Test Client and Stress/Performance Testing}\label{sec:stresstesting}
+
+\subsection{The Test Client}
+
+The test client is a variation of the actual client. It
+takes in as input the following extra command line arguments:
+
+\begin{itemize}
+    \item \texttt{--iterations} which is the number of requests
+        the test client will send to the server.
+    \item \texttt{--interval} which is the interval in between
+        each request in seconds.
+    \item \texttt{--expected\_responses} which is
+        \textbf{suppose} to be the total number of responses the
+        test client will receive.
+    \item \texttt{--other\_actions} which indicates whether
+        generating undo, select and clear should be allowed or
+        not.
+\end{itemize}
+
+\begin{marker}
+    The \texttt{--expected\_responses} flag's behaviour is
+    prefixed by a `\textbf{suppose}'. This is because it was
+    realised that calculating the number of expected
+    responses especially, if multiple test clients are present
+    is extremely difficult. This is the case because if multiple
+    tests clients are present some will actually connect to the
+    server later than others. This means that they will receive
+    all the events up to that point as one whole tagged draw
+    vector. Hence, calculating the number of expected responses
+    is impossible. Hence the number of expected responses
+    actually refers to the number of draw calls or the final
+    expected size of the tagged draw vector. Additionally, note
+    that if the other actions was also enabled by default it
+    would also make the calculation impossible.
+\end{marker}
+
+The \texttt{--expected\_responses} flag is important because it
+tells the test client when to stop and terminate. In the event
+that the quota set by the \texttt{--expected\_responses} flag is
+never met, the test client will wait until the server
+automatically, disconnects the client due to inactivity (circa
+ten minutes).
+
+The most critical behaviour of a test client is its generation
+of random actions which is contained in the file
+\texttt{src/test\_client/simulate\_user.cpp} file. It is a
+simple for-loop which uniformly generates all the available
+drawing commands (if the \texttt{--other\_actions} flag is set
+it will will generate all actions uniformly).
+
+\subsubsection{Thread Structure}
+
+The thread structure of the test client is similar to the normal
+client except it does not include does not have a dedicated
+input thread and the GUI/main is used for running the above
+mentioned random action/draw generator.
+
+\subsection{Stress Testing}
+
+Now having established a test client, the scripts
+\texttt{stress-server.sh} and \texttt{collect-data.sh} where
+written to gather information about the server, in particular
+its correctness and performance under heavy load.
+
+\subsubsection{Testing Correctness}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{stress-server-10-20-0.5}
+\caption{Stressing the server with ten test clients and twenty
+draw commands at an interval of 0.5 seconds (with the tagged
+draw vector hashes highlighted).}
+\label{fig:stresstest1}
+\end{figure}
+
+When testing for correctness an initial stress test using the
+release build is performed. Due to the ability to hash the
+tagged draw vector held by every client and the server it is
+easy to identify any discrepancies. In Figure
+\ref{fig:stresstest1} the hashes of the tagged draw vectors
+described above can be seen.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{tagged-vector-json-dumps-2}
+\caption{A collection of JSON dumps and along with an open JSON file.}
+\label{fig:jsondump}
+\end{figure}
+
+In the event that one of these hashes is incorrect, the binaries
+can be recompiled with \texttt{build-json.sh} to dump their
+tagged draw vector as JSON files which can then be manually
+inspected later. Of course, this does not guarantee an easier
+time debugging however, it can provide insight as to why the
+observed behaviour is being recorded.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{json-guide}
+\caption{A graphical guide to understanding a dumped JSON file.}
+\label{fig:jsondumpguide}
+\end{figure}
+
+\begin{note}
+    The JSON dump files (see Figure \ref{fig:jsondump}) lack
+    proper names for the fields. This is because the cereal
+    serialisation library only supports the addition of such
+    names when serialising into XML or JSON. However, the
+    program is also serialising into portable binary making it a
+    bit more difficult to annotate fields with names.  Please
+    see Figure \ref{fig:jsondumpguide} for a guide on reading
+    the JSON files.
+\end{note}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{difficult-stress-initial.png}
+\caption{Initial phase of a stress test with 1000 test clients
+(with highlighted command and timeout errors).}
+\label{fig:initial1000stress}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{difficult-stress-end.png}
+\caption{End phase of a stress test with 1000 test clients (with
+highlighted tagged draw vector hashes).}
+\label{fig:end1000stress}
+\end{figure}
+
+Currently, the project only starts to exhibit issues with
+correctness when 1000 simlatenous connection try to connect to
+the server. However, this only seems to be a networking
+limitation, since some of the connections (see Figure
+\ref{fig:initial1000stress}) are dropped. Because of this the
+test clients do not automatically terminate since they do not
+reach their expected draw count. However, after ten minutes of
+idling the server automatically, disconnects the clients.
+
+At the end (see Figure \ref{fig:end1000stress}) it still seems
+that overall the server's mechanisms for synchronoistaion are
+robust. This is because the hashes produced from the tagged draw
+vectors still seem to be equal to one another.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{difficult-stress-other-start.png}
+\caption{Start of a stress test with 1000 test clients (with
+other actions enabled).}
+\label{fig:start1000stressother}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{difficult-stress-other-timeout.png}
+\caption{Some test clients again experience timeout errors.}
+\label{fig:timeout1000stressother}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{difficult-stress-other-end.png}
+\caption{End phase of a stress test with 1000 test clients (with
+other actions enabled and highlighted tagged draw vector
+hashes).}
+\label{fig:end1000stressother}
+\end{figure}
+
+Finally, a test with other actions for the test clients enabled
+was conducted. A similar conlusion was reached. The server's
+mechanisms for synchronisation appear to be robust (see Figure
+\ref{fig:start1000stressother}, Figure
+\ref{fig:timeout1000stressother} and Figure
+\ref{fig:end1000stressother}).
+
+\subsubsection{Testing Server Performance}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{stress-configs.png}
+\caption{All the different configurations used for testing and
+data collection (each string  ``c i t'' is understood as `c' =
+number of clients, `i' = number of iterations and `t' = interval
+between each iteration).}
+\label{fig:stressconfigs}
+\end{figure}
+
+When testing for performance the \texttt{collect-data.sh} script
+was used. In particular, it contains a selection of
+configurations (see Figure \ref{fig:stressconfigs}) for which it
+is known that all the simulatenously generated connections can
+be handled (on the machine used for the developement of the
+project).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{running-collect-data.png}
+\caption{An example of the \texttt{collect-data.sh} script
+running.}
+\label{fig:runningcollectdata}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{collected-data.png}
+\caption{The collected data from running
+\texttt{collect-data.sh} in the produces \texttt{data.csv}
+file.}
+\label{fig:collecteddata}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{readingfromnetwork}
+\caption{The \texttt{"reading input from network"} benchmark in
+\texttt{src/test\_client/reader.cpp} at line 45.}
+\label{fig:readingfromnetwork}
+\end{figure}
+
+In particular, looking at the outcome of the script (see Figure
+\ref{fig:collecteddata}) the time it takes for each test client
+in the scope of a stress test is very much linked to the
+interval specified and the number of iterations specified. In
+fact, if the calculation $\mathtt{iterations} *
+\mathtt{interval\_sec} * 1000000$ is performed it is roughly
+equal to the completion time for each test client in the scope
+of specific stress test.
+
+Looking at the average amount of time it took for a response,
+for each draw action is quite inconsistent across the board. It
+seems to be really dependent on the current of the hosting
+machine. Although, it seems to increase again for longer
+interval times.
+
+Overall this indicates that the performance is overall quite
+good. However, this is by no means conclusive and further more
+sophisticated and precise means of measurement are required.
+Additionally, one has to keep in mind that all these test where
+performed locally, where the bottle neck imposed by network
+congestion is close to zero.
+
+\subsection{Running \texttt{valgrind} on the Server}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{valgrind-test}
+\caption{The result of running \texttt{./stress-server 100 10
+0.25} with the server being instrumented with
+\texttt{valgrind} (the single lost allocation has
+been clarified in Section \ref{sec:posixwrappers}).}
+\label{fig:valgrindservertest}
+\end{figure}
+
+Finally, the server was tested with \texttt{valgrind} to ensure
+that over time the server does not consume more and more memory,
+which could lead to the system failing (see Figure
+\ref{fig:valgrindservertest}).
+
+\subsection{Peformance Testing the Actual Client}
+
+To test the actual client, CLion was used. CLion provides
+facilities for using flamegraphs and the client was tested using
+these facilities.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{flamegraph1}
+\caption{A flamegraph of the client running captured by CLion.}
+\label{fig:flamegraph}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{flamegraph1zoomed}
+\caption{The same flamegraph as Figure \ref{fig:flamegraph} but zoomed (for clarity).}
+\label{fig:flamegraphzoomed}
+\end{figure}
+
+As can be seen from Figure \ref{fig:flamegraphzoomed}, the
+hottest path i.e. the path which can the most calls and the
+takes the longest is the draw function in the client. This means
+that the largest bottle neck in the client is actually the
+drawing.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{morethan5000fps}
+\caption{A screenshot of a single client connected
+to the server after the server's local tagged draw vector is
+filled with many draw calls (notice that the FPS counter is sitting
+at around 23).}
+\label{fig:stressedclient}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{freshserverfps}
+\caption{A screenshot of a single client connected to a fresh
+server (notice that the FPS counter is sitting at around 60
+which is the cap imposed because of VSYNC).}
+\label{fig:freshclient}
+\end{figure}
+
+This is corroborated by the result of running the
+\texttt{collect-data.sh} script three times on an already open
+server (see Figure \ref{fig:stressedclient} and Figure
+\ref{fig:freshclient}). It is clear that the FPS has dropped
+significantly. To solve this issue further work on the
+representation of the drawings is required along with possible
+improvements to the actual rendering it self. However, for such
+changes direct modifications to Raylib or a different rendering
+engine needs to be used.
+
+\subsection{Client Input Testing}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{basic-input-example}
+\caption{A screenshot of some basic input into a client.}
+\end{figure}
+
+A very rudimentary approach to testing the input mechanism was
+used. In particular, the command line interface was manually
+tested to ensure that at its most basic the inputs were properly
+parsed.
+
+\section{Recording}
+
+For a more thorough walkthrough of how the interface can be used
+and how the clients and the server behave please have a look at
+the video presentation which is being hosted on \url{testurl}.
+
+\section{\textbf{Bonus}: The Exporter}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{generate-image}
+\caption{A screenshot of the generate image method in
+\texttt{src/exporter/runner.cpp} at line 244.}
+\end{figure}
+
+The exporter is a simple binary which connects to an already
+existing server and it uses Raylib's built in features for
+software rendering to generate an image of a tagged draw vector
+with a specific background. Of course, later on this can be
+directly embedded into the client, using the GPU buffer instead
+of software rendering, but for now it is sufficient for some
+cool backgrounds.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{exported-background}
+\caption{A cool background generated by using the exporter.}
+\end{figure}
 
 \end{document}

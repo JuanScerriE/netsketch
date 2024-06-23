@@ -240,10 +240,6 @@ arrows.meta}
 
 \clearpage
 
-\lstlistoflistings
-
-\clearpage
-
 \mainmatter
 
 \chapter*{Report}
@@ -252,11 +248,10 @@ arrows.meta}
 
 \section{Introduction}
 
-The following is a report detailing the most prevalent
-aspects of the coursework. In particular, the following
-sections were deemed to be of significant importance for
-the proper treatment of the generate artefact i.e. the
-NetSketch application.
+The following is a report detailing the most prevalent aspects
+of the coursework. In particular, the following aspects were
+deemed to be of significant importance for the proper treatment
+of the NetSketch application.
 
 \section{Project Dependencies, Structure and Scripts}
 
@@ -267,69 +262,71 @@ development progressed. In particular, the
 initial list of dependencies was:
 
 \begin{itemize}
-    \item \href{https://github.com/CLIUtils/CLI11}{cli11} -- a command line parser for \CC{}11
-    \item \href{https://github.com/fmtlib/fmt}{fmt} -- a modern formatting library
-    \item \href{https://github.com/raysan5/raylib}{raylib} -- a simple library for game development
+    \item \href{https://github.com/CLIUtils/CLI11}{cli11} -- a command line parser for \CC{}11,
+    \item \href{https://github.com/fmtlib/fmt}{fmt} -- a modern formatting library, and
+    \item \href{https://github.com/raysan5/raylib}{raylib} -- a simple library for game development.
 \end{itemize}
 
-cli11 was immediately co-opted as a dependency after a extensive
-search for easier methods to implement command line parsing
-instead of the standard \texttt{getopt}.
+cli11 was immediately co-opted as a dependency after an
+extensive search for easier methods to implement command line
+parsing.  This is because the standard \texttt{getopt}
+is difficult to use.
 
-fmt is `considered' a must have because it provides a much
-needed modernisation of string manipulation and formatting. In
-fact, much of the work by the author of this library has been
-co-opted into the STL as of \CC{}20.
+fmt is `considered' a must have because it provides a more
+modern approach to string manipulation and formatting. In fact,
+much of the author's work has been co-opted into the STL under
+\texttt{std::format} as of \CC{}20.
 
 raylib was chosen due to previous positive experiences with the
 library and due to its simplicity. Because of this it allows for
-quick and relatively painless setup of basic windows, mouse
-events, 2D drawing etc.
+the quick and painless setup of basic windows, mouse events, 2D
+drawing etc.
 
 Later on during development it was realised that
 (de)serialisation from scratch was going to be a problem. This
-is because it increases maintenance costs and comes with healthy
-serving of endianness related bugs which further slow down
-development.
+is because it increases maintenance costs and comes with a
+healthy serving of endianness related bugs.
 
 A number of possible off-the-shelf solutions where considered.
 Specifically, \href{https://protobuf.dev/}{protobuf},
 \href{https://capnproto.org/}{Cap'n Proto} and
 \href{https://uscilab.github.io/cereal/}{cereal}. The problem
 with protobuf and Cap'n Proto is the fact that they both use a
-scheme language to generate source code which can then be
-embedded in the project which requires it. This in effect allows
+scheme language to generate source code, which can then be
+embedded in the project. This in effect allows
 you to have serialisation-friendly structures which are language
-agnostic. However, `feeled' a bit too much for the scale of
+agnostic. However, they `felt' a bit too heavy for this kind of
 project. Hence, cereal was chosen.
 
-However, cereal does provide some additional benefits. It is
-simple to get started without requiring the installation of a
+Additionally, cereal does provide some other benefits. It is
+simple to get started, without requiring the installation of a
 separate command line tool, it supports serialising STL
 containers and it supports a portable binary format. This makes
-it easy to integrate since relevant data structures do not need
-to be changed heavily and it abstracts away endianness.
+it easy to integrate since the relevant data structures do not
+need to be changed and it abstracts away endianness.
 
 Finally, \href{https://github.com/gabime/spdlog}{spdlog} was the
 last dependency to be added. From the very early stages of
 development it was realised that logging is very important.
-However, the rudimentary implementation was not ideal for
-multithreaded programs. This is because printing would often be
-incorrect or completely halt due to multiple threads trying to
-print at the same time. Most of these issues arise due to
-\texttt{stdout} being buffered. Instead of continuing
-to develop a custom solution it was replaced with spdlog.
+However, the rudimentary implementation used during the early
+phases of the project was not ideal for multithreaded programs.
+This is because printing would often be incorrect or completely
+halt due to multiple threads trying to print at the same time.
+Most of these issues are caused by \texttt{stdout} being
+buffered. Instead of continuing to develop a custom solution it
+was replaced with spdlog.
 
-spdlog solves all the above mentioned issues whilst maintaining
-its own threads allowing for a much smoother experience.
+spdlog solves the above mentioned problems whilst maintaining
+its own threads, allowing for a much smoother experience.
 
 \subsection{Structure}
 
-The source code of our project is split into five subfolders:
+The source code of our project is split into six subfolders:
 \texttt{bench} (short for benchmarking), \texttt{test\_client},
-\texttt{server}, \texttt{client} and \texttt{common}.
-After numerous changes to the code and its structure the
-above five compartmentalisations where reached.
+\texttt{server}, \texttt{client}, \texttt{common} and
+\texttt{exporter} (bonus). After numerous changes to the code
+and its structure the above six compartmentalisations where
+reached.
 
 \begin{figure}[H]
 \centering
@@ -344,23 +341,24 @@ above five compartmentalisations where reached.
 
 Now \texttt{test\_client}, \texttt{server} and \texttt{client}
 all contain source code which builds into their respective
-binary, those being the test client, the server and the client
+binaries, those being the test client, the server and the client
 respectively.
 
 The \texttt{bench} folder contains all the necessary code to
-facilitate benchmarking throughout the code to ensure adequate
-performance. More on this later.
+facilitate benchmarking throughout the project. More on this
+later.
 
 And finally, the \texttt{common} folder contains a number of
-header files with code which was either immediately realised to
-be common to all three binaries or it was duplicated and later
-refactored into \texttt{common}.
+header files with code which was either, immediately realised to
+be common to all the three binaries or it was duplicated and
+then later refactored into \texttt{common}.
 
 \subsection{Scripts}
 
-Through out development a number of configurations were setup
-and a number of scripts were written both for both using said
-configurations and running more complicated tasks.
+Throughout development a number of build configurations were
+setup and a number of scripts were written, the purpose of which
+was to run said configurations and for running more complicated
+tasks.
 
 In particular four different builds where created:
 

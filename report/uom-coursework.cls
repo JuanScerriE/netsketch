@@ -294,7 +294,7 @@
 \setsecnumformat{\csname the#1\endcsname\enskip{\color{gray}\textbar}\enskip} % Style the section numbering format
 \setsecnumdepth{subsection} % Three level depth - chapter, section, subsection. Subsubsections not included.
 
-\newsubfloat{figure} % Declares a new subfloat element which allows to use \subfigure and \subbottom commands (part of subfig package)
+% \newsubfloat{figure} % Declares a new subfloat element which allows to use \subfigure and \subbottom commands (part of subfig package)
 \feetbelowfloat % We want the footnotes below floats, not strangely above
 
 %% recolour the default itemize symbols to UMRed

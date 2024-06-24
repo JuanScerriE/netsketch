@@ -145,7 +145,7 @@ list_draws(Option tool_type, Option user_qual, TaggedDrawVector& draw_vector)
             }
             break;
         case Option::MINE:
-            if (share::username == tagged_draw.username) {
+            if (share::username == tagged_draw.username && !tagged_draw.adopted) {
                 switch (tool_type) {
                 case Option::ALL:
                     print_draw(index, tagged_draw.draw);

@@ -129,3 +129,9 @@ Options:
   --other-actions{false},--other-actions{false}
                               Enable generating other actions apart from drawing (e.g. Undo, Clear & Delete)
 ```
+
+## Images of the Server and Client Running on the Ubuntu 20.04 VM
+
+[Server](images/server.png)
+
+[Client](images/client.png)

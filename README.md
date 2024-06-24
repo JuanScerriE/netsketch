@@ -132,6 +132,6 @@ Options:
 
 ## Images of the Server and Client Running on the Ubuntu 20.04 VM
 
-[Server](images/server.png)
+![Server](images/server.png)
 
-[Client](images/client.png)
+![Client](images/client.png)

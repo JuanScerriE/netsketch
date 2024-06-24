@@ -24,6 +24,7 @@ target_link_libraries(netsketch_server PRIVATE
         cereal::cereal
         fmt::fmt
         spdlog::spdlog
+        rt
 )
 target_compile_options(netsketch_server PRIVATE -Wall -Wextra -Wpedantic -Weffc++ -Wconversion)
 
@@ -60,6 +61,7 @@ target_link_libraries(netsketch_client PRIVATE
         fmt::fmt
         raylib
         spdlog::spdlog
+        rt
 )
 target_compile_options(netsketch_client PRIVATE -Wall -Wextra -Wpedantic -Weffc++ -Wconversion)
 
@@ -88,6 +90,7 @@ target_link_libraries(netsketch_test_client PRIVATE
         cereal::cereal
         fmt::fmt
         spdlog::spdlog
+        rt
 )
 target_compile_options(netsketch_test_client PRIVATE -Wall -Wextra -Wpedantic -Weffc++ -Wconversion)
 
@@ -111,6 +114,7 @@ target_link_libraries(netsketch_exporter PRIVATE
         fmt::fmt
         raylib
         spdlog::spdlog
+        rt
 )
 target_compile_options(netsketch_exporter PRIVATE -Wall -Wextra -Wpedantic -Weffc++ -Wconversion)
 
